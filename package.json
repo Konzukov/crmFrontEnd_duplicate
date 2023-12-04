@@ -1,0 +1,114 @@
+{
+  "name": "crnfronend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.14.0",
+    "@ckeditor/ckeditor5-alignment": "^36.0.1",
+    "@ckeditor/ckeditor5-build-classic": "^36.0.1",
+    "@ckeditor/ckeditor5-vue2": "^3.0.1",
+    "@jamescoyle/vue-icon": "^0.1.2",
+    "@mdi/light-js": "^0.2.63",
+    "@novnc/novnc": "^1.4.0",
+    "@phasedlogix/vue-novnc": "^1.0.0-alpha",
+    "@syncfusion/ej2-vue-documenteditor": "^20.4.54",
+    "@vue/cli": "^5.0.8",
+    "card-info": "^1.2.4",
+    "core-js": "^3.12.1",
+    "docx-to-html": "^1.0.1",
+    "file-saver": "^2.0.5",
+    "filestack-js": "^3.24.1",
+    "mammoth": "^1.5.1",
+    "v-viewer": "^1.5.1",
+    "vue": "^2.6.12",
+    "vue-cookies": "^1.7.4",
+    "vue-doc-preview": "^0.3.2",
+    "vue-functional-calendar": "^2.9.98",
+    "vue-pdf-app": "^2.1.0",
+    "vue-router": "^3.5.1",
+    "vue-vnc": "^0.0.4",
+    "vue2-editor": "^2.10.3",
+    "vuetify": "^2.6.12",
+    "vuex": "^3.6.2",
+    "ws": "^8.12.1"
+  },
+  "devDependencies": {
+    "@babel/plugin-transform-runtime": "^7.13.15",
+    "@editorjs/checklist": "^1.3.0",
+    "@editorjs/editorjs": "^2.21.0",
+    "@editorjs/header": "^2.6.1",
+    "@editorjs/link": "^2.3.1",
+    "@editorjs/list": "^1.6.2",
+    "@editorjs/marker": "^1.2.2",
+    "@mdi/font": "^4.9.95",
+    "@mdi/js": "^4.9.95",
+    "@vue/cli-plugin-babel": "^4.4.6",
+    "@vue/cli-plugin-eslint": "^4.4.6",
+    "@vue/cli-plugin-router": "^4.4.6",
+    "@vue/cli-plugin-vuex": "^4.5.12",
+    "@vue/cli-service": "^4.5.12",
+    "animate.css": "^4.1.1",
+    "axios": "^0.19.2",
+    "babel-eslint": "^10.1.0",
+    "ckeditor5-custom-build": "^0.0.6",
+    "crypto-js": "^3.3.0",
+    "docxtemplater": "^3.36.0",
+    "element-ui": "^2.15.1",
+    "eslint": "^5.16.0",
+    "eslint-plugin-vue": "^5.0.0",
+    "excellentexport": "^3.6.0",
+    "file-saver": "^2.0.5",
+    "lodash": "^4.17.21",
+    "moment": "^2.29.1",
+    "pdf-image": "^2.0.0",
+    "sass": "^1.32.12",
+    "sass-loader": "^8.0.2",
+    "socket.io": "^4.1.0",
+    "socket.io-client": "^4.6.1",
+    "typescript": "^4.6.3",
+    "v-calendar": "^2.4.1",
+    "v-mask": "^2.2.4",
+    "vue-axios-cors": "^1.0.1",
+    "vue-cli-plugin-vuetify": "^2.5.8",
+    "vue-datetime-picker": "^0.2.1",
+    "vue-excel-export": "^0.1.3",
+    "vue-excel-xlsx": "^1.0.11",
+    "vue-pdf": "^4.3.0",
+    "vue-resize-directive": "^1.2.0",
+    "vue-template-compiler": "^2.6.12",
+    "vue2-dropzone": "^3.6.0",
+    "vuetify-datetime-picker": "^2.1.1",
+    "vuetify-loader": "^1.7.2"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/essential",
+      "eslint:recommended"
+    ],
+    "rules": {
+      "no-console": 0,
+      "no-unused-vars": [
+        "error",
+        {
+          "args": "none"
+        }
+      ]
+    },
+    "parserOptions": {
+      "parser": "babel-eslint"
+    }
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions"
+  ]
+}
