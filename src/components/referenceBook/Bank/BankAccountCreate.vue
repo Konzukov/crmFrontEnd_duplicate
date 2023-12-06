@@ -20,6 +20,7 @@
           <v-text-field dense outlined label="Расчетный счет" v-model="form.account" counter="20" :rules="rules"
                         append-outer-icon="mdi-file-document"
                         class="account_statement"
+                        :error-messages="errorMessage.account"
           >
             <template v-slot:append-outer>
               <v-menu
@@ -115,6 +116,9 @@ export default {
   name: "BankAccountCreate",
   data: () => ({
     fileIcon: mdilFilePlus,
+    errorMessage: {
+      account: '',
+    },
     bankAccountType: [
       {text: 'Не указан', value: 'EMP'},
       {text: 'Основной счет', value: 'MA'},
@@ -177,21 +181,33 @@ export default {
       this.$emit('editAccountStatement', {'statement': item, 'project': this.$route.params['pk']})
     },
     save() {
+      for (let prop in this.errorMessage) {
+        this.errorMessage[prop] = ''
+      }
       let formData = new FormData()
       Object.keys(this.form).forEach(key => {
         if (this.form[key]) {
-          console.log(this.form[key])
           formData.set(key, this.form[key])
         }
       })
       if (this.form.id) {
         this.$store.dispatch('editBankAccount', {formData, id: this.form.id}).then(() => {
           this.$emit('updateAccountList')
+        }).catch(err => {
+          let errors = err.response.data.errors
+          Object.keys(errors).forEach(key => {
+            this.errorMessage[key] = errors[key].toString()
+          })
         })
       } else {
         this.$store.dispatch('createBankAccount', formData).then((res) => {
           this.form.id = res.id
           this.$emit('updateAccountList')
+        }).catch(err => {
+          let errors = err.response.data.errors
+          Object.keys(errors).forEach(key => {
+            this.errorMessage[key] = errors[key].toString()
+          })
         })
       }
 

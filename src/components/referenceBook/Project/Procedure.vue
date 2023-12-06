@@ -372,6 +372,10 @@ export default {
     },
     updateAccountList() {
       this.bankAccountList = []
+      this.selectedAccount = null
+      setTimeout(()=>{
+        this.selectedAccount = {}
+      }, 100)
       this.$store.dispatch('getBankAccountList', this.$route.params['pk']).then(data => {
         console.log(data)
         this.bankAccountList.push(...data)
@@ -416,7 +420,11 @@ export default {
       })
     },
     addAccount() {
-      this.selectedAccount = {}
+      this.selectedAccount = null
+      setTimeout(()=>{
+        this.selectedAccount = {}
+      }, 100)
+
     },
     addAccountXlsx() {
       this.$emit('addXlsxAccount', this.$route.params['pk'])

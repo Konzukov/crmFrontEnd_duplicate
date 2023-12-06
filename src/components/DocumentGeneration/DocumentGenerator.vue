@@ -42,9 +42,9 @@
                 <v-checkbox :disabled="!project" dense label="Данные сформированы правильно"
                             v-model="verify"></v-checkbox>
               </v-col>
-              <v-col>
-                <v-btn color="success" :disabled="!verify" @click="saveDoc">Сохранить документ в базу</v-btn>
-              </v-col>
+<!--              <v-col>-->
+<!--                <v-btn color="success" :disabled="!verify" @click="saveDoc">Сохранить документ в базу</v-btn>-->
+<!--              </v-col>-->
               <v-col>
                 <v-btn color="success" :disabled="!verify || !!!sendEmailAddress" @click="sendEmail">Отправить на email
                 </v-btn>
