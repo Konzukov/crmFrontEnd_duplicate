@@ -9,7 +9,7 @@
                 <v-list-item-content @click="showDetail(item)">
                   <v-list-item-title>{{ item.case_number }}</v-list-item-title>
                   <v-list-item-subtitle>{{ item.court.name }} | {{ item.court.address }}</v-list-item-subtitle>
-                  <v-list-item-subtitle>{{ item.judge.full_name }}</v-list-item-subtitle>
+                  <v-list-item-subtitle>{{ item.judge | getJudge }}</v-list-item-subtitle>
                 </v-list-item-content>
               </v-list-item>
             </v-list-item-group>
@@ -80,6 +80,7 @@ export default {
   methods: {
     async updateData() {
       await this.$store.dispatch('getSeparatedDisputeList', this.project).then(res => {
+        console.log(res.data.data.data)
         this.separateDisputeList = res.data.data.data
       })
     },
@@ -102,31 +103,36 @@ export default {
       }
     },
     showDetail(item) {
-      this.separateDispute = new Object()
       this.separateDispute.id = item.id
       this.separateDispute.case_number = item.case_number
       this.separateDispute.court = item.court.pk
-      this.separateDispute.judge = item.judge.id
+      setTimeout(() => {
+        if (item.judge) {
+          this.separateDispute.judge = item.judge.id
+        } else {
+          this.separateDispute.judge = ''
+        }
+      }, 200)
     }
   },
   computed: {
     ...mapGetters({
       courtList: 'courtListData',
-
     }),
     judgesList() {
       const judgeListData = this.$store.getters.judgeListData
       if (this.separateDispute.court) {
-        return judgeListData.filter(obj => {
-          if (obj.court) {
-            return obj.court.id === this.separateDispute.court
-          }
-        })
+        return judgeListData.filter(obj => obj.court?.id === this.separateDispute.court)
       }
       return judgeListData
     }
   },
-  filters: {},
+  filters: {
+    getJudge(item) {
+      if (item) return item.full_name
+      return ''
+    }
+  },
   async mounted() {
     await this.$store.dispatch('getJudgeList')
     await this.$store.dispatch('getCourtList')
