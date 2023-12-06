@@ -164,7 +164,7 @@
       </v-card-actions>
     </v-card>
     <ContractorCreateModal @contractorAdded="setContractor"></ContractorCreateModal>
-    <DocInArbitr @saveDoc="saveDoc" ref="docInArbitr" :available-doc-list.sync="availableDoc"></DocInArbitr>
+    <DocInArbitr @saveDoc="saveDoc" ref="docInArbitr" @clearDocumentArbitr="clearDocumentArbitr" :available-doc-list.sync="availableDoc"></DocInArbitr>
   </v-container>
 </template>
 
@@ -396,10 +396,12 @@ export default {
           }
         })
         this.cookie = res.data.cookie
-        console.log(res.data)
       }).catch(err => {
         console.log(err)
       })
+    },
+    clearDocumentArbitr(){
+      this.availableDoc = []
     },
     clearJudge(item) {
       console.log(item)

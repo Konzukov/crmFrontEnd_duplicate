@@ -5,10 +5,11 @@
         <v-card id="report-card" width="100%" height="100%"
                 class="overflow-x-hidden">
           <template v-for="(item, i) in historyList">
-            <v-card-text :key="i" :class="[i % 2===0 ? 'bg-grey' : '', item.receiving_date? '': 'bg-warning']">
+            <v-card-text :key="i" :class="[i % 2===0 ? 'bg-grey' : '']">
               <v-row justify="start" class="mt-2 ml-2 mb-3 ">
                 <v-col md="2" class="date-type-info">
-                  <v-row>{{ item.receiving_date ? item.receiving_date : item['entry_date'] | filterDate }}</v-row>
+                  <!--                  .receiving_date ? item.receiving_date : item['entry_date']-->
+                  <v-row>{{ item | filterDate }}</v-row>
                   <v-row class="type">
                     <span v-if="item.type === 'event'">Событие</span>
                     <span v-else-if="item.type === 'task'">Задача</span>
@@ -438,7 +439,7 @@ export default {
   },
   async mounted() {
     await this.getData()
-    setTimeout(async ()=>{
+    setTimeout(async () => {
       await this.showAll()
     }, 1000)
   },
@@ -446,7 +447,18 @@ export default {
     sliceDescription(description) {
       return description.slice(0, 35) + '...'
     },
-    filterDate: date => moment(new Date(date)).format('DD.MM.YYYY'),
+    filterDate(item) {
+        if (item.type === 'document'){
+          return moment(new Date(item.receiving_date)).format('DD.MM.YYYY')
+        } else if(item.type === 'post'){
+          return moment(new Date(item.receiving_date)).format('DD.MM.YYYY')
+        } else if (item.type === 'event'){
+          return moment(new Date(item.start)).format('DD.MM.YYYY')
+        }else if (item.type === 'task'){
+          return moment(new Date(item.start)).format('DD.MM.YYYY')
+        }
+      // return moment(new Date(date)).format('DD.MM.YYYY'),
+    },
     getName(obj) {
       if (typeof obj === 'object') {
         if (obj && obj.hasOwnProperty('fullName')) {

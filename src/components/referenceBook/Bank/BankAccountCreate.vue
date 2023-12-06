@@ -63,7 +63,7 @@
       <v-row>
         <v-col cols="6">
           <v-text-field dense outlined label="Дата открытия" type="date" v-model="form.opening_date"
-                        append-outer-icon="mdi-file-document">
+                        append-outer-icon="mdi-file-document" :value.sync="form.opening_date">
 
           </v-text-field>
         </v-col>
