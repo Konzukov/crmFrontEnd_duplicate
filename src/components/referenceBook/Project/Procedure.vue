@@ -119,17 +119,16 @@
           <v-tooltip top>
             <template v-slot:activator="{ on, attrs }">
               <v-btn small v-bind="attrs"
-                     disabled
-                     v-on="on" icon color="success" @click.native.stop="addAccount">
+                     v-on="on" icon color="success" @click.native.stop="addCreditorClaim">
                 <v-icon>mdi-plus-thick</v-icon>
               </v-btn>
             </template>
             <span>Добавить требование</span>
           </v-tooltip>
         </v-expansion-panel-header>
-        <v-expansion-panel-content>
+        <v-expansion-panel-content class="procedure_content" :style="collapsed? 'height: 50vh': 'height: 41%'">
           <v-row justify="start" style="height: 80%">
-            <v-col :cols="selectedAccount? '8': '12' ">
+            <v-col :cols="selectedCreditorClaim? '8': '12' ">
               <v-card flat>
                 <v-card-text style="height: 80%">
                   <v-data-table
@@ -150,7 +149,8 @@
                       <v-icon
                           small
                           class="mr-2"
-                          @click="editItem(item)"
+                          color="primary"
+                          @click="editCreditorClaim($event, {item})"
                       >
                         mdi-pencil
                       </v-icon>
@@ -158,6 +158,11 @@
                   </v-data-table>
                 </v-card-text>
               </v-card>
+            </v-col>
+            <v-col :cols="selectedCreditorClaim? '4': '0'" v-if="selectedCreditorClaim">
+              <CreditorClaimCreate :creditor-claim-data="selectedCreditorClaim" :project="project"
+                                   @resetForm="closeTab"
+                                   @updateCreditorClaimList="updateCreditorClaims"></CreditorClaimCreate>
             </v-col>
           </v-row>
         </v-expansion-panel-content>
@@ -298,6 +303,7 @@ import {saveAs} from 'file-saver';
 import {mapGetters} from "vuex";
 import {compareFields} from "@/components/DocumentGeneration/functions";
 import BankCardCreate from "@/components/referenceBook/Bank/BankCardCreate.vue";
+import CreditorClaimCreate from "@/components/referenceBook/Project/Creditor/CreditorClaimCreate.vue";
 
 export default {
   props: ['project', 'collapsed', 'act'],
@@ -310,6 +316,7 @@ export default {
     bargainingList: [],
     selectedAccount: null,
     selectedBackCard: null,
+    selectedCreditorClaim: null,
     selectedBargaining: null,
     fileIcon: mdilFile,
     selectedStatement: null,
@@ -360,6 +367,16 @@ export default {
     }),
   },
   methods: {
+    addCreditorClaim() {
+      this.selectedCreditorClaim = {}
+    },
+    editCreditorClaim(event, {item}) {
+      console.log(item)
+      this.selectedCreditorClaim = null
+      setTimeout(() => {
+        this.selectedCreditorClaim = item
+      }, 150)
+    },
     accountRowClass(item) {
       if (item.closing_date && this.act) {
         let close_date = moment(item.closing_date, 'DD.MM.YYYY')
@@ -373,7 +390,7 @@ export default {
     updateAccountList() {
       this.bankAccountList = []
       this.selectedAccount = null
-      setTimeout(()=>{
+      setTimeout(() => {
         this.selectedAccount = {}
       }, 100)
       this.$store.dispatch('getBankAccountList', this.$route.params['pk']).then(data => {
@@ -389,6 +406,7 @@ export default {
       })
     },
     updateCreditorClaims() {
+      this.creditorClaims = []
       this.$http({
         method: "GET",
         url: customConst.REFERENCE_BOOK_API + 'creditors-claims',
@@ -421,7 +439,7 @@ export default {
     },
     addAccount() {
       this.selectedAccount = null
-      setTimeout(()=>{
+      setTimeout(() => {
         this.selectedAccount = {}
       }, 100)
 
@@ -480,6 +498,7 @@ export default {
       })
     },
     editItem(event, {item}) {
+      console.log(item)
       this.selectedAccount = null
       setTimeout(() => {
         this.selectedAccount = item
@@ -491,12 +510,14 @@ export default {
     closeTab() {
       this.selectedAccount = null
       this.selectedBackCard = null
+      this.selectedCreditorClaim = null
     }
   },
   filters: {
     getCreditor(item) {
+      console.log(item)
       if (!isEmpty(item.physical_creditor)) {
-        return item.physical_creditor?.name
+        return item.physical_creditor?.fullName
       } else if (!isEmpty(item.legal_creditor)) {
         return item.legal_creditor?.name
       }
@@ -504,10 +525,10 @@ export default {
     },
     getType(item) {
       return ThirdStageType.filter(obj => {
-        if (obj.value === item.third_stage_type) {
+        if ((obj.value === item.third_stage_type) && obj['text']) {
           return obj
         }
-      })[0].text
+      })[0]?.text
     }
   },
   created() {
@@ -522,6 +543,7 @@ export default {
     })
   },
   components: {
+    CreditorClaimCreate,
     bankAccountCreate,
     loadAccountXlsx,
     SvgIcon,
@@ -537,6 +559,7 @@ export default {
 .v-expansion-panel-header {
   height: 45px;
 }
+
 .procedure_content {
   overflow-y: scroll;
 }

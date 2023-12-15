@@ -1,0 +1,1791 @@
+  {
+"document": {
+    "apologize": false,
+    "archived": false,
+    "box_move_at": "2023-12-12T00:09:11.307+03:00",
+    "box_move_editor_id": 140737488355396,
+    "boxes": [
+      {
+        "type": "paragraph",
+        "enabled": false,
+        "position": 0,
+        "id": 140737496736574,
+        "created_at": "2023-12-11T22:02:18.298+03:00",
+        "post_author_id": "",
+        "post_author": "",
+        "kind": "plain",
+        "body": "Российский мобильный оператор Tele2 повысит тарифы с начала нового года. О получении таких сообщений «Ведомостям» рассказали три абонента оператора.",
+        "text_align": ""
+      },
+      {
+        "type": "paragraph",
+        "enabled": false,
+        "position": 1000,
+        "id": 140737496736575,
+        "created_at": "2023-12-11T22:02:18.332+03:00",
+        "post_author_id": "",
+        "post_author": "",
+        "kind": "plain",
+        "body": "Рост цен на услуги превысит 10%. «Мы хотим честно предупредить: со 2 января 2024 г. ежемесячная плата за услуги связи с учетом индивидуальной скидки увеличится на 65 руб. в месяц. Изменения применятся в день очередного списания средств», – говорится в сообщении оператора, которое получил один из абонентов в конце прошлой недели (4–10 декабря). По его словам, по тарифу «Везде онлайн 04_2020» с нового года цена увеличится с 560 до 625 руб., т. е. чуть больше чем на 10%. По указанной цене доступно 80 Гб интернета, 1000 минут и 100 sms. Далее абоненту предлагается выбрать более подходящие условия, сменив тариф в личном кабинете. Пользователь оформлял тариф в Москве.",
+        "text_align": ""
+      },
+      {
+        "type": "paywall_line",
+        "enabled": false,
+        "position": 2000,
+        "id": 140737496736576,
+        "created_at": "2023-12-11T22:02:18.363+03:00",
+        "post_author_id": "",
+        "post_author": "",
+        "fixed_at": 0
+      },
+      {
+        "type": "paragraph",
+        "enabled": false,
+        "position": 3000,
+        "id": 140737496736577,
+        "created_at": "2023-12-11T22:02:18.396+03:00",
+        "post_author_id": "",
+        "post_author": "",
+        "kind": "plain",
+        "body": "Также в соцсети «В контакте» распространяются скриншоты с похожими сообщениями о повышении тарифов Tele2 с января 2024 г. Один из абонентов получил sms об увеличении цены на 70 руб., с 300 до 370 руб., второй уточнил, что в полученном им сообщении говорилось о повышении стоимости услуг, но конкретная сумма не называлась. Сейчас, по его словам, он платит по 560 руб. в месяц.",
+        "text_align": ""
+      },
+      {
+        "type": "inset_link",
+        "enabled": false,
+        "position": 3500,
+        "id": 140737496736851,
+        "created_at": "2023-12-12T00:08:56.262+03:00",
+        "post_author_id": "",
+        "post_author": "",
+        "align": "left",
+        "alternative_title": "",
+        "alternative_subtitle": "",
+        "bound_document": {
+          "id": 140737489236495,
+          "title": "Tele2 сможет использовать бренд как минимум до конца 2024 года",
+          "published_at": "2023-11-08T00:41:31.033+03:00",
+          "url": "vedomosti.ru/technology/articles/2023/11/08/1004623-tele2-smozhet-ispolzovat-brend-do-kontsa-2024-g",
+          "categories": {
+            "project": {
+              "title": "Ведомости",
+              "slug": "vedomosti",
+              "position": 10,
+              "path": "project.vedomosti",
+              "subscribable": false
+            },
+            "kinds": {
+              "title": "Материалы",
+              "slug": "materials",
+              "position": 0,
+              "path": "kinds.materials",
+              "subscribable": false
+            },
+            "domains": {
+              "title": "vedomosti.ru",
+              "slug": "vedomosti.ru",
+              "position": 0,
+              "path": "domains.vedomosti_ru",
+              "subscribable": false
+            },
+            "parts": {
+              "title": "Статья",
+              "slug": "articles",
+              "position": 10,
+              "path": "parts.articles",
+              "subscribable": false
+            },
+            "newspaper": {
+              "title": "Первая полоса",
+              "slug": "front",
+              "position": 10,
+              "path": "newspaper.front",
+              "subscribable": false
+            },
+            "rubrics": [
+              {
+                "title": "Технологии",
+                "slug": "technology",
+                "position": 50,
+                "path": "rubrics.technology",
+                "subscribable": false,
+                "subrubrics": {
+                  "title": "Телекоммуникации",
+                  "slug": "telecom",
+                  "position": 0,
+                  "path": "rubrics.technology.subrubrics.telecom",
+                  "subscribable": true
+                }
+              }
+            ]
+          },
+          "archived": false,
+          "favorite": false,
+          "links": {
+            "companies": [
+              {
+                "position": 0,
+                "bound_document": {
+                  "id": 140737488817096,
+                  "url": "vedomosti.ru/companies/bank-vtb-oao",
+                  "ogrn": "1027739609391",
+                  "site": "http://vtb.ru/",
+                  "title": "ВТБ",
+                  "ticker": "VTBR",
+                  "archived": false,
+                  "disabled": false,
+                  "favorite": false,
+                  "subtitle": "Финансовая группа",
+                  "synonyms": "ВТБ, Банк ВТБ-ао",
+                  "categories": {
+                    "kinds": {
+                      "path": "kinds.companies",
+                      "slug": "companies",
+                      "title": "Компании",
+                      "position": 60,
+                      "subscribable": false
+                    },
+                    "domains": {
+                      "path": "domains.vedomosti_ru",
+                      "slug": "vedomosti.ru",
+                      "title": "vedomosti.ru",
+                      "position": 0,
+                      "subscribable": false
+                    },
+                    "project": {
+                      "path": "project.vedomosti",
+                      "slug": "vedomosti",
+                      "title": "Ведомости",
+                      "position": 10,
+                      "subscribable": false
+                    }
+                  },
+                  "commercial": false,
+                  "box_move_at": null,
+                  "published_at": "2008-12-10T16:10:21.000+03:00",
+                  "messages_feed": "",
+                  "juridical_title": "Банк ВТБ (ПАО)",
+                  "box_move_editor_id": 0,
+                  "press_releases_feed": "",
+                  "waterfalling_press_releases": false,
+                  "waterfalling_press_releases_ecology": false,
+                  "waterfalling_press_releases_real_estate": false
+                }
+              },
+              {
+                "position": 0,
+                "bound_document": {
+                  "id": 140737488813239,
+                  "url": "vedomosti.ru/companies/ooo-t2-rtk-holding-tele2-rossiya",
+                  "ogrn": "1137746610430",
+                  "site": "http://www.ru.tele2.ru/",
+                  "title": "Tele2 Россия",
+                  "ticker": "",
+                  "archived": false,
+                  "disabled": false,
+                  "favorite": false,
+                  "subtitle": "Оператор сотовой связи",
+                  "synonyms": "Tele2 Россия, Т2 РТК холдинг",
+                  "categories": {
+                    "kinds": {
+                      "path": "kinds.companies",
+                      "slug": "companies",
+                      "title": "Компании",
+                      "position": 60,
+                      "subscribable": false
+                    },
+                    "domains": {
+                      "path": "domains.vedomosti_ru",
+                      "slug": "vedomosti.ru",
+                      "title": "vedomosti.ru",
+                      "position": 0,
+                      "subscribable": false
+                    },
+                    "project": {
+                      "path": "project.vedomosti",
+                      "slug": "vedomosti",
+                      "title": "Ведомости",
+                      "position": 10,
+                      "subscribable": false
+                    }
+                  },
+                  "commercial": false,
+                  "box_move_at": null,
+                  "published_at": "2015-03-16T11:37:02.523+03:00",
+                  "messages_feed": "",
+                  "juridical_title": "ООО \"Т2 РТК холдинг\"",
+                  "box_move_editor_id": 0,
+                  "press_releases_feed": ""
+                }
+              }
+            ],
+            "newsrelease": [
+              {
+                "position": 0,
+                "bound_document": {
+                  "id": 140737489236491,
+                  "url": "vedomosti.ru/newspaper/2023/11/08",
+                  "title": "Газетный выпуск №5850",
+                  "archived": false,
+                  "favorite": false,
+                  "newsstand": {
+                    "source": {
+                      "url": "/image/2023/8n/1fchmf/source-1ujo.jpg",
+                      "size": 252900,
+                      "width": 705,
+                      "height": 1024,
+                      "attachment_id": 140737489093027
+                    },
+                    "_preview": {
+                      "url": "/image/2023/8n/1fchmf/_preview-1ujo.jpg",
+                      "size": 8426,
+                      "width": 110,
+                      "height": 160,
+                      "attachment_id": 140737489093027
+                    },
+                    "original": {
+                      "url": "/image/2023/8n/1fchmf/original-1ujo.jpg",
+                      "size": 1114385,
+                      "width": 1707,
+                      "height": 2480,
+                      "attachment_id": 140737489093027
+                    },
+                    "ipad_shelf_1x": {
+                      "url": "/image/2023/8n/1fchmf/ipad_shelf_1x-1ujp.jpg",
+                      "size": 5454,
+                      "width": 87,
+                      "height": 126,
+                      "attachment_id": 140737489093027
+                    },
+                    "ipad_shelf_2x": {
+                      "url": "/image/2023/8n/1fchmf/ipad_shelf_2x-1ujp.jpg",
+                      "size": 19523,
+                      "width": 173,
+                      "height": 252,
+                      "attachment_id": 140737489093027
+                    },
+                    "iphone_shelf_1x": {
+                      "url": "/image/2023/8n/1fchmf/iphone_shelf_1x-1ujp.jpg",
+                      "size": 3173,
+                      "width": 62,
+                      "height": 90,
+                      "attachment_id": 140737489093027
+                    },
+                    "iphone_shelf_2x": {
+                      "url": "/image/2023/8n/1fchmf/iphone_shelf_2x-1ujo.jpg",
+                      "size": 10615,
+                      "width": 124,
+                      "height": 180,
+                      "attachment_id": 140737489093027
+                    },
+                    "ipad_multitasking_1x": {
+                      "url": "/image/2023/8n/1fchmf/ipad_multitasking_1x-1ujn.jpg",
+                      "size": 2205,
+                      "width": 50,
+                      "height": 72,
+                      "attachment_id": 140737489093027
+                    },
+                    "ipad_multitasking_2x": {
+                      "url": "/image/2023/8n/1fchmf/ipad_multitasking_2x-1ujo.jpg",
+                      "size": 7079,
+                      "width": 99,
+                      "height": 144,
+                      "attachment_id": 140737489093027
+                    },
+                    "iphone_multitasking_1x": {
+                      "url": "/image/2023/8n/1fchmf/iphone_multitasking_1x-1ujn.jpg",
+                      "size": 1579,
+                      "width": 39,
+                      "height": 57,
+                      "attachment_id": 140737489093027
+                    },
+                    "iphone_multitasking_2x": {
+                      "url": "/image/2023/8n/1fchmf/iphone_multitasking_2x-1ujo.jpg",
+                      "size": 4617,
+                      "width": 78,
+                      "height": 114,
+                      "attachment_id": 140737489093027
+                    }
+                  },
+                  "categories": {
+                    "kinds": {
+                      "path": "kinds.newsrelease",
+                      "slug": "newsrelease",
+                      "title": "Газетный выпуск",
+                      "position": 50,
+                      "subscribable": false
+                    },
+                    "domains": {
+                      "path": "domains.vedomosti_ru",
+                      "slug": "vedomosti.ru",
+                      "title": "vedomosti.ru",
+                      "position": 0,
+                      "subscribable": false
+                    },
+                    "project": {
+                      "path": "project.vedomosti",
+                      "slug": "vedomosti",
+                      "title": "Ведомости",
+                      "position": 10,
+                      "subscribable": false
+                    }
+                  },
+                  "published_at": "2023-11-08T01:22:42.291+03:00",
+                  "alternative_title": "ESG с русским акцентом, Tele2 на второй год, локализация по винтикам"
+                }
+              }
+            ],
+            "authors": [
+              {
+                "position": 0,
+                "bound_document": {
+                  "id": 140737489182594,
+                  "url": "vedomosti.ru/authors/950722-anna-ustinova",
+                  "title": "Анна Устинова",
+                  "archived": false,
+                  "favorite": false,
+                  "last_name": "Устинова",
+                  "categories": {
+                    "kinds": {
+                      "path": "kinds.authors",
+                      "slug": "authors",
+                      "title": "Авторы",
+                      "position": 10,
+                      "subscribable": false
+                    },
+                    "domains": {
+                      "path": "domains.vedomosti_ru",
+                      "slug": "vedomosti.ru",
+                      "title": "vedomosti.ru",
+                      "position": 0,
+                      "subscribable": false
+                    },
+                    "project": {
+                      "path": "project.vedomosti",
+                      "slug": "vedomosti",
+                      "title": "Ведомости",
+                      "position": 10,
+                      "subscribable": false
+                    }
+                  },
+                  "first_name": "Анна",
+                  "appointment": "",
+                  "published_at": "2022-11-17T00:07:30.277+03:00",
+                  "subscribable": false
+                }
+              }
+            ]
+          },
+          "last_updated_at": null,
+          "sharing_title": "",
+          "sharing_subtitle": "",
+          "no_ads": false,
+          "subtitle": "Разрешение на это выдал шведский правообладатель «Теле2 Свериэ АБ»",
+          "yandex_subtitle": "",
+          "important": false,
+          "newspaper_subtitle": "Российский мобильный оператор Tele2 сможет использовать этот бренд как минимум до конца 2024 г. Разрешение на это выдал шведский правообладатель торговой марки «Теле2 Свериэ АБ»",
+          "newspaper_title": "Tele2 на второй год",
+          "exclusive": true,
+          "source_title": "Ведомости",
+          "source_url": "http://www.vedomosti.ru/",
+          "proofread": true,
+          "box_move_editor_id": 140737488355396,
+          "box_move_at": "2023-11-08T00:41:22.697+03:00",
+          "in_work": false,
+          "apologize": false,
+          "correction_comment": "",
+          "image_alt": "",
+          "image_author": "Евгений Разумный / Ведомости",
+          "image_source": "",
+          "pay_required": true,
+          "pay_required_expire": "2023-11-21T23:59:59.999Z",
+          "image": {
+            "thumbnail_low": {
+              "attachment_id": 140737489093025,
+              "url": "/image/2023/8n/1f6kp7/thumbnail_low-1ubz.jpg",
+              "width": 180,
+              "height": 101,
+              "size": 5789
+            },
+            "thumbnail_high": {
+              "attachment_id": 140737489093025,
+              "url": "/image/2023/8n/1f6kp7/thumbnail_high-1uc0.jpg",
+              "width": 270,
+              "height": 152,
+              "size": 10770
+            },
+            "thumbnail": {
+              "attachment_id": 140737489093025,
+              "url": "/image/2023/8n/1f6kp7/thumbnail-1ubz.jpg",
+              "width": 75,
+              "height": 42,
+              "size": 1813
+            },
+            "small": {
+              "attachment_id": 140737489093025,
+              "url": "/image/2023/8n/1f6kp7/small-1uc0.jpg",
+              "width": 168,
+              "height": 95,
+              "size": 5137
+            },
+            "original": {
+              "attachment_id": 140737489093025,
+              "url": "/image/2023/8n/1f6kp7/original-1uc0.jpg",
+              "width": 1200,
+              "height": 675,
+              "size": 137651
+            },
+            "normal": {
+              "attachment_id": 140737489093025,
+              "url": "/image/2023/8n/1f6kp7/normal-1uc0.jpg",
+              "width": 570,
+              "height": 321,
+              "size": 37017
+            },
+            "mobile_low": {
+              "attachment_id": 140737489093025,
+              "url": "/image/2023/8n/1f6kp7/mobile_low-1ubz.jpg",
+              "width": 640,
+              "height": 360,
+              "size": 44384
+            },
+            "mobile_high": {
+              "attachment_id": 140737489093025,
+              "url": "/image/2023/8n/1f6kp7/mobile_high-1uc0.jpg",
+              "width": 960,
+              "height": 540,
+              "size": 93914
+            },
+            "level2": {
+              "attachment_id": 140737489093025,
+              "url": "/image/2023/8n/1f6kp7/level2-1ubz.jpg",
+              "width": 270,
+              "height": 152,
+              "size": 10770
+            },
+            "level1": {
+              "attachment_id": 140737489093025,
+              "url": "/image/2023/8n/1f6kp7/level1-1uc0.jpg",
+              "width": 369,
+              "height": 208,
+              "size": 17761
+            },
+            "fullscreen": {
+              "attachment_id": 140737489093025,
+              "url": "/image/2023/8n/1f6kp7/fullscreen-1ubz.jpg",
+              "width": 1200,
+              "height": 675,
+              "size": 137651
+            },
+            "default": {
+              "attachment_id": 140737489093025,
+              "url": "/image/2023/8n/1f6kp7/default-1ubz.jpg",
+              "width": 570,
+              "height": 321,
+              "size": 37017
+            },
+            "_preview": {
+              "attachment_id": 140737489093025,
+              "url": "/image/2023/8n/1f6kp7/_preview-1uc0.jpg",
+              "width": 121,
+              "height": 68,
+              "size": 3338
+            }
+          }
+        }
+      },
+      {
+        "type": "paragraph",
+        "enabled": false,
+        "position": 4000,
+        "id": 140737496736578,
+        "created_at": "2023-12-11T22:02:18.428+03:00",
+        "post_author_id": "",
+        "post_author": "",
+        "kind": "plain",
+        "body": "«Корректировки затронут ряд архивных тарифов, при этом мы пересматриваем цены не чаще одного раза в год, приводя стоимость в соответствие со справедливым рыночным уровнем. Размер пересмотра зависит от конкретного плана, но даже с учетом последних изменений наши предложения остаются выгодными: каждый клиент может выбрать тариф в соответствии со своими ценовыми ожиданиями и профилем потребления», – заявил представитель Tele2.",
+        "text_align": ""
+      },
+      {
+        "type": "paragraph",
+        "enabled": false,
+        "position": 5000,
+        "id": 140737496736579,
+        "created_at": "2023-12-11T22:02:18.458+03:00",
+        "post_author_id": "",
+        "post_author": "",
+        "kind": "plain",
+        "body": "Все открытые для подключения и переходов тарифы Tele2 остаются неизменными, добавил он. «На них реализована защита от повышения цен: текущая стоимость этих тарифов заморожена до конца 2025 г.», – уточнил представитель оператора. Он заверил, что компания предоставила ФАС экономическое обоснование корректировок.",
+        "text_align": ""
+      },
+      {
+        "type": "paragraph",
+        "enabled": false,
+        "position": 6000,
+        "id": 140737496736580,
+        "created_at": "2023-12-11T22:02:18.491+03:00",
+        "post_author_id": "",
+        "post_author": "",
+        "kind": "plain",
+        "body": "В ФАС начали поступать обращения граждан относительно обоснованности повышения тарифов сотовой связи Tele2, сообщил представитель службы. Оператор уведомил ФАС о планируемом повышении тарифов, ведомство анализирует полученную информацию. При выявлении нарушений антимонопольного законодательства ФАС примет меры реагирования, добавил представитель ведомства.",
+        "text_align": ""
+      },
+      {
+        "type": "paragraph",
+        "enabled": false,
+        "position": 7000,
+        "id": 140737496736581,
+        "created_at": "2023-12-11T22:02:18.522+03:00",
+        "post_author_id": "",
+        "post_author": "",
+        "kind": "plain",
+        "body": "Последний раз Tele2 рассылала абонентам сообщения о повышении цен на связь в декабре 2022 г., писали «Ведомости». Тогда в одном из сообщений оператора говорилось о том, что цена по тарифу увеличится на 60 руб. до 500 руб. с января 2023 г. Через несколько дней после этого ФАС начала расследование обоснованности повышения цен на услуги. В сентябре 2023 г. служба признала обоснованным рост тарифов Тele2, подчеркнув, что компания объяснила повышение расходами на сеть.",
+        "text_align": ""
+      },
+      {
+        "type": "inset_image",
+        "enabled": false,
+        "position": 7500,
+        "id": 140737496736600,
+        "created_at": "2023-12-11T22:08:23.057+03:00",
+        "post_author_id": "",
+        "post_author": "",
+        "description": "",
+        "author": "",
+        "credits": "",
+        "image": {
+          "tiny": {
+            "attachment_id": 140737489098895,
+            "url": "/image/2023/9l/1bg8x6/tiny-1phx.jpg",
+            "width": 369,
+            "height": 235,
+            "size": 17527
+          },
+          "thumbnail_low": {
+            "attachment_id": 140737489098895,
+            "url": "/image/2023/9l/1bg8x6/thumbnail_low-1phx.jpg",
+            "width": 180,
+            "height": 115,
+            "size": 6555
+          },
+          "thumbnail_high": {
+            "attachment_id": 140737489098895,
+            "url": "/image/2023/9l/1bg8x6/thumbnail_high-1phx.jpg",
+            "width": 270,
+            "height": 172,
+            "size": 11772
+          },
+          "thumbnail": {
+            "attachment_id": 140737489098895,
+            "url": "/image/2023/9l/1bg8x6/thumbnail-1phx.jpg",
+            "width": 75,
+            "height": 48,
+            "size": 1756
+          },
+          "original": {
+            "attachment_id": 140737489098895,
+            "url": "/image/2023/9l/1bg8x6/original-1phx.jpg",
+            "width": 976,
+            "height": 622,
+            "size": 68049
+          },
+          "mobile_low": {
+            "attachment_id": 140737489098895,
+            "url": "/image/2023/9l/1bg8x6/mobile_low-1phw.jpg",
+            "width": 640,
+            "height": 408,
+            "size": 39717
+          },
+          "mobile_high": {
+            "attachment_id": 140737489098895,
+            "url": "/image/2023/9l/1bg8x6/mobile_high-1phx.jpg",
+            "width": 960,
+            "height": 612,
+            "size": 68825
+          },
+          "fullscreen": {
+            "attachment_id": 140737489098895,
+            "url": "/image/2023/9l/1bg8x6/fullscreen-1phx.jpg",
+            "width": 976,
+            "height": 622,
+            "size": 68049
+          },
+          "default": {
+            "attachment_id": 140737489098895,
+            "url": "/image/2023/9l/1bg8x6/default-1phw.jpg",
+            "width": 570,
+            "height": 363,
+            "size": 33332
+          },
+          "_preview": {
+            "attachment_id": 140737489098895,
+            "url": "/image/2023/9l/1bg8x6/_preview-1phx.jpg",
+            "width": 110,
+            "height": 70,
+            "size": 2854
+          }
+        }
+      },
+      {
+        "type": "paragraph",
+        "enabled": false,
+        "position": 8000,
+        "id": 140737496736582,
+        "created_at": "2023-12-11T22:02:18.557+03:00",
+        "post_author_id": "",
+        "post_author": "",
+        "kind": "plain",
+        "body": "Сейчас пересмотр цен представитель Tele2 назвал «нормальной рыночной практикой», связанной с экономическими и регуляторными факторами, в том числе с возросшими расходами на содержание сетей, ценами на электроэнергию, оборудование и логистику, арендными ставками. Также на повышение тарифов повлияла внешняя ситуация 2022–2023 гг., которая привела к перестройке цепочек поставок оборудования и, как следствие, к дальнейшему удорожанию закупок. Ситуация усложнилась на фоне роста трафика в сети Tele2, заключил представитель оператора: по итогам III квартала 2023 г. он увеличился на 19% год к году.",
+        "text_align": ""
+      },
+      {
+        "type": "paragraph",
+        "enabled": false,
+        "position": 9000,
+        "id": 140737496736583,
+        "created_at": "2023-12-11T22:02:18.592+03:00",
+        "post_author_id": "",
+        "post_author": "",
+        "kind": "plain",
+        "body": "Tele2 повышала цены в конце 2022 г., а значит, это повышение первое за год, обращает внимание генеральный директор Telecom Daily Денис Кусков. По прогнозу агентства, который составляется на основе опросов представителей «большой четверки», ежегодное повышение цен в пределах 10–12% является допустимым и примерно соответствует уровню инфляции. «Tele2 имеет сбалансированную ценовую политику, и текущий уровень оплаты по тарифам находится на схожем с другими операторами уровне. Это позволяет говорить о том, что это не способ заработка, а необходимость текущих реалий, вызванных сложностями с обслуживанием текущей инфраструктуры и приобретением нового телекомоборудования», – говорит он.",
+        "text_align": ""
+      },
+      {
+        "type": "inset_link",
+        "enabled": false,
+        "position": 9500,
+        "id": 140737496736850,
+        "created_at": "2023-12-12T00:08:07.014+03:00",
+        "post_author_id": "",
+        "post_author": "",
+        "align": "left",
+        "alternative_title": "",
+        "alternative_subtitle": "",
+        "bound_document": {
+          "id": 140737489241402,
+          "title": "Tele2 просит не принимать апелляцию поставщика Ericsson",
+          "published_at": "2023-12-06T00:44:22.766+03:00",
+          "url": "vedomosti.ru/newspaper/articles/2023/12/06/1009530-tele2-prosit-ne-prinimat-apellyatsiyu-postavschika-ericsson",
+          "categories": {
+            "project": {
+              "title": "Ведомости",
+              "slug": "vedomosti",
+              "position": 10,
+              "path": "project.vedomosti",
+              "subscribable": false
+            },
+            "kinds": {
+              "title": "Материалы",
+              "slug": "materials",
+              "position": 0,
+              "path": "kinds.materials",
+              "subscribable": false
+            },
+            "domains": {
+              "title": "vedomosti.ru",
+              "slug": "vedomosti.ru",
+              "position": 0,
+              "path": "domains.vedomosti_ru",
+              "subscribable": false
+            },
+            "parts": {
+              "title": "Статья",
+              "slug": "articles",
+              "position": 10,
+              "path": "parts.articles",
+              "subscribable": false
+            },
+            "newspaper": {
+              "title": "Компании и рынки",
+              "slug": "companies_markets",
+              "position": 70,
+              "path": "newspaper.companies_markets",
+              "subscribable": false
+            },
+            "rubrics": [
+              {
+                "title": "Технологии",
+                "slug": "technology",
+                "position": 50,
+                "path": "rubrics.technology",
+                "subscribable": false,
+                "subrubrics": {
+                  "title": "Телекоммуникации",
+                  "slug": "telecom",
+                  "position": 0,
+                  "path": "rubrics.technology.subrubrics.telecom",
+                  "subscribable": true
+                }
+              }
+            ]
+          },
+          "archived": false,
+          "favorite": false,
+          "links": {
+            "newsrelease": [
+              {
+                "position": 0,
+                "bound_document": {
+                  "id": 140737489241395,
+                  "url": "vedomosti.ru/newspaper/2023/12/06",
+                  "title": "Газетный выпуск №5870",
+                  "archived": false,
+                  "favorite": false,
+                  "newsstand": {
+                    "source": {
+                      "url": "/image/2023/9f/1d1pom/source-1rke.png",
+                      "size": 764058,
+                      "width": 704,
+                      "height": 1024,
+                      "attachment_id": 140737489097766
+                    },
+                    "_preview": {
+                      "url": "/image/2023/9f/1d1pom/_preview-1rke.png",
+                      "size": 28703,
+                      "width": 110,
+                      "height": 160,
+                      "attachment_id": 140737489097766
+                    },
+                    "original": {
+                      "url": "/image/2023/9f/1d1pom/original-1rkd.png",
+                      "size": 416325,
+                      "width": 723,
+                      "height": 1051,
+                      "attachment_id": 140737489097766
+                    },
+                    "ipad_shelf_1x": {
+                      "url": "/image/2023/9f/1d1pom/ipad_shelf_1x-1rke.png",
+                      "size": 19010,
+                      "width": 87,
+                      "height": 126,
+                      "attachment_id": 140737489097766
+                    },
+                    "ipad_shelf_2x": {
+                      "url": "/image/2023/9f/1d1pom/ipad_shelf_2x-1rkd.png",
+                      "size": 65956,
+                      "width": 173,
+                      "height": 252,
+                      "attachment_id": 140737489097766
+                    },
+                    "iphone_shelf_1x": {
+                      "url": "/image/2023/9f/1d1pom/iphone_shelf_1x-1rkd.png",
+                      "size": 10501,
+                      "width": 62,
+                      "height": 90,
+                      "attachment_id": 140737489097766
+                    },
+                    "iphone_shelf_2x": {
+                      "url": "/image/2023/9f/1d1pom/iphone_shelf_2x-1rkd.png",
+                      "size": 35966,
+                      "width": 124,
+                      "height": 180,
+                      "attachment_id": 140737489097766
+                    },
+                    "ipad_multitasking_1x": {
+                      "url": "/image/2023/9f/1d1pom/ipad_multitasking_1x-1rke.png",
+                      "size": 7163,
+                      "width": 50,
+                      "height": 72,
+                      "attachment_id": 140737489097766
+                    },
+                    "ipad_multitasking_2x": {
+                      "url": "/image/2023/9f/1d1pom/ipad_multitasking_2x-1rke.png",
+                      "size": 23851,
+                      "width": 99,
+                      "height": 144,
+                      "attachment_id": 140737489097766
+                    },
+                    "iphone_multitasking_1x": {
+                      "url": "/image/2023/9f/1d1pom/iphone_multitasking_1x-1rkd.png",
+                      "size": 4742,
+                      "width": 39,
+                      "height": 57,
+                      "attachment_id": 140737489097766
+                    },
+                    "iphone_multitasking_2x": {
+                      "url": "/image/2023/9f/1d1pom/iphone_multitasking_2x-1rke.png",
+                      "size": 15729,
+                      "width": 78,
+                      "height": 114,
+                      "attachment_id": 140737489097766
+                    }
+                  },
+                  "categories": {
+                    "kinds": {
+                      "path": "kinds.newsrelease",
+                      "slug": "newsrelease",
+                      "title": "Газетный выпуск",
+                      "position": 50,
+                      "subscribable": false
+                    },
+                    "domains": {
+                      "path": "domains.vedomosti_ru",
+                      "slug": "vedomosti.ru",
+                      "title": "vedomosti.ru",
+                      "position": 0,
+                      "subscribable": false
+                    },
+                    "project": {
+                      "path": "project.vedomosti",
+                      "slug": "vedomosti",
+                      "title": "Ведомости",
+                      "position": 10,
+                      "subscribable": false
+                    }
+                  },
+                  "published_at": "2023-12-06T01:27:59.687+03:00",
+                  "alternative_title": "«Балтику» предложили национализировать, зачем президент Ирана летит в Россию, аудиторы в «Почте России»"
+                }
+              }
+            ],
+            "authors": [
+              {
+                "position": 0,
+                "bound_document": {
+                  "id": 140737489182594,
+                  "url": "vedomosti.ru/authors/950722-anna-ustinova",
+                  "title": "Анна Устинова",
+                  "archived": false,
+                  "favorite": false,
+                  "last_name": "Устинова",
+                  "categories": {
+                    "kinds": {
+                      "path": "kinds.authors",
+                      "slug": "authors",
+                      "title": "Авторы",
+                      "position": 10,
+                      "subscribable": false
+                    },
+                    "domains": {
+                      "path": "domains.vedomosti_ru",
+                      "slug": "vedomosti.ru",
+                      "title": "vedomosti.ru",
+                      "position": 0,
+                      "subscribable": false
+                    },
+                    "project": {
+                      "path": "project.vedomosti",
+                      "slug": "vedomosti",
+                      "title": "Ведомости",
+                      "position": 10,
+                      "subscribable": false
+                    }
+                  },
+                  "first_name": "Анна",
+                  "appointment": "",
+                  "published_at": "2022-11-17T00:07:30.277+03:00",
+                  "subscribable": false
+                }
+              }
+            ]
+          },
+          "last_updated_at": null,
+          "sharing_title": "",
+          "sharing_subtitle": "",
+          "no_ads": false,
+          "subtitle": "Юристы сочли высокими шансы сотовой компании отсудить 4 млн евро",
+          "yandex_subtitle": "",
+          "important": false,
+          "newspaper_subtitle": "Tele2 просит суд не принимать апелляцию поставщика оборудования Ericsson на 4 млн евро. Юристы сочли шансы сотовой компании отсудить неустойку довольно значительными",
+          "newspaper_title": "Tele2 апеллирует на апелляцию",
+          "exclusive": true,
+          "source_title": "Ведомости",
+          "source_url": "http://www.vedomosti.ru/",
+          "proofread": true,
+          "box_move_editor_id": 140737488355396,
+          "box_move_at": "2023-12-06T00:44:15.326+03:00",
+          "in_work": false,
+          "apologize": false,
+          "correction_comment": "",
+          "image_alt": "",
+          "image_author": "Максим Стулов / Ведомости",
+          "image_source": "",
+          "pay_required": true,
+          "pay_required_expire": "2023-12-19T23:59:59.999Z",
+          "image": {
+            "thumbnail_low": {
+              "attachment_id": 140737489097785,
+              "url": "/image/2023/9g/1jtuw/thumbnail_low-20d.jpg",
+              "width": 180,
+              "height": 101,
+              "size": 6004
+            },
+            "thumbnail_high": {
+              "attachment_id": 140737489097785,
+              "url": "/image/2023/9g/1jtuw/thumbnail_high-20d.jpg",
+              "width": 270,
+              "height": 152,
+              "size": 10423
+            },
+            "thumbnail": {
+              "attachment_id": 140737489097785,
+              "url": "/image/2023/9g/1jtuw/thumbnail-20d.jpg",
+              "width": 75,
+              "height": 42,
+              "size": 1881
+            },
+            "small": {
+              "attachment_id": 140737489097785,
+              "url": "/image/2023/9g/1jtuw/small-20c.jpg",
+              "width": 168,
+              "height": 95,
+              "size": 5308
+            },
+            "original": {
+              "attachment_id": 140737489097785,
+              "url": "/image/2023/9g/1jtuw/original-20d.jpg",
+              "width": 1200,
+              "height": 675,
+              "size": 94668
+            },
+            "normal": {
+              "attachment_id": 140737489097785,
+              "url": "/image/2023/9g/1jtuw/normal-20d.jpg",
+              "width": 570,
+              "height": 321,
+              "size": 32236
+            },
+            "mobile_low": {
+              "attachment_id": 140737489097785,
+              "url": "/image/2023/9g/1jtuw/mobile_low-20c.jpg",
+              "width": 640,
+              "height": 360,
+              "size": 37885
+            },
+            "mobile_high": {
+              "attachment_id": 140737489097785,
+              "url": "/image/2023/9g/1jtuw/mobile_high-20c.jpg",
+              "width": 960,
+              "height": 540,
+              "size": 73190
+            },
+            "level2": {
+              "attachment_id": 140737489097785,
+              "url": "/image/2023/9g/1jtuw/level2-20c.jpg",
+              "width": 270,
+              "height": 152,
+              "size": 10423
+            },
+            "level1": {
+              "attachment_id": 140737489097785,
+              "url": "/image/2023/9g/1jtuw/level1-20d.jpg",
+              "width": 369,
+              "height": 208,
+              "size": 16709
+            },
+            "fullscreen": {
+              "attachment_id": 140737489097785,
+              "url": "/image/2023/9g/1jtuw/fullscreen-20d.jpg",
+              "width": 1200,
+              "height": 675,
+              "size": 94668
+            },
+            "default": {
+              "attachment_id": 140737489097785,
+              "url": "/image/2023/9g/1jtuw/default-20d.jpg",
+              "width": 570,
+              "height": 321,
+              "size": 32236
+            },
+            "_preview": {
+              "attachment_id": 140737489097785,
+              "url": "/image/2023/9g/1jtuw/_preview-20d.jpg",
+              "width": 121,
+              "height": 68,
+              "size": 3506
+            }
+          }
+        }
+      },
+      {
+        "type": "paragraph",
+        "enabled": false,
+        "position": 10000,
+        "id": 140737496736584,
+        "created_at": "2023-12-11T22:02:18.624+03:00",
+        "post_author_id": "",
+        "post_author": "",
+        "kind": "plain",
+        "body": "С апреля до конца 2022 г. действовало распоряжение ФАС, по факту запрещавшее операторам повышать цены выше уровня инфляции. В 2023 г. действие этого документа продлевать не стали, т. е. сейчас оператор может повышать цены на связь и на процент выше инфляции. Однако для этого компания обязана уведомить ФАС, обосновав необходимость индексации тарифов.",
+        "text_align": ""
+      },
+      {
+        "type": "paragraph",
+        "enabled": false,
+        "position": 11000,
+        "id": 140737496736585,
+        "created_at": "2023-12-11T22:02:18.655+03:00",
+        "post_author_id": "",
+        "post_author": "",
+        "kind": "plain",
+        "body": "Операторам могут разрешить индексировать цены на связь выше уровня инфляции, следовало из стратегии отрасли связи до 2035 г., о которой писали «Ведомости» в начале декабря. Но для того, чтобы реализовать этот сценарий, операторы должны будут взять на себя обязательства по развитию новых поколений связи, современных технологий, а также по строительству инфраструктуры на новых территориях (ДНР, ЛНР, Херсонской и Запорожской областях).",
+        "text_align": ""
+      },
+      {
+        "type": "paragraph",
+        "enabled": false,
+        "position": 12000,
+        "id": 140737496736586,
+        "created_at": "2023-12-11T22:02:18.687+03:00",
+        "post_author_id": "",
+        "post_author": "",
+        "kind": "plain",
+        "body": "В соответствии с любым сценарием развития операторам нужно строить инфраструктуру, отмечает Кусков. До ухода из России иностранных вендоров в 2022 г. операторы ежегодно вводили от 70 000 до 100 000 базовых станций. Пока остается непонятным, смогут ли российские производители покрыть такой спрос, отмечает эксперт.",
+        "text_align": ""
+      },
+      {
+        "type": "inset_link",
+        "enabled": false,
+        "position": 12500,
+        "id": 140737496736852,
+        "created_at": "2023-12-12T00:09:11.116+03:00",
+        "post_author_id": "",
+        "post_author": "",
+        "align": "left",
+        "alternative_title": "",
+        "alternative_subtitle": "",
+        "bound_document": {
+          "id": 140737489241215,
+          "title": "Операторам могут разрешить повышать цены на связь выше уровня инфляции",
+          "published_at": "2023-12-05T00:57:09.766+03:00",
+          "url": "vedomosti.ru/technology/articles/2023/12/05/1009343-operatoram-mogut-razreshit-povishat-tseni-vishe-urovnya-inflyatsii",
+          "categories": {
+            "project": {
+              "title": "Ведомости",
+              "slug": "vedomosti",
+              "position": 10,
+              "path": "project.vedomosti",
+              "subscribable": false
+            },
+            "kinds": {
+              "title": "Материалы",
+              "slug": "materials",
+              "position": 0,
+              "path": "kinds.materials",
+              "subscribable": false
+            },
+            "domains": {
+              "title": "vedomosti.ru",
+              "slug": "vedomosti.ru",
+              "position": 0,
+              "path": "domains.vedomosti_ru",
+              "subscribable": false
+            },
+            "parts": {
+              "title": "Статья",
+              "slug": "articles",
+              "position": 10,
+              "path": "parts.articles",
+              "subscribable": false
+            },
+            "newspaper": {
+              "title": "Компании и рынки",
+              "slug": "companies_markets",
+              "position": 70,
+              "path": "newspaper.companies_markets",
+              "subscribable": false
+            },
+            "rubrics": [
+              {
+                "title": "Технологии",
+                "slug": "technology",
+                "position": 50,
+                "path": "rubrics.technology",
+                "subscribable": false,
+                "subrubrics": {
+                  "title": "Телекоммуникации",
+                  "slug": "telecom",
+                  "position": 0,
+                  "path": "rubrics.technology.subrubrics.telecom",
+                  "subscribable": true
+                }
+              }
+            ]
+          },
+          "archived": false,
+          "favorite": false,
+          "links": {
+            "newsrelease": [
+              {
+                "position": 0,
+                "bound_document": {
+                  "id": 140737489241193,
+                  "url": "vedomosti.ru/newspaper/2023/12/05",
+                  "title": "Газетный выпуск №5869",
+                  "archived": false,
+                  "favorite": false,
+                  "newsstand": {
+                    "source": {
+                      "url": "/image/2023/9e/1dye7g/source-1sqq.jpg",
+                      "size": 245863,
+                      "width": 704,
+                      "height": 1024,
+                      "attachment_id": 140737489097561
+                    },
+                    "_preview": {
+                      "url": "/image/2023/9e/1dye7g/_preview-1sqq.jpg",
+                      "size": 9727,
+                      "width": 110,
+                      "height": 160,
+                      "attachment_id": 140737489097561
+                    },
+                    "original": {
+                      "url": "/image/2023/9e/1dye7g/original-1sqq.jpg",
+                      "size": 1014465,
+                      "width": 1706,
+                      "height": 2480,
+                      "attachment_id": 140737489097561
+                    },
+                    "ipad_shelf_1x": {
+                      "url": "/image/2023/9e/1dye7g/ipad_shelf_1x-1sqp.jpg",
+                      "size": 6343,
+                      "width": 87,
+                      "height": 126,
+                      "attachment_id": 140737489097561
+                    },
+                    "ipad_shelf_2x": {
+                      "url": "/image/2023/9e/1dye7g/ipad_shelf_2x-1sqp.jpg",
+                      "size": 21677,
+                      "width": 173,
+                      "height": 252,
+                      "attachment_id": 140737489097561
+                    },
+                    "iphone_shelf_1x": {
+                      "url": "/image/2023/9e/1dye7g/iphone_shelf_1x-1sqq.jpg",
+                      "size": 3771,
+                      "width": 62,
+                      "height": 90,
+                      "attachment_id": 140737489097561
+                    },
+                    "iphone_shelf_2x": {
+                      "url": "/image/2023/9e/1dye7g/iphone_shelf_2x-1sqr.jpg",
+                      "size": 12131,
+                      "width": 124,
+                      "height": 180,
+                      "attachment_id": 140737489097561
+                    },
+                    "ipad_multitasking_1x": {
+                      "url": "/image/2023/9e/1dye7g/ipad_multitasking_1x-1sqp.jpg",
+                      "size": 2581,
+                      "width": 50,
+                      "height": 72,
+                      "attachment_id": 140737489097561
+                    },
+                    "ipad_multitasking_2x": {
+                      "url": "/image/2023/9e/1dye7g/ipad_multitasking_2x-1sqr.jpg",
+                      "size": 8181,
+                      "width": 99,
+                      "height": 144,
+                      "attachment_id": 140737489097561
+                    },
+                    "iphone_multitasking_1x": {
+                      "url": "/image/2023/9e/1dye7g/iphone_multitasking_1x-1sqq.jpg",
+                      "size": 1842,
+                      "width": 39,
+                      "height": 57,
+                      "attachment_id": 140737489097561
+                    },
+                    "iphone_multitasking_2x": {
+                      "url": "/image/2023/9e/1dye7g/iphone_multitasking_2x-1sqq.jpg",
+                      "size": 5390,
+                      "width": 78,
+                      "height": 114,
+                      "attachment_id": 140737489097561
+                    }
+                  },
+                  "categories": {
+                    "kinds": {
+                      "path": "kinds.newsrelease",
+                      "slug": "newsrelease",
+                      "title": "Газетный выпуск",
+                      "position": 50,
+                      "subscribable": false
+                    },
+                    "domains": {
+                      "path": "domains.vedomosti_ru",
+                      "slug": "vedomosti.ru",
+                      "title": "vedomosti.ru",
+                      "position": 0,
+                      "subscribable": false
+                    },
+                    "project": {
+                      "path": "project.vedomosti",
+                      "slug": "vedomosti",
+                      "title": "Ведомости",
+                      "position": 10,
+                      "subscribable": false
+                    }
+                  },
+                  "published_at": "2023-12-05T01:12:27.646+03:00",
+                  "alternative_title": "Что успел Владимир Путин 4 декабря, пошлины хотят сбить с курса, запчасти дорожают"
+                }
+              }
+            ],
+            "authors": [
+              {
+                "position": 0,
+                "bound_document": {
+                  "id": 140737489182594,
+                  "url": "vedomosti.ru/authors/950722-anna-ustinova",
+                  "title": "Анна Устинова",
+                  "archived": false,
+                  "favorite": false,
+                  "last_name": "Устинова",
+                  "categories": {
+                    "kinds": {
+                      "path": "kinds.authors",
+                      "slug": "authors",
+                      "title": "Авторы",
+                      "position": 10,
+                      "subscribable": false
+                    },
+                    "domains": {
+                      "path": "domains.vedomosti_ru",
+                      "slug": "vedomosti.ru",
+                      "title": "vedomosti.ru",
+                      "position": 0,
+                      "subscribable": false
+                    },
+                    "project": {
+                      "path": "project.vedomosti",
+                      "slug": "vedomosti",
+                      "title": "Ведомости",
+                      "position": 10,
+                      "subscribable": false
+                    }
+                  },
+                  "first_name": "Анна",
+                  "appointment": "",
+                  "published_at": "2022-11-17T00:07:30.277+03:00",
+                  "subscribable": false
+                }
+              },
+              {
+                "position": 1000,
+                "bound_document": {
+                  "id": 140737489223680,
+                  "url": "vedomosti.ru/authors/991808-mariya-aryalina",
+                  "title": "Мария Арялина",
+                  "archived": false,
+                  "favorite": false,
+                  "last_name": "Арялина",
+                  "categories": {
+                    "kinds": {
+                      "path": "kinds.authors",
+                      "slug": "authors",
+                      "title": "Авторы",
+                      "position": 10,
+                      "subscribable": false
+                    },
+                    "domains": {
+                      "path": "domains.vedomosti_ru",
+                      "slug": "vedomosti.ru",
+                      "title": "vedomosti.ru",
+                      "position": 0,
+                      "subscribable": false
+                    },
+                    "project": {
+                      "path": "project.vedomosti",
+                      "slug": "vedomosti",
+                      "title": "Ведомости",
+                      "position": 10,
+                      "subscribable": false
+                    }
+                  },
+                  "first_name": "Мария",
+                  "appointment": "",
+                  "published_at": "2023-08-24T21:38:09.720+03:00",
+                  "subscribable": false
+                }
+              }
+            ]
+          },
+          "last_updated_at": null,
+          "sharing_title": "",
+          "sharing_subtitle": "",
+          "no_ads": false,
+          "subtitle": "Но их могут обязать строить сети и развивать новые технологии",
+          "yandex_subtitle": "",
+          "important": false,
+          "newspaper_subtitle": "Операторам могут разрешить повышать цены на связь выше уровня инфляции. Но для этого их могут обязать построить сети связи на новых территориях и развивать новые технологии",
+          "newspaper_title": "Минуты связали с инвестициями",
+          "exclusive": false,
+          "source_title": "Ведомости",
+          "source_url": "http://www.vedomosti.ru/",
+          "proofread": true,
+          "box_move_editor_id": 140737488355396,
+          "box_move_at": "2023-12-05T00:57:04.425+03:00",
+          "in_work": false,
+          "apologize": false,
+          "correction_comment": "",
+          "image_alt": "",
+          "image_author": "Максим Стулов / Ведомости",
+          "image_source": "",
+          "pay_required": true,
+          "pay_required_expire": "2023-12-18T23:59:59.999Z",
+          "image": {
+            "thumbnail_low": {
+              "attachment_id": 140737489097573,
+              "url": "/image/2023/9f/1zsj9/thumbnail_low-2l2.jpg",
+              "width": 180,
+              "height": 101,
+              "size": 3098
+            },
+            "thumbnail_high": {
+              "attachment_id": 140737489097573,
+              "url": "/image/2023/9f/1zsj9/thumbnail_high-2l1.jpg",
+              "width": 270,
+              "height": 152,
+              "size": 5322
+            },
+            "thumbnail": {
+              "attachment_id": 140737489097573,
+              "url": "/image/2023/9f/1zsj9/thumbnail-2l2.jpg",
+              "width": 75,
+              "height": 42,
+              "size": 1309
+            },
+            "small": {
+              "attachment_id": 140737489097573,
+              "url": "/image/2023/9f/1zsj9/small-2l2.jpg",
+              "width": 168,
+              "height": 95,
+              "size": 2894
+            },
+            "original": {
+              "attachment_id": 140737489097573,
+              "url": "/image/2023/9f/1zsj9/original-2l2.jpg",
+              "width": 1200,
+              "height": 675,
+              "size": 81141
+            },
+            "normal": {
+              "attachment_id": 140737489097573,
+              "url": "/image/2023/9f/1zsj9/normal-2l2.jpg",
+              "width": 570,
+              "height": 321,
+              "size": 19033
+            },
+            "mobile_low": {
+              "attachment_id": 140737489097573,
+              "url": "/image/2023/9f/1zsj9/mobile_low-2l2.jpg",
+              "width": 640,
+              "height": 360,
+              "size": 23626
+            },
+            "mobile_high": {
+              "attachment_id": 140737489097573,
+              "url": "/image/2023/9f/1zsj9/mobile_high-2l2.jpg",
+              "width": 960,
+              "height": 540,
+              "size": 55149
+            },
+            "level2": {
+              "attachment_id": 140737489097573,
+              "url": "/image/2023/9f/1zsj9/level2-2l2.jpg",
+              "width": 270,
+              "height": 152,
+              "size": 5322
+            },
+            "level1": {
+              "attachment_id": 140737489097573,
+              "url": "/image/2023/9f/1zsj9/level1-2l2.jpg",
+              "width": 369,
+              "height": 208,
+              "size": 8782
+            },
+            "fullscreen": {
+              "attachment_id": 140737489097573,
+              "url": "/image/2023/9f/1zsj9/fullscreen-2l2.jpg",
+              "width": 1200,
+              "height": 675,
+              "size": 81141
+            },
+            "default": {
+              "attachment_id": 140737489097573,
+              "url": "/image/2023/9f/1zsj9/default-2l2.jpg",
+              "width": 570,
+              "height": 321,
+              "size": 19033
+            },
+            "_preview": {
+              "attachment_id": 140737489097573,
+              "url": "/image/2023/9f/1zsj9/_preview-2l2.jpg",
+              "width": 121,
+              "height": 68,
+              "size": 2031
+            }
+          }
+        }
+      },
+      {
+        "type": "paragraph",
+        "enabled": false,
+        "position": 13000,
+        "id": 140737496736587,
+        "created_at": "2023-12-11T22:02:18.718+03:00",
+        "post_author_id": "",
+        "post_author": "",
+        "kind": "plain",
+        "body": "В течение этого года все операторы уже повышали цены, на что обращала внимание ФАС, продолжает Кусков. Если же оператор все равно идет на повышение цен, значит, он четко осознает возможные последствия со стороны ФАС и приготовил обоснование, с которым служба должна согласиться, считает он. По мнению аналитика iKS-Consulting Максима Савватина, необходимость повышения цен важно обосновать. Чтобы не возникало публичного недовольства абонентов, как правило, перед корректировкой тарифов операторы согласуют повышение тарифов с ФАС до публичных объявлений, отмечает он. Конкретные детали повышения обычно зависят как от общего уровня инфляции, так и от рыночной конкуренции в конкретных регионах, объясняет аналитик.",
+        "text_align": ""
+      },
+      {
+        "type": "paragraph",
+        "enabled": false,
+        "position": 14000,
+        "id": 140737496736588,
+        "created_at": "2023-12-11T22:02:18.761+03:00",
+        "post_author_id": "",
+        "post_author": "",
+        "kind": "plain",
+        "body": "Скорее всего, стоит ожидать, что и другие операторы будут повышать свои тарифы в новом году, прогнозирует управляющий партнер «ТМТ консалтинга» Константин Анкилов. Это может не касаться единовременно всех тарифных планов, т. е. в целом по абонбазе процесс будет постепенным, возможно, распределенным на год и более, считает он. В любом случае ФАС следит за тарифной активностью операторов по собственной инициативе, а также реагирует на заявления граждан.",
+        "text_align": ""
+      },
+      {
+        "type": "paragraph",
+        "enabled": false,
+        "position": 15000,
+        "id": 140737496736589,
+        "created_at": "2023-12-11T22:02:18.794+03:00",
+        "post_author_id": "",
+        "post_author": "",
+        "kind": "plain",
+        "body": "В случае нарушения «правил игры» регулятор, как и раньше, будет реагировать, принуждать операторов корректировать свои действия, отмечает Анкилов. В каких-то случаях операторы соглашаются и вносят изменения, в каких-то отстаивают свою позицию, говорит он.",
+        "text_align": ""
+      }
+    ],
+    "categories": {
+      "kinds": {
+        "path": "kinds.materials",
+        "slug": "materials",
+        "title": "Материалы",
+        "position": 0,
+        "subscribable": false
+      },
+      "parts": {
+        "path": "parts.articles",
+        "slug": "articles",
+        "title": "Статья",
+        "position": 10,
+        "subscribable": false
+      },
+      "domains": {
+        "path": "domains.vedomosti_ru",
+        "slug": "vedomosti.ru",
+        "title": "vedomosti.ru",
+        "position": 0,
+        "subscribable": false
+      },
+      "project": {
+        "path": "project.vedomosti",
+        "slug": "vedomosti",
+        "title": "Ведомости",
+        "position": 10,
+        "subscribable": false
+      },
+      "rubrics": [
+        {
+          "path": "rubrics.technology",
+          "slug": "technology",
+            "title": "Технологии",
+          "position": 50,
+          "subrubrics": {
+            "path": "rubrics.technology.subrubrics.telecom",
+            "slug": "telecom",
+            "title": "Телекоммуникации",
+            "position": 0,
+            "subscribable": true
+          },
+          "subscribable": false
+        }
+      ],
+      "newspaper": {
+        "path": "newspaper.companies_markets",
+        "slug": "companies_markets",
+        "title": "Компании и рынки",
+        "position": 70,
+        "subscribable": false
+      }
+    },
+    "correction_comment": "",
+    "exclusive": true,
+    "favorite": false,
+    "id": 140737489242375,
+    "image": {
+      "small": {
+        "url": "/image/2023/9l/1bxf1l/small-1q46.jpg",
+        "size": 5248,
+        "width": 168,
+        "height": 95,
+        "attachment_id": 140737489098902
+      },
+      "level1": {
+        "url": "/image/2023/9l/1bxf1l/level1-1q46.jpg",
+        "size": 16957,
+        "width": 369,
+        "height": 208,
+        "attachment_id": 140737489098902
+      },
+      "level2": {
+        "url": "/image/2023/9l/1bxf1l/level2-1q46.jpg",
+        "size": 10357,
+        "width": 270,
+        "height": 152,
+        "attachment_id": 140737489098902
+      },
+      "normal": {
+        "url": "/image/2023/9l/1bxf1l/normal-1q46.jpg",
+        "size": 32563,
+        "width": 570,
+        "height": 321,
+        "attachment_id": 140737489098902
+      },
+      "default": {
+        "url": "/image/2023/9l/1bxf1l/default-1q46.jpg",
+        "size": 32563,
+        "width": 570,
+        "height": 321,
+        "attachment_id": 140737489098902
+      },
+      "_preview": {
+        "url": "/image/2023/9l/1bxf1l/_preview-1q46.jpg",
+        "size": 3376,
+        "width": 121,
+        "height": 68,
+        "attachment_id": 140737489098902
+      },
+      "original": {
+        "url": "/image/2023/9l/1bxf1l/original-1q46.jpg",
+        "size": 94427,
+        "width": 1200,
+        "height": 675,
+        "attachment_id": 140737489098902
+      },
+      "thumbnail": {
+        "url": "/image/2023/9l/1bxf1l/thumbnail-1q46.jpg",
+        "size": 1798,
+        "width": 75,
+        "height": 42,
+        "attachment_id": 140737489098902
+      },
+      "fullscreen": {
+        "url": "/image/2023/9l/1bxf1l/fullscreen-1q46.jpg",
+        "size": 94427,
+        "width": 1200,
+        "height": 675,
+        "attachment_id": 140737489098902
+      },
+      "mobile_low": {
+        "url": "/image/2023/9l/1bxf1l/mobile_low-1q46.jpg",
+        "size": 38422,
+        "width": 640,
+        "height": 360,
+        "attachment_id": 140737489098902
+      },
+      "mobile_high": {
+        "url": "/image/2023/9l/1bxf1l/mobile_high-1q46.jpg",
+        "size": 71008,
+        "width": 960,
+        "height": 540,
+        "attachment_id": 140737489098902
+      },
+      "thumbnail_low": {
+        "url": "/image/2023/9l/1bxf1l/thumbnail_low-1q45.jpg",
+        "size": 5891,
+        "width": 180,
+        "height": 101,
+        "attachment_id": 140737489098902
+      },
+      "thumbnail_high": {
+        "url": "/image/2023/9l/1bxf1l/thumbnail_high-1q46.jpg",
+        "size": 10357,
+        "width": 270,
+        "height": 152,
+        "attachment_id": 140737489098902
+      }
+    },
+    "image_alt": "",
+    "image_author": "Андрей Гордеев / Ведомости",
+    "image_source": "",
+    "important": false,
+    "in_work": false,
+    "last_published_at": 1702328958,
+    "last_updated_at": null,
+    "links": {
+      "newsrelease": [
+        {
+          "position": 0,
+          "bound_document": {
+            "id": 140737489242349,
+            "url": "vedomosti.ru/newspaper/2023/12/12",
+            "title": "Газетный выпуск №5874",
+            "archived": false,
+            "favorite": false,
+            "newsstand": {
+              "source": {
+                "url": "/image/2023/9l/1cviwr/source-1rcd.jpg",
+                "size": 256404,
+                "width": 704,
+                "height": 1024,
+                "attachment_id": 140737489098917
+              },
+              "_preview": {
+                "url": "/image/2023/9l/1cviwr/_preview-1rcd.jpg",
+                "size": 9075,
+                "width": 110,
+                "height": 160,
+                "attachment_id": 140737489098917
+              },
+              "original": {
+                "url": "/image/2023/9l/1cviwr/original-1rcd.jpg",
+                "size": 1090107,
+                "width": 1706,
+                "height": 2480,
+                "attachment_id": 140737489098917
+              },
+              "ipad_shelf_1x": {
+                "url": "/image/2023/9l/1cviwr/ipad_shelf_1x-1rcc.jpg",
+                "size": 5836,
+                "width": 87,
+                "height": 126,
+                "attachment_id": 140737489098917
+              },
+              "ipad_shelf_2x": {
+                "url": "/image/2023/9l/1cviwr/ipad_shelf_2x-1rcc.jpg",
+                "size": 21010,
+                "width": 173,
+                "height": 252,
+                "attachment_id": 140737489098917
+              },
+              "iphone_shelf_1x": {
+                "url": "/image/2023/9l/1cviwr/iphone_shelf_1x-1rcd.jpg",
+                "size": 3447,
+                "width": 62,
+                "height": 90,
+                "attachment_id": 140737489098917
+              },
+              "iphone_shelf_2x": {
+                "url": "/image/2023/9l/1cviwr/iphone_shelf_2x-1rcc.jpg",
+                "size": 11383,
+                "width": 124,
+                "height": 180,
+                "attachment_id": 140737489098917
+              },
+              "ipad_multitasking_1x": {
+                "url": "/image/2023/9l/1cviwr/ipad_multitasking_1x-1rcc.jpg",
+                "size": 2370,
+                "width": 50,
+                "height": 72,
+                "attachment_id": 140737489098917
+              },
+              "ipad_multitasking_2x": {
+                "url": "/image/2023/9l/1cviwr/ipad_multitasking_2x-1rcc.jpg",
+                "size": 7693,
+                "width": 99,
+                "height": 144,
+                "attachment_id": 140737489098917
+              },
+              "iphone_multitasking_1x": {
+                "url": "/image/2023/9l/1cviwr/iphone_multitasking_1x-1rcc.jpg",
+                "size": 1697,
+                "width": 39,
+                "height": 57,
+                "attachment_id": 140737489098917
+              },
+              "iphone_multitasking_2x": {
+                "url": "/image/2023/9l/1cviwr/iphone_multitasking_2x-1rcc.jpg",
+                "size": 4985,
+                "width": 78,
+                "height": 114,
+                "attachment_id": 140737489098917
+              }
+            },
+            "categories": {
+              "kinds": {
+                "path": "kinds.newsrelease",
+                "slug": "newsrelease",
+                "title": "Газетный выпуск",
+                "position": 50,
+                "subscribable": false
+              },
+              "domains": {
+                "path": "domains.vedomosti_ru",
+                "slug": "vedomosti.ru",
+                "title": "vedomosti.ru",
+                "position": 0,
+                "subscribable": false
+              },
+              "project": {
+                "path": "project.vedomosti",
+                "slug": "vedomosti",
+                "title": "Ведомости",
+                "position": 10,
+                "subscribable": false
+              }
+            },
+            "published_at": "2023-12-12T00:31:56.014+03:00",
+            "alternative_title": "Экспортеры испугались штрафов, 30 лет победе ЛДПР, плата за швейцарский воздух"
+          }
+        }
+      ],
+        "authors": [
+        {
+          "position": 0,
+          "bound_document": {
+            "id": 140737489182594,
+            "url": "vedomosti.ru/authors/950722-anna-ustinova",
+            "title": "Анна Устинова",
+            "archived": false,
+            "favorite": false,
+            "last_name": "Устинова",
+            "categories": {
+              "kinds": {
+                "path": "kinds.authors",
+                "slug": "authors",
+                "title": "Авторы",
+                "position": 10,
+                "subscribable": false
+              },
+              "domains": {
+                "path": "domains.vedomosti_ru",
+                "slug": "vedomosti.ru",
+                "title": "vedomosti.ru",
+                "position": 0,
+                "subscribable": false
+              },
+              "project": {
+                "path": "project.vedomosti",
+                "slug": "vedomosti",
+                "title": "Ведомости",
+                "position": 10,
+                "subscribable": false
+              }
+            },
+            "first_name": "Анна",
+            "appointment": "",
+            "published_at": "2022-11-17T00:07:30.277+03:00",
+            "subscribable": false
+          }
+        }
+      ]
+    },
+    "newspaper_subtitle": "Tele2 повысит цены на связь с января, рост тарифов превысит 10%. Оператор представил обоснование повышения в ФАС, служба начала анализ этих данных",
+    "newspaper_title": "10 процентов под елочку",
+    "no_ads": false,
+    "pay_required": true,
+    "pay_required_expire": "2023-12-25T23:59:59.999Z",
+    "proofread": false,
+    "published_at": "2023-12-12T00:09:17.966+03:00",
+    "sharing_subtitle": "",
+    "sharing_title": "",
+    "source_title": "Ведомости",
+    "source_url": "http://www.vedomosti.ru/",
+    "subtitle": "ФАС начала анализ повышения по представленным оператором данным",
+    "taggings": [],
+    "title": "Tele2 повысит цены на связь с января более чем на 10%",
+    "url": "vedomosti.ru/technology/articles/2023/12/12/1010503-tele2-povisit-tseni-na-svyaz-s-yanvarya",
+    "yandex_subtitle": ""
+  }
+}

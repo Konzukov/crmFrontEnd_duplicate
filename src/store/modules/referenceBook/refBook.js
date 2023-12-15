@@ -646,9 +646,17 @@ export default {
             return state.legalEntity
         },
         allRefData(state) {
-            if (state.legalEntity && state.physicalPerson) {
-                return state.legalEntity.concat(state.physicalPerson)
+            let data = [];
+            if (state.legalEntity){
+                data.push(...state.legalEntity)
             }
+            if (state.physicalPerson){
+                data.push(...state.physicalPerson)
+            }
+            return data
+            // if (state.legalEntity && state.physicalPerson) {
+            //     return state.legalEntity.concat(state.physicalPerson)
+            // }
 
         },
         positionData(state) {
