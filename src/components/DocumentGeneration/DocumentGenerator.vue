@@ -284,6 +284,7 @@ export default {
   methods: {
     getProjectDetail(item) {
       this.$store.dispatch('getProjectDetail', item).then(data => {
+        console.log(data)
         this.projectData = data
         if (data.legal_contractor) {
           this.legalContractor = data.legal_contractor

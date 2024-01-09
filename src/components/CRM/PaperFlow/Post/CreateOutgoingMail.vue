@@ -97,7 +97,6 @@ export default {
           console.log(err)
         })
       })
-
     },
     createSelectedMail() {
       const dt = {data: this.selected, departureDate: this.departureDate};

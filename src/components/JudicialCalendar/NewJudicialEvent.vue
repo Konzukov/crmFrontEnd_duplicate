@@ -1,7 +1,7 @@
 <template>
   <v-container>
     <v-dialog v-model="show" width="650" hide-overlay>
-      <v-card height="100vh">
+      <v-card height="90vh">
         <v-card-title class="justify-center">Добавление нового заседания</v-card-title>
         <v-card-text>
           <v-form>
@@ -23,6 +23,7 @@
                     dense
                     outlined label="Проект"
                     :items="projectList"
+                    @change="setJudge"
                     v-model="formField.project"
                     item-text="name" item-value="id" return-object
                 >
@@ -95,7 +96,7 @@
           </v-overlay>
         </v-card-text>
         <v-card-actions class="justify-space-between pb-6">
-          <v-btn color="error" @click="show = false">Закрыть</v-btn>
+          <v-btn color="error" @click="close()">Закрыть</v-btn>
           <v-btn color="success" @click="save()">{{ actionType === 'create' ? 'Добавить' : 'Сохранить' }}</v-btn>
         </v-card-actions>
       </v-card>
@@ -109,6 +110,7 @@
 import {mapGetters} from 'vuex'
 import NewJudge from "@/components/referenceBook/Judges/NewJudge";
 import SaveProcessed from "@/components/UI/SaveProcessed";
+
 
 export default {
   name: "NewJudicialEvent",
@@ -137,12 +139,28 @@ export default {
       judgesList: 'judgeListData',
       judicialCategories: 'judicialCategoriesData',
       userList: 'allSystemUsersData'
-    })
+    }),
+    // judgesList: {
+    //   get(){
+    //     let judgeLIst = this.$store.getters.judgeListData
+    //     if (this.formField.project){
+    //       let courtId =
+    //       return judgeLIst
+    //     }else {
+    //       return  judgeLIst
+    //     }
+    //   }
+    // }
   },
   methods: {
     addJudge() {
       console.log('click')
       this.$emit('newJudge')
+    },
+    setJudge(item){
+      if (item.judge){
+        this.formField.judge = item.judge.id
+      }
     },
     save() {
       let formData = new FormData();
@@ -174,13 +192,15 @@ export default {
 
     },
     close() {
-      this.show = false
       Object.assign(this.$data, this.$options.data())
+      // this.show = false
+
     },
     async loadingData() {
       await new Promise(resolve => {
         this.loading = true
         this.$store.dispatch('getJudgeList')
+        this.$store.dispatch('getProjectList')
         this.$store.dispatch('getJudicialCategories')
         this.$store.dispatch('allSystemUser')
         resolve()

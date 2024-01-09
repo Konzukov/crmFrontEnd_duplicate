@@ -41,13 +41,15 @@
             <v-list-item @click="addOutPost">
               <v-list-item-title>Добавить из архива</v-list-item-title>
             </v-list-item>
+            <v-list-item @click="addOutPostXlsx">
+              <v-list-item-title>Добавить из таблицы</v-list-item-title>
+            </v-list-item>
             <v-list-item @click="addSingleOutPost">
               <v-list-item-title>Добавить исходящую почту</v-list-item-title>
             </v-list-item>
           </v-list>
         </v-menu>
       </v-card-title>
-      {{ editableItem.pk }}
       <v-data-table
           @contextmenu:row.prevent="openContextMenu"
           v-model="editableItem"
@@ -91,7 +93,7 @@
     <PostEdit></PostEdit>
     <massEdit itemType="posts"></massEdit>
     <DeletePost></DeletePost>
-    <MouseContextMenu :display="showContextMenu"  ref="contextMenu">
+    <MouseContextMenu :display="showContextMenu" ref="contextMenu">
       <li @click="massEdit">Редактировать выбранные</li>
       <!--      <li >Скачать выбранные</li>-->
     </MouseContextMenu>
@@ -141,7 +143,7 @@ export default {
       this.$router.push({name: 'create-outgoing-post'})
     },
     hasFile(item) {
-      if (!item['post_documents']) {
+      if (!item['project']) {
         return 'warning-row';
       }
       return '';
@@ -159,7 +161,9 @@ export default {
       if (this.editableItem.length > 0) {
         this.$refs.contextMenu.open(e)
       }
-
+    },
+    addOutPostXlsx() {
+      this.$router.push({name: 'create-outgoing-post-xlsx'})
     },
     massEdit() {
       this.$emit('massEdit', this.editableItem)

@@ -19,7 +19,7 @@
                 <template v-slot:default="{ active }">
                   <v-list-item-action>
                     <v-checkbox :disabled="item['in_shipment']" v-model="postOrdersId" multiple :input-value="active"
-                                :value="item['reg_num']"></v-checkbox>
+                                  :value="item['reg_num']"></v-checkbox>
                   </v-list-item-action>
                   <v-list-item-content>
                     <v-list-item-title>ИД заказа: {{ item['reg_num'] }}</v-list-item-title>

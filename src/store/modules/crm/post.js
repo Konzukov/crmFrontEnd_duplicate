@@ -138,6 +138,7 @@ export default {
                     method: "GET",
                     url: customConst.PAPERFLOW_API + 'outgoing-post-list'
                 }).then(res => {
+                    console.log(res.data.data.data)
                     commit('syncOutgoingPost', res.data.data.data)
                     resolve()
                 }).catch(err => {

@@ -303,6 +303,11 @@ const routes = [
                         component: CreateOutgoingMail
                     },
                     {
+                        name: 'create-outgoing-post-xlsx',
+                        path: 'create-outgoing-post-xlsx',
+                        component: () => import('../components/CRM/PaperFlow/Post/CreateOutgoingMailXlsx'),
+                    },
+                    {
                         name: 'trash-post-list',
                         path: 'trash-post-list',
                         component: TrashPostList

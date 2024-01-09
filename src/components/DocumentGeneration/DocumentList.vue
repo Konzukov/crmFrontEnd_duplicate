@@ -18,8 +18,11 @@
           </v-card-text>
         </v-card>
       </v-col>
-      <v-col cols="8">
+      <v-col cols="8" v-if="currentTemplate && currentTemplate.name !== 'Сопровод к отчетам'">
         <DocumentGenerator  v-if="currentTemplate" :template="currentTemplate"></DocumentGenerator>
+      </v-col>
+      <v-col cols="8" v-else-if="currentTemplate && currentTemplate.name === 'Сопровод к отчетам'">
+          <ReportGenerator :template="currentTemplate"></ReportGenerator>
       </v-col>
     </v-row>
   </v-container>
@@ -28,6 +31,7 @@
 <script>
 import DocumentGenerator from "@/components/DocumentGeneration/DocumentGenerator";
 import {mapGetters} from 'vuex'
+import ReportGenerator from "@/components/DocumentGeneration/ReportGenerator.vue";
 
 export default {
   name: "DocumentList",
@@ -56,6 +60,7 @@ export default {
     await this.$store.dispatch('getDocTemplate')
   },
   components: {
+    ReportGenerator,
     DocumentGenerator
   }
 }

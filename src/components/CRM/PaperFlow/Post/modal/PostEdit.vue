@@ -615,10 +615,11 @@ export default {
   },
   created() {
     this.overlay = true
-    this.allSystemUser();
-    this.getParticipator();
-    this.getLegalEntity();
-    this.getPhysicalPerson();
+    this.allSystemUser()
+    this.getProjectList()
+    this.getParticipator()
+    this.getLegalEntity()
+    this.getPhysicalPerson()
     this.getCorrespondenceType();
     this.$parent.$on("editPost", (pk) => {
       this.drawer = true;
