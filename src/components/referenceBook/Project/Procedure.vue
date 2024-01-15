@@ -244,6 +244,15 @@
           <v-spacer></v-spacer>
           <v-tooltip top>
             <template v-slot:activator="{ on, attrs }">
+              <v-btn class="mr-6" icon small v-bind="attrs"
+                     v-on="on" color="success" @click.native.stop="addBankCardXlsx">
+                <v-icon>mdi-table-large-plus</v-icon>
+              </v-btn>
+            </template>
+            <span>Загрузить данные карт из xlsx</span>
+          </v-tooltip>
+          <v-tooltip top>
+            <template v-slot:activator="{ on, attrs }">
               <v-btn small icon v-bind="attrs"
                      v-on="on" color="success" @click.native.stop="addBankCard">
                 <v-icon>mdi-card-plus-outline</v-icon>
@@ -445,7 +454,10 @@ export default {
 
     },
     addAccountXlsx() {
-      this.$emit('addXlsxAccount', this.$route.params['pk'])
+      this.$emit('addXlsxAccount', {project: this.$route.params['pk'], dataType: 'bankAccount'})
+    },
+    addBankCardXlsx(){
+      this.$emit('addXlsxBankCard', {project: this.$route.params['pk'], dataType: 'bankCard'})
     },
     addBargaining() {
       this.$emit('addBargaining', this.$route.params['pk'])
@@ -460,7 +472,8 @@ export default {
       this.selectedBackCard = {}
     },
     async createTradingProtocol(item) {
-      this.template = this.documentTemplate.filter(obj => obj.id === 9)[0]
+      console.log(this.documentTemplate)
+      this.template = this.documentTemplate.filter(obj => obj.name === "Протокол_торгов")[0]
       await this.$store.dispatch('getProjectDetail', this.project).then(async data => {
         await compareFields(this.template.fields, data).then(async (data) => {
           this.templateFields = data
@@ -468,7 +481,7 @@ export default {
         console.log(this.templateFields)
       })
       let formData = new FormData()
-      formData.append('template', '9')
+      formData.append('template', this.template.id)
       formData.append('project', this.project)
       formData.append('docType', 'docx')
       formData.append('BARGAINING', item.id)

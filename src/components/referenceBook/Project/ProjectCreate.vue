@@ -295,7 +295,6 @@ export default {
           console.log(refs)
           for (let ref of refs) {
             let judicialActComponent = this.$refs[ref]
-            console.log(judicialActComponent)
             if (judicialActComponent) {
               judicialActComponent[0].save()
             }
@@ -313,12 +312,10 @@ export default {
         this.$store.dispatch('getProjectAct', res['pk']).then(res => {
           let act = res.data.data.data
           if (act.length > 0) {
-            console.log('push act')
             act.forEach((obj, index) => {
               this.judicialActCount.push({index, ref: `judicialActComponent${index}`, data: obj})
             })
           }
-          console.log(this.judicialActCount)
         }).catch(err => {
           console.log(err)
         })
@@ -431,7 +428,6 @@ export default {
       }
     },
     contractor(val) {
-      console.log(val)
       this.$emit('changeContractor', val)
     },
   },

@@ -35,9 +35,7 @@ export default {
     ])
   },
   created() {
-    console.log(this.$route.params.pk)
     this.getFile(this.$route.params.pk).then(file=>{
-      console.log(file)
       this.file = Object.assign({}, file)
     })
   }

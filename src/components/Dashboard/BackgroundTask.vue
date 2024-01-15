@@ -68,7 +68,6 @@ export default {
         method: "GET",
         url: customConst.CRM_API + 'background-task'
       }).then(res => {
-        console.log(res.data)
         this.backgroundTask = res.data
       })
     },
@@ -107,7 +106,6 @@ export default {
   },
   watch: {
     selectedBgTaskUUID(val) {
-      console.log(val)
       this.$http({
         method: "GET",
         url: customConst.CRM_API + `background-task/${val}`

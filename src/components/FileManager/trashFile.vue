@@ -67,9 +67,9 @@ export default {
           formData.append(key, this.form[key])
         }
       })
-      for (let pair of formData.entries()) {
-        console.log(pair[0] + ', ' + pair[1]);
-      }
+      // for (let pair of formData.entries()) {
+      //   console.log(pair[0] + ', ' + pair[1]);
+      // }
       this.$store.dispatch('createTrashFile', formData).then((trashFile)=>{
         eventBus.$on('fileDeleted', trashFile)
         this.close()

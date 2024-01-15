@@ -154,7 +154,6 @@ export default {
   },
   methods: {
     addJudge() {
-      console.log('click')
       this.$emit('newJudge')
     },
     setJudge(item){
@@ -193,7 +192,7 @@ export default {
     },
     close() {
       Object.assign(this.$data, this.$options.data())
-      // this.show = false
+      this.show = false
 
     },
     async loadingData() {
@@ -216,7 +215,6 @@ export default {
     })
     this.$parent.$on('editJudicialEvent', (judicialEvent) => {
       for (let [key, val] of Object.entries(judicialEvent)) {
-        console.log(key, val)
         if (val !== 0) {
           if (key === 'category_id') this.formField['category'] = val
           else if (key === 'responsible_id') this.formField['responsible'] = val

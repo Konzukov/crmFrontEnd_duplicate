@@ -41,7 +41,6 @@ export default {
             userData.set('smsCode', data.smsCode)
 
             return new Promise((resolve, reject) => {
-                console.log(data.login, data.password, data.smsCode)
                 commit('auth_request')
                 axios({
                     method: 'post',

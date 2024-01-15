@@ -46,7 +46,6 @@ export default {
   },
   watch: {
     $route(to, from) {
-      console.log(to.name)
       if (to.name === 'participatorOrganization' || to.name === 'participatorStaff') {
         this.transitionEnter = 'animated bounceInRight'
         this.transitionLeave = 'animated bounceOutLeft'

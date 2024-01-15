@@ -2,27 +2,34 @@
   <v-container>
     <v-form lazy-validation class="pt-4">
       <v-row>
-        <v-col cols="12">
-          <v-row class="mt-5">
-            <v-text-field dense outlined label="Номер карты" v-model="form.card_number" counter="20" :rules="rules">
-              <template v-slot:append-outer>
-                <v-img max-width="100" max-height="100" :src="bankInfo.bankLogo" alt=""
-                       :style="`background: ${bankInfo.backgroundColor}`"></v-img>
-              </template>
-              <template v-slot:append>
-                <v-img max-width="45" max-height="60" :src="bankInfo.brandLogo" style="margin-bottom: 8px;"></v-img>
-              </template>
-            </v-text-field>
-          </v-row>
+        <v-col cols="7">
+          <v-text-field dense outlined label="Номер карты" v-model="form.card_number" counter="20" :rules="rules">
+          </v-text-field>
         </v-col>
-        <v-col cols="6">
+        <v-col cols="5">
+          <v-autocomplete dense outlined label="Платежная система" v-model="form.card_type" :items="cardType"
+                          item-value="val"
+                          item-text="text">
+            <template v-slot:append>
+              <v-img max-width="40" max-height="55" :src="bankInfo.brandLogo"></v-img>
+            </template>
+          </v-autocomplete>
+        </v-col>
+        <v-col cols="8">
           <v-autocomplete dense label="Банк" outlined v-model="form.bank" append-outer-icon="mdi-plus"
+
                           @click:append-outer="addBank" :items="bankList" item-text="name" item-value="id">
           </v-autocomplete>
         </v-col>
 
         <v-col cols="4">
-          <v-text-field return-masked-value outlined dense label="Срок действия карты" v-model="form.validity" v-mask="'##/##'"></v-text-field>
+          <v-text-field return-masked-value
+                        outlined dense label="Срок действия карты" v-model="form.validity"
+                        v-mask="'##/##'"></v-text-field>
+        </v-col>
+        <v-col cols="6">
+          <v-text-field dense outlined label="Дата передачи карты" v-model="form.transfer_date"
+                        type="date"></v-text-field>
         </v-col>
       </v-row>
       <v-row>
@@ -60,6 +67,11 @@ export default {
   props: ['bankCardData', 'project'],
   name: "BankCardCreate",
   data: () => ({
+    cardType: [
+      {val: 'VISA', text: 'VISA'},
+      {val: 'MASTERCARD', text: 'MasterCard'},
+      {val: 'MIR', text: 'Мир'},
+    ],
     rules: [v => (v.length < 21 || v.length > 15) || 'Номер счета должен состоять из 20 цифр'],
     form: {
       id: '',
@@ -67,7 +79,9 @@ export default {
       physical: '',
       bank: '',
       card_number: '',
+      card_type: '',
       validity: '',
+      transfer_date: '',
       comment: ''
     },
     bankInfo: {
@@ -90,15 +104,21 @@ export default {
           brandLogoPolicy: 'colored'
         })
         console.log(card)
-        //${bankInfo.bankLogo}
+        if (card.brandName === "Maestro") {
+          this.form.card_type = "MASTERCARD"
+        } else if (card.brandName === "Visa") {
+          this.form.card_type = "VISA"
+        }
         this.bankInfo.bankLogo = card.bankLogo
         this.bankInfo.brandLogo = card.brandLogo
         this.bankInfo.backgroundColor = card.backgroundColor
-        this.bankList.filter(obj => {
-          if (obj['name'].toString().toLowerCase().indexOf(card.bankName.toLowerCase()) !== -1) {
-            this.form.bank = obj['id']
-          }
-        })
+        if (card.bankName) {
+          this.bankList.filter(obj => {
+            if (obj['name'].toString().toLowerCase().indexOf(card.bankName.toLowerCase()) !== -1) {
+              this.form.bank = obj['id']
+            }
+          })
+        }
       }
     }
   },
@@ -132,26 +152,32 @@ export default {
     },
     save() {
       let formData = new FormData()
-      Object.keys(this.form).forEach(key=>{
-        if (key === 'validity'){
+      Object.keys(this.form).forEach(key => {
+        if (key === 'validity') {
+          console.log(this.form.validity)
           let date = moment(this.form.validity, 'MM/YY').format('YYYY-MM-DD')
           console.log(date)
           formData.append(key, date)
-        }else{
+        } else {
           formData.append(key, this.form[key])
         }
       })
-      if (this.form.id){
-        this.$store.dispatch('editBankCard', {id: this.form.id, formData})
-      }else{
-        this.$store.dispatch('createBankCard', formData)
+      if (this.form.id) {
+        this.$store.dispatch('editBankCard', {id: this.form.id, formData}).then(data => {
+          this.$emit('updateBankCardList')
+        })
+      } else {
+        this.$store.dispatch('createBankCard', formData).then(data => {
+          console.log(data)
+          this.$emit('updateBankCardList')
+        })
       }
 
     }
   },
   async created() {
     await this.$store.dispatch('getBankList')
-    // await this.syncData()
+    await this.syncData()
   },
   components: {
     BankCreate,
@@ -160,5 +186,7 @@ export default {
 </script>
 
 <style scoped>
-
+#input-151 {
+  max-height: 35px !important;
+}
 </style>

@@ -238,8 +238,6 @@ export default {
     selectDoc(doc) {
       this.selectedDoc.url = doc.file
       this.selectedDoc.type = doc.type
-      console.log(doc.date)
-      console.log(moment(doc.date, 'DD.MM.YYYY'))
       this.selectedDoc.date = moment(doc.date, 'DD.MM.YYYY').format('YYYY-MM-DD')
     },
     openModal() {
@@ -250,7 +248,6 @@ export default {
       this.$emit('clearDocumentArbitr')
     },
     saveDoc(){
-      console.log('Call',this.selectedDoc)
       this.$emit('saveDoc', {url: this.selectedDoc.url, type: this.selectedDoc.type, date: this.selectedDoc.date})
     }
   },

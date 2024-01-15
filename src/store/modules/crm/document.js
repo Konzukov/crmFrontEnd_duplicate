@@ -105,25 +105,28 @@ export default {
     actions: {
         async saveDocument({commit}, {formData, template, file, force}) {
             return await new Promise(async (resolve, reject) => {
-                await axios({
-                    method: 'POST',
-                    url: customConst.PAPERFLOW_API + 'document-create',
-                    data: formData,
-                    params: {
-                        template: template.id,
-                        force: force
-                    },
-                    onUploadProgress: (progressEvent) => {
-                        let progress = String(Math.round((progressEvent.loaded / progressEvent.total) * 100))
-                        eventBus.$emit('updateProgress', {progress, file})
-                    }
+                setTimeout(async () => {
+                    await axios({
+                        method: 'POST',
+                        url: customConst.PAPERFLOW_API + 'document-create',
+                        data: formData,
+                        params: {
+                            template: template.id,
+                            force: force
+                        },
+                        onUploadProgress: (progressEvent) => {
+                            let progress = String(Math.round((progressEvent.loaded / progressEvent.total) * 100))
+                            eventBus.$emit('updateProgress', {progress, file})
+                        }
 
-                }).then(async (response) => {
-                    commit('addDocument', response.data.data.data)
-                    await resolve(response.data.data.data)
-                }).catch((error) => {
-                    reject(error)
-                })
+                    }).then(async (response) => {
+                        commit('addDocument', response.data.data.data)
+                        await resolve(response.data.data.data)
+                    }).catch(async (error) => {
+                        await reject(error)
+                    })
+                }, 1000)
+
             })
         },
         editDocument({commit}, obj) {
@@ -364,7 +367,7 @@ export default {
                 axios({
                     method: "GET",
                     url: customConst.PAPERFLOW_API + `judicial-act/${projectPk}/list/`,
-                }).then(res=>{
+                }).then(res => {
                     resolve(res)
                 })
             })

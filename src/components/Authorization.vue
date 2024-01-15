@@ -221,7 +221,6 @@ export default {
           loginType: this.loginType
         }
       }).then((response) => {
-        console.log(response.data.data.data)
         this.availableOrganization = response.data.data.data
         this.loginForm.showLogin = !this.loginForm.showLogin
         if (response.data.data.data.length === 1) {
@@ -242,7 +241,6 @@ export default {
         password: this.password,
         smsCode: this.smsCode
       }
-      console.log(data)
       this.$store.dispatch("login", data)
           .then(() => this.$router.push('/dashboard'))
           .catch(err => console.log(err))

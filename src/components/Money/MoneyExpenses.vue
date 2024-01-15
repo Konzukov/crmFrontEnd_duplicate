@@ -59,7 +59,6 @@ export default {
   },
   methods:{
     newExpenses(){
-      console.log('click')
       this.$emit('createExpenses')
     },
   },

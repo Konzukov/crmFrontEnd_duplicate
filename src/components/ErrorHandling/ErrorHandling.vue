@@ -52,7 +52,6 @@
         },
         methods: {
             open(message) {
-                console.log(message)
                 this.errorMessage = message
                 this.errorSnackbar = true
             },

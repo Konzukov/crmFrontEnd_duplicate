@@ -125,7 +125,6 @@ export default {
       }
     },
     applyFilter() {
-      console.log(this.focus)
       let date = '-1';
       let project, user, tags;
       if (!this.project || !this.user) {

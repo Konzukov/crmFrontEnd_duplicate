@@ -269,7 +269,6 @@ export default {
     goBack(obj, title) {
       obj.active = false
       this.showBackMenu = false
-      console.log(title)
       this.detailActive[title] = false
 
     },
@@ -300,7 +299,6 @@ export default {
       this.$store.dispatch('changeOrganization', formData).then(() => {
         location.reload()
       })
-      console.log(item)
     }
   },
   async created() {

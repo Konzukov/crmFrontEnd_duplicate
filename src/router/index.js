@@ -485,7 +485,6 @@ const router = new VueRouter({
 
 router.beforeEach((to, from, next) => {
     if (to.matched.some(record => record.meta.authRequire)) {
-        console.log(to.matched.some(record => record))
         if (store.getters.isLoggedIn) {
             next()
             return

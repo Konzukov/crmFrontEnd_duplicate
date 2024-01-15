@@ -102,7 +102,10 @@
               </p>
               <p>
                 <strong>Судья</strong>
-                <span v-html="': ' + selectedEvent.judge.full_name"></span>
+
+                <span v-if="selectedEvent.judge">: {{selectedEvent.judge.full_name}}</span>
+                <span v-else v-html="': ' "></span>
+
               </p>
               <p>
                 <strong>Категория</strong>
@@ -250,7 +253,6 @@ export default {
         requestAnimationFrame(() => requestAnimationFrame(() => this.selectedOpen = true))
         this.$store.dispatch('detailJudicialEvent', event['id']).then(eventDetail => {
           this.selectedEvent = eventDetail
-          console.log(this.selectedEvent)
         })
       }
 

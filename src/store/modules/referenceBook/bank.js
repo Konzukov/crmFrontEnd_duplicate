@@ -113,7 +113,7 @@ export default {
                     url: customConst.REFERENCE_BOOK_API + 'bank-cards/',
                     data: formData
                 }).then(res => {
-                    commit()
+                    resolve(res.data.data.data)
                 }).catch(err => {
                     reject(err)
                 })
@@ -126,7 +126,7 @@ export default {
                     url: customConst.REFERENCE_BOOK_API + `${id}/` +'bank-cards/',
                     data: formData
                 }).then(res => {
-                    commit()
+                    resolve(res.data.data.data)
                 }).catch(err => {
                     reject(err)
                 })

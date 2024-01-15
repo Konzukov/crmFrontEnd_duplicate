@@ -24,10 +24,8 @@
               >
             </v-row>
             <v-row justify="center" class="mt-10" align="center">
-              <a :href="exampleUrl">Пример файла для загрузки счетов</a>
-              <!--            <v-col cols="2">-->
-              <!--              <v-btn icon><v-icon>mdi-help</v-icon></v-btn>-->
-              <!--            </v-col>-->
+              <a v-if="dataType === 'bankAccount'" :href="exampleAccountUrl">Пример файла для загрузки счетов</a>
+              <a v-else :href="exampleBankCardUrl">Пример файла для загрузки данных карт</a>
             </v-row>
           </v-container>
         </v-card-text>
@@ -58,7 +56,7 @@
         <v-card-actions>
           <v-row justify="center">
             <v-col cols="auto">
-              <v-btn color="error" @click="close">Закрыть</v-btn>
+              <v-btn color="error" @click="close()">Закрыть</v-btn>
             </v-col>
           </v-row>
         </v-card-actions>
@@ -82,7 +80,9 @@ export default {
       {text: 'Загружен', value: 'added'},
     ],
     project: null,
-    exampleUrl: customConst.BASE_URL + '/media/bank_account_example.xlsx',
+    dataType: null,
+    exampleAccountUrl: customConst.BASE_URL + '/media/bank_account_example.xlsx',
+    exampleBankCardUrl: customConst.BASE_URL + '/media/bank_card_example.xlsx',
     selectedFile: null,
     isSelecting: false,
     errorMessage: null,
@@ -90,16 +90,23 @@ export default {
   }),
   methods: {
     close() {
+      if (this.dataType === 'bankAccount'){
+        this.$emit('updateAccountList')
+      } else if (this.dataType === 'bankCard'){
+        this.$emit('updateBankCardList')
+      }
       Object.assign(this.$data, this.$options.data())
+      this.selectedFile = null
+      this.isSelecting = null
       this.dialog = false
     },
     handleFileImport() {
       this.isSelecting = true;
 
-      // After obtaining the focus when closing the FilePicker, return the button state to normal
-      window.addEventListener('focus', () => {
-        this.isSelecting = false
-      }, {once: false});
+      // // After obtaining the focus when closing the FilePicker, return the button state to normal
+      // window.addEventListener('focus', () => {
+      //   this.isSelecting = false
+      // }, {once: false});
 
       // Trigger click on the FileInput
       this.$refs.uploader.click();
@@ -110,6 +117,7 @@ export default {
       let formData = new FormData()
       formData.set('file', e.target.files[0])
       formData.set('project', this.project)
+      formData.set('dataType', this.dataType)
       this.$http({
         method: "POST",
         url: customConst.REFERENCE_BOOK_API + 'load-bank-account',
@@ -128,7 +136,13 @@ export default {
     },
   },
   created() {
-    this.$parent.$on('addXlsxAccount', (project) => {
+    this.$parent.$on('addXlsxAccount', ({project, dataType}) => {
+      this.dataType = dataType
+      this.project = project
+      this.dialog = true
+    })
+    this.$parent.$on('addXlsxBankCard', ({project, dataType}) => {
+      this.dataType = dataType
       this.project = project
       this.dialog = true
     })

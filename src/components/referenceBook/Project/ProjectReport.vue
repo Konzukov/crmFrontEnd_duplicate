@@ -5,7 +5,8 @@
         <v-card id="report-card" width="100%" height="100%"
                 class="overflow-x-hidden">
           <template v-for="(item, i) in historyList">
-            <v-card-text :key="i" :class="[i % 2===0 ? 'bg-grey' : '']">
+            <v-card-text :key="i"
+                         :class="[i % 2===0 ? 'bg-grey' : '', item.route && item.route !== 'Исходящее'? '': 'bg-out']">
               <v-row justify="start" class="mt-2 ml-2 mb-3 ">
                 <v-col md="2" class="date-type-info">
                   <!--                  .receiving_date ? item.receiving_date : item['entry_date']-->
@@ -36,18 +37,16 @@
                   </v-row>
                   <v-row justify="start" class="primary--text item-additional-info">
                     <span v-if="item.type === 'event'">
-                      {{ item.author | getName }} | {{ item.start | filterDate }} | {{ item.name }}
+                      {{ item.author | getName }} | {{ item | filterDate }} | {{ item.name }}
                     </span>
                     <span v-else-if="item.type === 'task'">
                       {{ item.author | getName }} | {{ item.name }}
                     </span>
                     <span v-else-if="item.type === 'document'">
-                      {{ item.author | getName }} | {{ item.entry_date | filterDate }} | {{ item.file }}
+                      {{ item.author | getName }} | {{ item | filterDate }} | {{ item.file }}
                     </span>
                     <span v-else-if="item.type === 'post'">
-                      {{ item.user | getName }} | {{
-                        item.departure_date | filterDate
-                      }} | {{ item.post_documents | fileName }}
+                      {{ item.user | getName }} | {{ item | filterDate }} | {{ item | fileName }}
                     </span>
                   </v-row>
 
@@ -419,6 +418,7 @@ export default {
               }
             })
           }
+          console.log(data)
           return data
         }
         return new Array()
@@ -448,15 +448,15 @@ export default {
       return description.slice(0, 35) + '...'
     },
     filterDate(item) {
-        if (item.type === 'document'){
-          return moment(new Date(item.receiving_date)).format('DD.MM.YYYY')
-        } else if(item.type === 'post'){
-          return moment(new Date(item.receiving_date)).format('DD.MM.YYYY')
-        } else if (item.type === 'event'){
-          return moment(new Date(item.start)).format('DD.MM.YYYY')
-        }else if (item.type === 'task'){
-          return moment(new Date(item.start)).format('DD.MM.YYYY')
-        }
+      if (item.type === 'document') {
+        return moment(new Date(item.receiving_date)).format('DD.MM.YYYY')
+      } else if (item.type === 'post') {
+        return moment(new Date(item.receiving_date)).format('DD.MM.YYYY')
+      } else if (item.type === 'event') {
+        return moment(new Date(item.start)).format('DD.MM.YYYY')
+      } else if (item.type === 'task') {
+        return moment(new Date(item.start)).format('DD.MM.YYYY')
+      }
       // return moment(new Date(date)).format('DD.MM.YYYY'),
     },
     getName(obj) {
@@ -471,7 +471,17 @@ export default {
 
     },
     fileName(item) {
-      if (item && item.hasOwnProperty('fileName')) return item.fileName
+      let files = []
+      if (item && item.hasOwnProperty('post_documents')) {
+        if (Array.isArray(item['post_documents'])) {
+          for (let docs of item['post_documents']) {
+            files.push(docs.fileName)
+            console.log(files)
+          }
+          return files.join(', ')
+        }
+        return 'Нет вложения'
+      }
       return 'Нет вложения'
     }
   },
@@ -579,6 +589,10 @@ export default {
   padding-bottom: 0;
   padding-top: 1px;
   border-bottom: 1px solid #a1a1a1;
+}
+
+.bg-out {
+  background-color: rgba(11, 39, 177, 0.3) !important;
 }
 
 .bg-grey {
