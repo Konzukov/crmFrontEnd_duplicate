@@ -6,12 +6,13 @@
           <v-card flat :class="[expiredTask(task.date_to), 'mb-1']">
             <v-card-text class="mt-2 mb-2">
               <v-row justify="start" >
+                <v-col md="2">{{i}}</v-col>
                 <v-col md="2">
                   <v-row class="item-additional-info">
                     <v-col class="pl-1 pr-1"><span>До: {{ task.date_to | dateFormat }}</span></v-col>
                   </v-row>
                 </v-col>
-                <v-col md="8">
+                <v-col md="7">
                   <v-row>
                     <v-col cols="auto" class="task-name">
                       <strong>{{ task.name }}</strong>

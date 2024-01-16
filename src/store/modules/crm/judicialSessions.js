@@ -22,7 +22,8 @@ export default {
         syncEditJudicialEvent(state, judicialEvent){
             for (let events of state.judicialEvent){
                 if (events['id'] === judicialEvent['id']){
-                    events = judicialEvent
+                    Object.assign(events, judicialEvent)
+                    // events = judicialEvent
                 }
             }
         }
@@ -65,9 +66,9 @@ export default {
                 })
             })
         },
-        editJudicialEvent({commit}, {formData, id}) {
-            return new Promise((resolve, reject) => {
-                axios({
+        async editJudicialEvent({commit}, {formData, id}) {
+            return new Promise(async (resolve, reject) => {
+                await axios({
                     method: "PUT",
                     url: customConst.CRM_API + `judicial-sessions/${id}/`,
                     data: formData

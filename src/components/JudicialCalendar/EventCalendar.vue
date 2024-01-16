@@ -59,7 +59,8 @@
           :close-on-content-click="false"
           :activator="selectedElement"
           top
-          origin="center center"
+          offset-x
+          allow-overflow
           transition="scale-transition"
           max-width="350px"
       >
@@ -77,7 +78,6 @@
             min-width="350px"
             max-width="350px"
             flat
-
         >
           <v-toolbar dark>
             <v-toolbar-title v-html="selectedEvent['project_name']"></v-toolbar-title>
@@ -103,7 +103,7 @@
               <p>
                 <strong>Судья</strong>
 
-                <span v-if="selectedEvent.judge">: {{selectedEvent.judge.full_name}}</span>
+                <span v-if="selectedEvent.judge">: {{ selectedEvent.judge.full_name }}</span>
                 <span v-else v-html="': ' "></span>
 
               </p>
@@ -115,9 +115,9 @@
                 <p>
                   <strong>Требование суда</strong>
                 </p>
-                <span>
-                {{ selectedEvent.court_requirement }}
-              </span>
+                <p style="height: 30vh; overflow-y: scroll">
+                  {{ selectedEvent.court_requirement }}
+                </p>
               </div>
               <p>
                 <strong>Ссылка на определение:</strong><a :href="selectedEvent.definition_url"
@@ -152,7 +152,7 @@
            right outlined fab icon class="v-btn-parse">
       <v-icon>mdi-reload</v-icon>
     </v-btn>
-    <NewJudicialEvent></NewJudicialEvent>
+    <NewJudicialEvent @saveDone="saveDone"></NewJudicialEvent>
   </v-container>
 </template>
 
@@ -181,7 +181,7 @@ export default {
   }),
   computed: {
     judicialEventList() {
-      const judicialEventListData = this.$store.getters.judicialEventData
+      let judicialEventListData = this.$store.getters.judicialEventData
       if (this.onlyMyEvent) {
         const curUser = this.$store.getters.currentUserData[0]
         return judicialEventListData.filter(obj => obj.responsible === curUser.uuid)
@@ -217,11 +217,17 @@ export default {
         timeZone: 'UTC', month: 'long',
       })
     },
-    currentUserInfo(){
+    currentUserInfo() {
       return this.$store.getters.currentUserData[0]
     }
   },
   methods: {
+    saveDone(event) {
+      this.$store.dispatch('detailJudicialEvent', event).then(eventDetail => {
+        this.selectedEvent = eventDetail
+      })
+      console.log('saveDone')
+    },
     newJudicialSession() {
       this.$emit('newJudicialSession')
     },

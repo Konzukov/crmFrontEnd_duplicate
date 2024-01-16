@@ -180,7 +180,7 @@ export default {
           })
         } else {
           this.$store.dispatch('editJudicialEvent', {formData, id: this.formField.id}).then(() => {
-            this.$emit('saveDone')
+            this.$emit('saveDone', this.formField.id)
             this.close()
           }).catch(() => {
             this.$emit('saveError')

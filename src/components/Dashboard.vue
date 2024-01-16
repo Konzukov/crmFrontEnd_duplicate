@@ -124,8 +124,8 @@
                      :to="{name: 'task-list'}"
                      translate="animatedPulse"
                      @click="showDetailInfo(dashboardItems[0].task, 'task')"
-                     :width="dashboardTaskList.total + 15"
-                     :height="dashboardTaskList.total + 15"
+                     :width="taskFont() + 15"
+                     :height="taskFont() + 15"
                      :style="{fontSize: taskFont(),
                          color: convert(0.7)}">{{ dashboardTaskList.total }}
               </v-btn>
@@ -133,7 +133,7 @@
             </v-row>
           </v-col>
           <v-col md="4" sm="12" xs="12" class="dash-title"
-                 v-if="(!detailActive.task & !detailActive.event & !detailActive.doc) || detailActive.event"
+                 v-if="(!detailActive.task & !detailActive.event && !detailActive.doc) || detailActive.event"
           >
             <v-row justify="center">
               <h2 class="headline">
@@ -289,7 +289,7 @@ export default {
     },
     taskFont() {
       if (this.dashboardTaskList.total > 70) {
-        return 70 + 'px'
+        return 30 + 'px'
       }
       return (10 + this.dashboardTaskList.total) + 'px'
     },
