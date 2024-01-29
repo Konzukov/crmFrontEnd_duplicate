@@ -26,12 +26,12 @@
                                   item-value="id" v-model="form.correspondence_type"></v-autocomplete>
                 </v-col>
               </v-row>
-              <v-row justify="start">
+              <v-row justify="space-around">
                 <v-col md="5" sm="5" class="mr-2">
                   <v-autocomplete
                       outlined
                       dense
-                      label="От кого"
+                      :label="form.route? 'От кого': 'Кому'"
                       v-model="form.from"
                       :items="contractorList"
                       item-value="uuid"
@@ -52,7 +52,7 @@
                   <v-autocomplete
                       outlined
                       dense
-                      label="Кому"
+                      :label="form.route? 'Кому': 'От кого'"
                       :items="participatorList"
                       v-model="form.to"
                       return-object

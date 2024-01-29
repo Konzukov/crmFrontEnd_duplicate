@@ -123,7 +123,7 @@ export default {
             return new Promise((resolve, reject) => {
                 axios({
                     method: "PUT",
-                    url: customConst.REFERENCE_BOOK_API + `${id}/` +'bank-cards/',
+                    url: customConst.REFERENCE_BOOK_API  +`bank-cards/${id}/`,
                     data: formData
                 }).then(res => {
                     resolve(res.data.data.data)

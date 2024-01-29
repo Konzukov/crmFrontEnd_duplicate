@@ -51,6 +51,7 @@ export default {
     passport: {
       pk: '',
       serial: '',
+      type: 'PR',
       number: '',
       date_issue: '',
       division_code: '',

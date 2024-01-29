@@ -156,8 +156,8 @@ export default {
     addJudge() {
       this.$emit('newJudge')
     },
-    setJudge(item){
-      if (item.judge){
+    setJudge(item) {
+      if (item.judge) {
         this.formField.judge = item.judge.id
       }
     },
@@ -217,9 +217,14 @@ export default {
       for (let [key, val] of Object.entries(judicialEvent)) {
         if (val !== 0) {
           if (key === 'category_id') this.formField['category'] = val
-          else if (key === 'responsible_id') this.formField['responsible'] = val
-          else if (key === 'judge') this.formField[key] = val['id']
-          else {
+          else if (key === 'responsible_id') {
+            this.formField['responsible'] = val
+          }
+          else if (key === 'judge') {
+            if (val) {
+              this.formField[key] = val['id']
+            }
+          } else {
             if (val) this.formField[key] = val
           }
         }

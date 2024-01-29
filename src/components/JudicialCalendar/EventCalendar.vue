@@ -58,7 +58,9 @@
           v-model="selectedOpen"
           :close-on-content-click="false"
           :activator="selectedElement"
+          content-class="calendar-card"
           top
+          offset-y
           offset-x
           allow-overflow
           transition="scale-transition"
@@ -352,5 +354,8 @@ export default {
 
 .v-application p {
   margin-bottom: 5px;
+}
+.calendar-card{
+  top: 95px !important;
 }
 </style>

@@ -276,14 +276,20 @@ export default {
         })
         //
         if (this.passportCount.length > 0) {
+          console.log(this.passportCount.length)
           const refs = this.passportCount.map(obj => {
             return obj.ref
           })
+          console.log(refs)
           for (let ref of refs) {
+            console.log(ref)
             let passportCreateComponent = this.$refs[ref]
             if (passportCreateComponent) {
               let data = passportCreateComponent[0].save()
               if (data) {
+                for (let pair of data.entries()) {
+                  console.log(pair[0] + ', ' + pair[1]);
+                }
                 this.passportFormsData.push(data)
               }
             }
@@ -344,7 +350,9 @@ export default {
           this.$store.dispatch('editPhysicalPerson', {formData, pk: this.form.pk}).then(async (res) => {
             for (let passportFormData of this.passportFormsData) {
               if (passportFormData.get('pk')) {
-                console.log('passport edit')
+                for (let pair of passportFormData.entries()) {
+                  console.log(pair[0] + ', ' + pair[1]);
+                }
                 await this.$store.dispatch('editPhysicalPersonPassport', {
                   formData: passportFormData,
                   pk: passportFormData.get('pk')
@@ -357,11 +365,18 @@ export default {
               } else {
                 console.log('passport create')
                 passportFormData.append('physical_person', this.form.pk)
+                for (let pair of passportFormData.entries()) {
+                  console.log(pair[0] + ', ' + pair[1]);
+                }
                 await this.$store.dispatch('createPhysicalPersonPassport', passportFormData).then(() => {
                   this.savingDone = true
                   setTimeout(() => {
                     this.savingData = false
                   }, 1500)
+                }).catch(err => {
+                  setTimeout(() => {
+                    this.savingData = false
+                  }, 5500)
                 })
               }
             }
@@ -399,7 +414,7 @@ export default {
             }, 1500)
           })
         }
-        setTimeout(()=>{
+        setTimeout(() => {
           this.updateData()
         }, 1000)
       }

@@ -24,7 +24,11 @@
       <v-col cols="8" v-else-if="currentTemplate && currentTemplate.name === 'Сопровод к отчетам'">
           <ReportGenerator :template="currentTemplate"></ReportGenerator>
       </v-col>
+      <v-col col="8" v-else-if="currentTemplate && currentTemplate.name === 'Сводный запрос в кредитную организацию'">
+
+      </v-col>
     </v-row>
+
   </v-container>
 </template>
 

@@ -42,9 +42,9 @@
                 <v-checkbox :disabled="!project" dense label="Данные сформированы правильно"
                             v-model="verify"></v-checkbox>
               </v-col>
-<!--              <v-col>-->
-<!--                <v-btn color="success" :disabled="!verify" @click="saveDoc">Сохранить документ в базу</v-btn>-->
-<!--              </v-col>-->
+              <!--              <v-col>-->
+              <!--                <v-btn color="success" :disabled="!verify" @click="saveDoc">Сохранить документ в базу</v-btn>-->
+              <!--              </v-col>-->
               <v-col>
                 <v-btn color="success" :disabled="!verify || !!!sendEmailAddress" @click="sendEmail">Отправить на email
                 </v-btn>
@@ -112,6 +112,18 @@
                       </template>
                     </v-autocomplete>
                   </v-row>
+                  <v-row v-if="field.value ==='BANK_CARD'" justify="start">
+                    <v-autocomplete outlined dense :label="field.name" :items="bankCardList" item-value="id"
+                                    multiple
+                                    v-model="bankCard">
+                      <template v-slot:selection="data">
+                        <span style="font-size: 13px">{{ data.item.bank.name }} - {{ data.item.card_number }}</span>
+                      </template>
+                      <template v-slot:item="data">
+                        <span style="font-size: 13px">{{ data.item.bank.name }} - {{ data.item.card_number }}</span>
+                      </template>
+                    </v-autocomplete>
+                  </v-row>
                 </template>
                 <template v-else-if="field['is_date']">
                   <v-text-field type="date" :rules="rules.required"
@@ -134,7 +146,7 @@
           </v-col>
         </v-row>
       </v-card-text>
-      <v-dialog v-model="overlay" width="25vw" scrollable>
+      <v-dialog v-model="overlay" width="25vw" scrollable persistent>
         <v-card width="25vw" height="25vh">
           <v-card-text v-if="loading" style="display:flex;">
             <v-row justify="center" align="center">
@@ -143,12 +155,6 @@
                   indeterminate
                   size="64"
               ></v-progress-circular>
-            </v-row>
-          </v-card-text>
-          <v-card-text v-else style="display:flex;">
-            <v-row justify="center" align="center">
-              <v-icon v-if="!error" color="success" size="64">mdi-check</v-icon>
-              <v-icon v-else color="error" size="64">mdi-alert-circle</v-icon>
             </v-row>
           </v-card-text>
         </v-card>
@@ -180,8 +186,8 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <SystemMessage :state.sync="state"/>
   </v-container>
-
 </template>
 
 <script>
@@ -192,6 +198,7 @@ import {saveAs} from 'file-saver';
 import CreatePostMail from "@/components/PostMail/CreatePostMail";
 import ContractorCreateModal from "@/components/referenceBook/ContractorCreateModal";
 import LegalEntityCreateModal from "@/components/referenceBook/LegalEntity/LegalEntityCreateModal.vue";
+import SystemMessage from "@/components/UI/SystemMessage.vue";
 
 
 let vueStore = {
@@ -228,8 +235,11 @@ export default {
     legalContractor: null,
     sendEmailAddress: '',
     bankAccountList: null,
+    bankCardList: null,
     bankAccount: null,
+    bankCard: [],
     contractList: null,
+    state: '',
     rules: {
       required: [v => !!v || 'Не удалось сапоставить значение']
     },
@@ -255,7 +265,7 @@ export default {
       participantDetail: 'participantFullDetail',
       currentUser: 'authUserData',
       allRefList: 'allRefData',
-      legalList: 'legalEntityData'
+      legalList: 'legalEntityData',
     }),
     bailiffsList: function () {
       let bailiffs = this.$store.getters.bailiffsListData
@@ -296,6 +306,9 @@ export default {
         this.$store.dispatch('getOrganizationBankAccount', data.participant.participator.uuid).then(bankAccount => {
           this.bankAccountList = bankAccount
         })
+        this.$store.dispatch('getBankCardList', data.id).then(cardList => {
+          this.bankCardList = cardList
+        })
         this.contractList = data.contract
         this.fileName = data['name'].split(' ')[0]
         this.$store.dispatch('getProjectAct', data['id']).then(res => {
@@ -303,9 +316,6 @@ export default {
           data['act'] = act
           compareFields(this.template.fields, data).then(async (data) => {
             this.templateFields = data
-            // for (let [key, val] of Object.entries(await data)) {
-            //   this.templateFields[key] = val
-            // }
           })
         })
       })
@@ -332,16 +342,20 @@ export default {
         formData.append('CREDITOR_ADDRESS', this.creditor?.legal_address)
       }
       if (this.bank) {
-        console.log(this.bank)
         formData.append('BANK', this.bank.name)
         formData.append('BANK_ID', this.bank.id)
         formData.append('BANK_ADDRESS', this.bank?.legal_address)
       }
+
       Object.keys(this.templateFields).forEach(key => {
         formData.append(key, this.templateFields[key])
       })
       if (this.dataFile) {
         formData.append('dataFile', this.dataFile)
+      }
+      if (this.bankCard) {
+        this.bankCard.forEach(item=>formData.append('BANK_CARD', item))
+        // formData.append('BANK_CARD', this.bankCard)
       }
       return formData
     },
@@ -350,7 +364,6 @@ export default {
       this.overlay = true
       this.loading = true
       let formData = this.setFormData()
-      console.log(this.currentUser)
       this.$http({
         method: "POST",
         url: customConst.GENERATOR + 'document-template/generate/',
@@ -363,7 +376,7 @@ export default {
         } else {
           fileName = `${this.fileName}_${this.template.name.replaceAll(' ', '_')}_${this.templateFields['NUMBER']}`
         }
-        if (this.template.name === 'ходатайтсво об ознакомлении с материалами дела'){
+        if (this.template.name === 'ходатайтсво об ознакомлении с материалами дела') {
           fileName += '_1л'
         }
         saveAs(res.data, fileName)
@@ -371,10 +384,12 @@ export default {
         this.loading = false
       }).then(() => {
         this.confirmSave = true
-      }).catch(err => {
+      }).catch(async (err) => {
+
         this.overlay = false
         this.loading = false
-        this.error = true
+        this.state = 'error'
+        this.$emit('showSystemMessage', {response: err, state: this.state})
       })
     },
     async saveDoc() {
@@ -395,14 +410,18 @@ export default {
             this.overlay = false
             this.confirmSave = false
             this.docId = res.data.data.data
+            this.overlay = false
+            this.loading = false
+            this.state = 'success'
+            this.$emit('showSystemMessage', {response: res, state: this.state})
             resolve()
+
           }, 1000)
         }).catch(err => {
+          this.overlay = false
           this.loading = false
-          setTimeout(() => {
-            this.error = true
-            this.overlay = false
-          }, 1000)
+          this.state = 'error'
+          this.$emit('showSystemMessage', {response: err, state: this.state})
         })
       })
     },
@@ -416,17 +435,15 @@ export default {
         url: customConst.GENERATOR + 'document-template/send_mail_to_kommersant/',
         data: formData,
       }).then(res => {
+        this.overlay = false
         this.loading = false
-        setTimeout(() => {
-          this.error = false
-          this.overlay = false
-        }, 1000)
+        this.state = 'success'
+        this.$emit('showSystemMessage', {response: res, state: this.state})
       }).catch(err => {
+        this.overlay = false
         this.loading = false
-        setTimeout(() => {
-          this.error = true
-          this.overlay = false
-        }, 1000)
+        this.state = 'error'
+        this.$emit('showSystemMessage', {response: err, state: this.state})
       })
     },
     sendEmail() {
@@ -541,6 +558,7 @@ export default {
     await this.$store.dispatch('getPhysicalPerson')
   },
   components: {
+    SystemMessage,
     CreatePostMail,
     ContractorCreateModal,
     LegalEntityCreateModal

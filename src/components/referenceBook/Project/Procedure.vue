@@ -245,6 +245,15 @@
           <v-tooltip top>
             <template v-slot:activator="{ on, attrs }">
               <v-btn class="mr-6" icon small v-bind="attrs"
+                     v-on="on" color="success" @click.native.stop="createCardAcceptance">
+                <v-icon>mdi-file-document-plus-outline</v-icon>
+              </v-btn>
+            </template>
+            <span>Сформировать акт приема карт</span>
+          </v-tooltip>
+          <v-tooltip top>
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn class="mr-6" icon small v-bind="attrs"
                      v-on="on" color="success" @click.native.stop="addBankCardXlsx">
                 <v-icon>mdi-table-large-plus</v-icon>
               </v-btn>
@@ -273,8 +282,19 @@
                       dense
                       height="50%"
                       @dblclick:row="editItem"
-                      :item-class="accountRowClass"
+                      :item-class="hasStatement"
                   >
+                    <template v-slot:item.actions="{item}">
+                      <v-tooltip top>
+                        <template v-slot:activator="{ on, attrs }">
+                          <v-btn small v-bind="attrs"
+                                 v-on="on" icon color="primary" @click.native.stop="editBankCard($event, {item})">
+                            <v-icon>mdi-pencil</v-icon>
+                          </v-btn>
+                        </template>
+                        <span>Редактировать карту</span>
+                      </v-tooltip>
+                    </template>
                   </v-data-table>
                 </v-card-text>
               </v-card>
@@ -292,6 +312,7 @@
     <AccountStatementModal></AccountStatementModal>
     <BargainingCreateModal></BargainingCreateModal>
     <ApplicantCreateModal></ApplicantCreateModal>
+    <DocumentGeneratorModal :project="project"></DocumentGeneratorModal>
   </v-container>
 </template>
 
@@ -313,6 +334,7 @@ import {mapGetters} from "vuex";
 import {compareFields} from "@/components/DocumentGeneration/functions";
 import BankCardCreate from "@/components/referenceBook/Bank/BankCardCreate.vue";
 import CreditorClaimCreate from "@/components/referenceBook/Project/Creditor/CreditorClaimCreate.vue";
+import DocumentGeneratorModal from "@/components/DocumentGeneration/DocumentGeneratorModal.vue";
 
 export default {
   props: ['project', 'collapsed', 'act'],
@@ -396,6 +418,11 @@ export default {
         }
       }
     },
+    hasStatement(item) {
+      if (item.document) {
+        return 'has-statement'
+      }
+    },
     updateAccountList() {
       this.bankAccountList = []
       this.selectedAccount = null
@@ -456,8 +483,11 @@ export default {
     addAccountXlsx() {
       this.$emit('addXlsxAccount', {project: this.$route.params['pk'], dataType: 'bankAccount'})
     },
-    addBankCardXlsx(){
+    addBankCardXlsx() {
       this.$emit('addXlsxBankCard', {project: this.$route.params['pk'], dataType: 'bankCard'})
+    },
+    createCardAcceptance() {
+      this.$emit('generateDocument', 12)
     },
     addBargaining() {
       this.$emit('addBargaining', this.$route.params['pk'])
@@ -511,10 +541,15 @@ export default {
       })
     },
     editItem(event, {item}) {
-      console.log(item)
       this.selectedAccount = null
       setTimeout(() => {
         this.selectedAccount = item
+      }, 150)
+    },
+    editBankCard(event, {item}) {
+      this.selectedBackCard = null
+      setTimeout(() => {
+        this.selectedBackCard = item
       }, 150)
     },
     editStatement(item) {
@@ -556,6 +591,7 @@ export default {
     })
   },
   components: {
+    DocumentGeneratorModal,
     CreditorClaimCreate,
     bankAccountCreate,
     loadAccountXlsx,
@@ -592,5 +628,9 @@ export default {
 
 >>> .expired {
   color: #a0a0a0 !important;
+}
+
+>>> .has-statement {
+  background-color: rgba(21, 239, 11, 0.18);
 }
 </style>

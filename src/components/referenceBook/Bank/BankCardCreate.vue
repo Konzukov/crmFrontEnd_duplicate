@@ -108,6 +108,8 @@ export default {
           this.form.card_type = "MASTERCARD"
         } else if (card.brandName === "Visa") {
           this.form.card_type = "VISA"
+        }else if (card.brandName === "MIR") {
+          this.form.card_type = "MIR"
         }
         this.bankInfo.bankLogo = card.bankLogo
         this.bankInfo.brandLogo = card.brandLogo
@@ -126,12 +128,17 @@ export default {
     async syncData() {
       console.log(this.project)
       if (!isEmpty(this.bankCardData)) {
+        console.log(this.bankCardData)
         this.form.id = this.bankCardData.id
-        this.form.legal = this.bankCardData.legal
-        this.form.physical = this.bankCardData.physical
+        if (this.bankCardData.legal){
+          this.form.legal = this.bankCardData.legal
+        }else{
+          this.form.physical = this.bankCardData.physical
+        }
         this.form.bank = this.bankCardData.bank.id
         this.form.card_number = this.bankCardData.card_number
-        this.form.validity = this.bankCardData.validity
+        this.form.card_type = this.bankCardData.card_type
+        this.form.validity = moment(this.bankCardData.validity, 'YY-MM-DD').format('MM/YY')
         this.form.comment = this.bankCardData.comment
         this.account_statement = this.bankCardData.account_statement
       } else {

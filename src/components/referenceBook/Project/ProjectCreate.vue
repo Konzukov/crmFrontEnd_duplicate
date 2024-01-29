@@ -165,6 +165,7 @@
     </v-card>
     <ContractorCreateModal @contractorAdded="setContractor"></ContractorCreateModal>
     <DocInArbitr @saveDoc="saveDoc" ref="docInArbitr" @clearDocumentArbitr="clearDocumentArbitr" :available-doc-list.sync="availableDoc"></DocInArbitr>
+    <SystemMessage :state="state"/>
   </v-container>
 </template>
 
@@ -175,6 +176,7 @@ import ContractorCreateModal from "@/components/referenceBook/ContractorCreateMo
 import customConst from "@/const/customConst";
 import DocInArbitr from "@/components/UI/DocInArbitr";
 import {VueEditor} from "vue2-editor";
+import SystemMessage from "@/components/UI/SystemMessage.vue";
 
 export default {
   props: {
@@ -191,6 +193,7 @@ export default {
   data: () => ({
     valid: false,
     contractor: '',
+    state: '',
     judicialActCount: [],
     judicialAct: [],
     errors: {},
@@ -394,7 +397,9 @@ export default {
         })
         this.cookie = res.data.cookie
       }).catch(err => {
-        console.log(err)
+        this.$refs.docInArbitr.close()
+        this.state = 'error'
+        this.$emit('showSystemMessage', {response: err, state: this.state})
       })
     },
     clearDocumentArbitr(){
@@ -443,7 +448,7 @@ export default {
   destroyed() {
 
   },
-  components: {ContractorCreateModal, JudicialAct, DocInArbitr, VueEditor}
+  components: {SystemMessage, ContractorCreateModal, JudicialAct, DocInArbitr, VueEditor}
 }
 </script>
 

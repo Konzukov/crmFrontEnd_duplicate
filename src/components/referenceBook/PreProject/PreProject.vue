@@ -126,7 +126,7 @@ export default {
       },
       loading: false,
       loadMessage: '',
-      email: '',
+      email: 'sro_edinstvo@mail.ru',
       emailRules: [
         v => !v || /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) || 'E-mail must be valid'
       ],
