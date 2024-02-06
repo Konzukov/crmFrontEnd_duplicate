@@ -5,16 +5,31 @@
       <v-card-text>
         <v-row justify="start">
           <v-col cols="4" class="mt-5">
-            <v-autocomplete dense
-                            outlined
-                            label="Выберете проект"
-                            v-model="project"
-                            :items="projectList"
-                            item-text="name"
-                            item-value="id"
-                            @change="getProjectDetail"
+            <v-autocomplete
+                v-if="template['name'] !== 'Сводный запрос в кредитную организацию'"
+                dense
+                outlined
+                label="Выберете проект"
+                v-model="project"
+                :items="projectList"
+                item-text="name"
+                item-value="id"
+                @change="getProjectDetail"
             >
             </v-autocomplete>
+
+            <v-autocomplete
+                v-else
+                dense
+                outlined
+                label="Выберете кредитную организацию"
+                v-model="creditOrganization"
+                :items="creditOrganizationList"
+                item-text="name"
+                item-value="id"
+                return-object
+                @change="getCreditOrganizationDetail"
+            ></v-autocomplete>
             <v-radio-group row dense v-model="docType">
               <v-radio
                   label="DOCX"
@@ -215,6 +230,7 @@ export default {
   },
   data: () => ({
     project: null,
+    creditOrganization: null,
     confirmSave: false,
     projectData: null,
     docType: 'docx',
@@ -266,6 +282,7 @@ export default {
       currentUser: 'authUserData',
       allRefList: 'allRefData',
       legalList: 'legalEntityData',
+      creditOrganizationList: 'creditOrganizationListData'
     }),
     bailiffsList: function () {
       let bailiffs = this.$store.getters.bailiffsListData
@@ -294,7 +311,6 @@ export default {
   methods: {
     getProjectDetail(item) {
       this.$store.dispatch('getProjectDetail', item).then(data => {
-        console.log(data)
         this.projectData = data
         if (data.legal_contractor) {
           this.legalContractor = data.legal_contractor
@@ -319,6 +335,17 @@ export default {
           })
         })
       })
+    },
+    getCreditOrganizationDetail(item) {
+      this.project = 36
+      this.bank = item
+      this.$store.dispatch('getProjectDetail', 36).then(data => {
+        this.projectData = data
+        compareFields(this.template.fields, data).then(async (data) => {
+          this.templateFields = data
+        })
+      })
+
     },
     setFormData() {
       let formData = new FormData()
@@ -354,7 +381,7 @@ export default {
         formData.append('dataFile', this.dataFile)
       }
       if (this.bankCard) {
-        this.bankCard.forEach(item=>formData.append('BANK_CARD', item))
+        this.bankCard.forEach(item => formData.append('BANK_CARD', item))
         // formData.append('BANK_CARD', this.bankCard)
       }
       return formData
@@ -548,7 +575,7 @@ export default {
     },
   },
   async created() {
-    // let participant = this.$store.getters.participantFullDetail
+    await this.$store.dispatch('getCreditorOrganization')
     await this.$store.dispatch('getParticipator')
     await this.$store.dispatch('getProjectList')
     await this.$store.dispatch('getRegion')

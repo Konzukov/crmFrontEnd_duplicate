@@ -48,7 +48,19 @@
             <v-data-table :items="successMessages" :headers="headers" hide-default-footer :items-per-page="999">
               <template v-slot:item.added="{item}">
                 <span v-if="item.added">Да</span>
-                <span v-else>Нет</span>
+                <span v-else>Нет
+                  <v-tooltip bottom>
+                    <template v-slot:activator="{ on, attrs }">
+        <v-icon
+            color="error"
+            v-bind="attrs"
+            v-on="on"
+        >
+          mdi-information
+        </v-icon>
+      </template>
+      <span>{{item.comment}}</span>
+    </v-tooltip></span>
               </template>
             </v-data-table>
           </v-row>
@@ -90,9 +102,9 @@ export default {
   }),
   methods: {
     close() {
-      if (this.dataType === 'bankAccount'){
+      if (this.dataType === 'bankAccount') {
         this.$emit('updateAccountList')
-      } else if (this.dataType === 'bankCard'){
+      } else if (this.dataType === 'bankCard') {
         this.$emit('updateBankCardList')
       }
       Object.assign(this.$data, this.$options.data())

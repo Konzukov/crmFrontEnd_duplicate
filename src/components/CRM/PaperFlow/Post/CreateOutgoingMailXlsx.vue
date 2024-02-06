@@ -3,6 +3,10 @@
     <v-form>
       <v-row justify="start" align="baseline">
         <v-col md="6" sm="8" xl="6" lg="6">
+          <v-autocomplete dense outlined label="Структура файла" v-model="fileType"
+                          :items="fileTypes" item-text="text" item-value="val"
+          >
+          </v-autocomplete>
           <v-file-input
               dense
               label="Добавьте файл xlsx"
@@ -22,11 +26,12 @@
         <v-list-item-group style="height: 65vh; overflow: scroll">
           <v-list v-for="(item, i) in existPostData" :key="i">
             <v-list-item-content>
-              <v-list-item-title style="font-size: 13px">{{item.rpo}}: {{item.post.from_who.fullName}}</v-list-item-title>
+              <v-list-item-title style="font-size: 13px">{{ item.rpo }}: {{ item.post.from_who.fullName }}
+              </v-list-item-title>
               <v-list-item-subtitle style="font-size: 12px">
-                Проект: {{item.post.project}}
+                Проект: {{ item.post.project }}
               </v-list-item-subtitle>
-              <v-list-item-subtitle>{{item.post.post_documents | getFileName}}</v-list-item-subtitle>
+              <v-list-item-subtitle>{{ item.post.post_documents | getFileName }}</v-list-item-subtitle>
 
             </v-list-item-content>
           </v-list>
@@ -38,6 +43,9 @@
         <v-list-item-group style="height: 65vh; overflow: scroll">
           <v-list v-for="(item, i) in notExistPostData" :key="i">
             <v-list-item-title style="font-size: 13px">{{ item.rpo }}</v-list-item-title>
+            <v-list-item-subtitle style="font-size: 12px">
+              Проект: {{ item.post.project }}
+            </v-list-item-subtitle>
           </v-list>
         </v-list-item-group>
       </v-col>
@@ -51,7 +59,12 @@ import customConst from "@/const/customConst";
 export default {
   name: 'CreateOutgoingMail',
   data: () => ({
+    fileTypes: [
+      {val: 'POST', text: 'Почта РФ'},
+      {val: 'SBIS', text: 'Сбис'},
+    ],
     outMail: null,
+    fileType: 'POST',
     existPostData: [],
     notExistPostData: []
   }),
@@ -59,6 +72,7 @@ export default {
     checkOutPostXlsx() {
       let formData = new FormData
       formData.append('file', this.outMail)
+      formData.append('fileType', this.fileType)
       return new Promise((resolve, reject) => {
         this.$http({
           method: "POST",
@@ -81,7 +95,7 @@ export default {
     }
   },
   filters: {
-    getFileName(obj){
+    getFileName(obj) {
       console.log(obj)
       return obj?.fileName
     }

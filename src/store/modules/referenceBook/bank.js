@@ -11,7 +11,8 @@ export default {
         bankList: [],
         bankAccountList: [],
         organizationBankAccount: [],
-        bankCardList: []
+        bankCardList: [],
+        creditOrganization: []
     },
     mutations: {
         syncBankList(state, bankList) {
@@ -31,6 +32,9 @@ export default {
         },
         syncBankCardsList(state, bankCardsList) {
             state.bankCardList = bankCardsList
+        },
+        syncCreditOrganization(state, creditOrganizationList) {
+            state.creditOrganization = creditOrganizationList
         }
     },
     actions: {
@@ -123,7 +127,7 @@ export default {
             return new Promise((resolve, reject) => {
                 axios({
                     method: "PUT",
-                    url: customConst.REFERENCE_BOOK_API  +`bank-cards/${id}/`,
+                    url: customConst.REFERENCE_BOOK_API + `bank-cards/${id}/`,
                     data: formData
                 }).then(res => {
                     resolve(res.data.data.data)
@@ -173,7 +177,20 @@ export default {
                     reject(err)
                 })
             })
-        }
+        },
+        getCreditorOrganization({commit}) {
+            return new Promise((resolve, reject) => {
+                axios({
+                    method: "GET",
+                    url: customConst.REFERENCE_BOOK_API + 'bank/get-credit-organization',
+                }).then(res => {
+                    commit('syncCreditOrganization', res.data.data.data)
+                    resolve()
+                }).catch(err => {
+                    console.log(err)
+                })
+            })
+        },
     },
     getters: {
         bankListData(state) {
@@ -184,6 +201,9 @@ export default {
         },
         organizationBankAccountData(state) {
             return state.organizationBankAccount
+        },
+        creditOrganizationListData(state) {
+            return state.creditOrganization
         }
     }
 
