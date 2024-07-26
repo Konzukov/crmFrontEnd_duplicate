@@ -2,16 +2,19 @@ import moment from "moment";
 import Vue from 'vue'
 import VueCookies from 'vue-cookies'
 import {isEmpty} from 'lodash'
+
 Vue.use(VueCookies)
 
 
 export async function compareFields(fields, data) {
-    console.log(fields)
-    console.log(data)
+    let act_date;
+    let report_date;
     let compare = {}
     let person = data['physical_contractor']
     let act = data['act'][0]
+    console.log(person)
     let personDomicile = null;
+    let personPostcode = null
     if (person) {
         personDomicile = person['registration'].filter(obj => {
             if (obj.length === 1) return obj['address']
@@ -19,6 +22,13 @@ export async function compareFields(fields, data) {
         })
         if (personDomicile.length === 0) {
             personDomicile = null
+        }
+        personPostcode = person['registration'].filter(obj => {
+            if (obj.length === 1) return obj['postcode']
+            else if (obj['active']) return obj['postcode']
+        })
+        if (personPostcode.length === 0) {
+            personPostcode = null
         }
     }
     for (let field of fields) {
@@ -59,6 +69,11 @@ export async function compareFields(fields, data) {
                     compare[field['value']] = personDomicile[0]['address']
                 } else compare[field['value']] = ''
                 break
+            case "DEBTOR_POSTCODE":
+                if (personPostcode) {
+                    compare[field['value']] = personPostcode[0]['postcode']
+                } else compare[field['value']] = ''
+                break
             case "DEBTOR_INN":
                 if (person) {
                     compare[field['value']] = person['inn']
@@ -76,10 +91,10 @@ export async function compareFields(fields, data) {
             case "DEBTOR_PASSPORT":
                 if (person) {
                     let passport = person['passports'][0]
-                    if (isEmpty(passport)){
+                    if (isEmpty(passport)) {
                         compare[field['value']] = ''
-                    } else{
-                         compare[field['value']] = `${passport.serial} ${passport.number}`
+                    } else {
+                        compare[field['value']] = `${passport.serial} ${passport.number}`
                     }
                 } else {
                     compare[field['value']] = ''
@@ -106,6 +121,13 @@ export async function compareFields(fields, data) {
             case "JUDICIAL_ACT_DATE":
                 if (act) {
                     compare[field['value']] = moment(act['document']['receiving_date']).format('DD.MM.YYYY')
+                } else {
+                    compare[field['value']] = ''
+                }
+                break
+            case "JUDICIAL_ACT_URL":
+                if (act) {
+                    compare[field['value']] = act['url']
                 } else {
                     compare[field['value']] = ''
                 }
@@ -214,6 +236,23 @@ export async function compareFields(fields, data) {
             case 'DOC_TOTAL_PRICE':
                 compare[field['value']] = ''
                 break
+            case "DURATION":
+                if (act) {
+                    act_date = moment(act['document']['receiving_date'])
+                } else {
+                    act_date = null
+                }
+                if (data['report_date']) {
+                    report_date = moment(data['report_date'])
+                } else {
+                    report_date = null
+                }
+
+                if (report_date && act_date) {
+                    compare[field['value']] = report_date.diff(act_date, 'months')
+                } else
+                    compare[field['value']] = 6
+
         }
     }
     return compare

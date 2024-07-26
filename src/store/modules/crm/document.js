@@ -19,6 +19,7 @@ export default {
         uploadingTemplates: '',
         docType: [],
         correspondenceType: [],
+        docSendQueue: []
     },
     mutations: {
         addDocument(state, newDoc) {
@@ -100,6 +101,15 @@ export default {
         },
         syncCorrespondenceType(state, correspondenceTypeList) {
             state.correspondenceType = correspondenceTypeList
+        },
+        syncDocSendQueue(state, docSend) {
+            state.docSendQueue = [...docSend]
+        },
+        syncDelDocSendQueue(state, id) {
+            const index = state.docSendQueue.findIndex(i => i.id === id);
+            if (index !== -1) {
+                state.docSendQueue.splice(index, 1);
+            }
         }
     },
     actions: {
@@ -372,6 +382,49 @@ export default {
                 })
             })
         },
+        async getDocumentSendQueue({commit}) {
+            return await new Promise(async (resolve, reject) => {
+                await axios({
+                    method: "GET",
+                    url: customConst.PAPERFLOW_API + 'document-send-queue'
+                }).then(res => {
+                    console.log(res.data.data.data)
+                    commit('syncDocSendQueue', res.data.data.data)
+                    resolve()
+                }).catch(err => {
+                    reject(err)
+                })
+            })
+        },
+        deleteDocumentSendQueue({commit}, {id, formData}) {
+            return new Promise((resolve, reject) => {
+                axios({
+                    method: "DELETE",
+                    url: customConst.PAPERFLOW_API + 'document-send-queue/' + id,
+                    data: formData
+                }).then(res => {
+                    commit('syncDelDocSendQueue', id)
+                    resolve()
+                }).catch(err => {
+                    reject(err)
+                })
+            })
+        },
+        sendDocumentQueue({commit}, formData){
+            return new Promise((resolve, reject) => {
+                axios({
+                    method: "POST",
+                    url: customConst.PAPERFLOW_API + 'document-send-queue/send/',
+                    data: formData,
+                    responseType: 'blob',
+                }).then(res=>{
+                    saveAs(res.data, 'otpravka.zip')
+                    resolve()
+                }).catch(err=>{
+                    reject(err)
+                })
+            })
+        }
     },
     getters: {
         processedDocumentListData(state) {
@@ -397,6 +450,9 @@ export default {
         },
         correspondenceTypeData(state) {
             return state.correspondenceType
+        },
+        docQueueData(state) {
+            return state.docSendQueue
         }
     }
 }

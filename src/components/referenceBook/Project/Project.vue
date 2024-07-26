@@ -55,7 +55,9 @@
           >
             <template v-slot:body="{ items }">
               <tbody>
+<!--              :style="item.act?'':'backgroundColor: #fb00004d'"-->
               <tr v-for="item in items"
+
                   :key="item.pk"
                   :class="{archive: item.isArchive}"
               >
@@ -63,9 +65,12 @@
                   <v-checkbox dense v-model="selectedProject" :value="item"
                               hide-details/>
                 </td>
+
                 <td @click="showDetail(item.pk)">{{ item.name }}</td>
                 <td width="100">{{ item.code }}</td>
-                <td>{{ item.case_number }}</td>
+                <td>{{ item.case_number }} <br>
+                  <span style="font-size: 10px; color: #00a6ee">{{ item.procedure | getProcedure }}</span>
+                </td>
                 <td>{{ item.responsible }}</td>
                 <td v-if="item.judge">{{ item.judge.full_name }}</td>
                 <td v-else></td>
@@ -104,7 +109,7 @@
             </template>
             <template v-slot:footer>
               <tr>
-                <td>
+                <td >
                   <export-excel
                       :data="selectedProject"
                       :fields="excelField"
@@ -114,6 +119,10 @@
                   >
                     <v-btn :disabled="selectedProject.length === 0">Выгрузить</v-btn>
                   </export-excel>
+                </td>
+                <td colspan="2"></td>
+                <td>
+                  <v-btn @click="getPreProjectReport">Выгрузить(До проекты)</v-btn>
                 </td>
               </tr>
             </template>
@@ -135,8 +144,10 @@ import methods from '../../../mixin/projectColor'
 import filter from '../../../mixin/filter'
 import ProjectCreate from "./ProjectCreate";
 import addToArchive from "./modal/addToArchive";
-
 import {mapGetters} from 'vuex'
+import {ProcedureType} from "@/const/dataTypes";
+import {saveAs} from 'file-saver'
+
 
 export default {
   name: "Project",
@@ -178,6 +189,12 @@ export default {
         'Ответственный': {
           field: 'responsible',
         },
+        'Представитель': {
+          field: 'agent'
+        },
+        // 'Акт': {
+        //   field: 'act'
+        // },
         'Судья': {
           field: 'judge.full_name',
         },
@@ -193,6 +210,7 @@ export default {
   },
   computed: {
     filteredProject: function () {
+      console.log(this.projectList)
       const filtered = this.projectList.filter(item => {
         if (this.filter.isArchive && !item.isArchive) return item
         else if (!this.filter.isArchive) return item
@@ -206,8 +224,7 @@ export default {
         } else if (!this.filter.participant) return item
       })
       return filtered
-    }
-    ,
+    },
     ...
         mapGetters({
           projectList: 'projectListData',
@@ -216,9 +233,35 @@ export default {
         })
 
 
-  }
-  ,
+  },
+  filters: {
+    getProcedure(item) {
+      let legal = ProcedureType.Legal
+      let physical = ProcedureType.Physical
+      let physicalVal = physical.filter(obj => {
+        if (obj.value === item) {
+          return obj
+        }
+      })[0]
+      let legalVal = legal.filter(obj => {
+        if (obj.value === item) {
+          return obj
+        }
+      })[0]
+      if (physicalVal) {
+        return physicalVal.text
+      } else if(legalVal){
+        return legalVal.text
+      }
+
+    }
+  },
   methods: {
+    getPreProjectReport(){
+      this.$store.dispatch('downloadPreProjectReport').then(res=>{
+        saveAs(res.data, 'preProject-report.xlsx')
+      })
+    },
     resetSelected() {
       this.selectedProject = []
     },

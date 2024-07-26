@@ -132,9 +132,10 @@ export default {
                         reject(err)
                     })
                 }).catch(err => {
+                    console.log(err)
                     Vue.$cookies.remove('token')
                     delete axios.defaults.headers.common['Authorization']
-
+                    reject(err)
                 })
             })
         },

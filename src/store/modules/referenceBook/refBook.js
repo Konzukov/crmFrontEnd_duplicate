@@ -22,7 +22,8 @@ export default {
         department: [],
         country: [],
         region: [],
-        bailiffs: []
+        bailiffs: [],
+        fns: []
     },
     mutations: {
         syncSystemUser(state, userList) {
@@ -64,6 +65,7 @@ export default {
         legalEntityList(state, legalEntity) {
             state.status = 'legalEntityList success'
             state.legalEntity = legalEntity
+            state.fns = legalEntity.filter(obj => obj['org_type'] === 'FNS')
         },
         legalEntityDetailInfo(state, obj) {
             state.status = 'Success'
@@ -77,6 +79,12 @@ export default {
         updateLegalEntity(state, legalEntity) {
             state.status = 'legalEntityUpdate success'
             state.legalEntity.data = state.legalEntity.map(obj => {
+                if (obj['pk'] === legalEntity['pk']) {
+                    return Object.assign({}, legalEntity)
+                }
+                return obj
+            })
+            state.fns.data = state.fns.map(obj => {
                 if (obj['pk'] === legalEntity['pk']) {
                     return Object.assign({}, legalEntity)
                 }
@@ -382,21 +390,26 @@ export default {
                     data: legalEntityData
                 }).then(response => {
                     commit('addLegalEntity', response.data.data.data)
-                    resolve(response.data.data.data)
+                    resolve(response)
                 }).catch(err => reject(err))
             })
 
         },
         editLegalEntity({commit}, data) {
             console.log('actions', data)
-            Axios({
-                method: 'put',
-                url: customConst.REFERENCE_BOOK_API + 'legal-entity-update/' + data.legalEntityDetail.pk,
-                data: data.data
-            }).then((response) => {
-                console.log(response.data.data.data)
-                commit('updateLegalEntity', response.data.data.data)
-            }).catch(err => console.log(err))
+            return new Promise((resolve, reject) => {
+                Axios({
+                    method: 'put',
+                    url: customConst.REFERENCE_BOOK_API + 'legal-entity-update/' + data.legalEntityDetail.pk,
+                    data: data.data
+                }).then((response) => {
+                    console.log(response.data.data.data)
+                    commit('updateLegalEntity', response.data.data.data)
+                    resolve(response)
+                }).catch(err => {
+                    reject(err)
+                })
+            })
         },
         deleteLegalEntity({commit}, pk) {
             Axios({
@@ -627,7 +640,7 @@ export default {
                     reject(err)
                 })
             })
-        }
+        },
     },
     getters: {
         relatedUserData(state) {
@@ -647,10 +660,10 @@ export default {
         },
         allRefData(state) {
             let data = [];
-            if (state.legalEntity){
+            if (state.legalEntity) {
                 data.push(...state.legalEntity)
             }
-            if (state.physicalPerson){
+            if (state.physicalPerson) {
                 data.push(...state.physicalPerson)
             }
             return data
@@ -697,6 +710,9 @@ export default {
         },
         bailiffsListData(state) {
             return state.bailiffs
+        },
+        fnsListData(state) {
+            return state.fns
         }
     }
 }

@@ -45,14 +45,30 @@
               <v-text-field outlined dense label="Номер дела"
                             :error="!!errors['case_number']"
                             :error-messages="errors['case_number']"
+                            @change="setCurt"
                             v-model="project.case_number"></v-text-field>
             </v-col>
           </v-row>
           <v-row justify="start">
-            <v-col cols="auto">
+            <v-col cols="4" class="mr-3">
+              <v-autocomplete dense outlined label="Вид процедуры" :items="ProcedureType(contractor.type)" item-value="value"
+                        item-text="text"
+                        v-model="project.procedure">
+
+              </v-autocomplete>
+            </v-col>
+            <v-col cols="auto" class="mr-3">
               <v-autocomplete class="required" :rules="required" dense outlined label="Ответственный"
                               :items="systemUserList" item-value="id"
                               item-text="fullName" v-model="project.responsible"></v-autocomplete>
+            </v-col>
+            <v-col cols="auto" class="mr-3">
+              <v-autocomplete dense outlined label="Брокер"
+                              @change="setAgent"
+                              v-model="agent"
+                              :items="allRefList" item-text="fullName"
+                              return-object
+              ></v-autocomplete>
             </v-col>
           </v-row>
           <v-expansion-panels focusable multiple flat>
@@ -164,7 +180,8 @@
       </v-card-actions>
     </v-card>
     <ContractorCreateModal @contractorAdded="setContractor"></ContractorCreateModal>
-    <DocInArbitr @saveDoc="saveDoc" ref="docInArbitr" @clearDocumentArbitr="clearDocumentArbitr" :available-doc-list.sync="availableDoc"></DocInArbitr>
+    <DocInArbitr @saveDoc="saveDoc" ref="docInArbitr" @clearDocumentArbitr="clearDocumentArbitr"
+                 :available-doc-list.sync="availableDoc"></DocInArbitr>
     <SystemMessage :state="state"/>
   </v-container>
 </template>
@@ -176,6 +193,7 @@ import ContractorCreateModal from "@/components/referenceBook/ContractorCreateMo
 import customConst from "@/const/customConst";
 import DocInArbitr from "@/components/UI/DocInArbitr";
 import {VueEditor} from "vue2-editor";
+import {ProcedureType} from "@/const/dataTypes";
 import SystemMessage from "@/components/UI/SystemMessage.vue";
 
 export default {
@@ -193,6 +211,7 @@ export default {
   data: () => ({
     valid: false,
     contractor: '',
+    agent: '',
     state: '',
     judicialActCount: [],
     judicialAct: [],
@@ -210,7 +229,10 @@ export default {
       pk: '',
       name: '',
       code: '',
+      procedure: '',
       case_number: '',
+      legal_agent: '',
+      physical_agent: '',
       publication_date: '',
       publication_number: '',
       publication_number_page: '',
@@ -251,6 +273,12 @@ export default {
     }
   },
   methods: {
+    ProcedureType(val) {
+      console.log(val)
+      if (val === 'PhysicalPerson') return ProcedureType.Physical
+      else if (val === 'LegalEntity') return ProcedureType.Legal
+      else return ProcedureType.Physical
+    },
     async loadData() {
       await this.$store.dispatch('getParticipator')
       await this.$store.dispatch('getLegalEntity')
@@ -278,12 +306,14 @@ export default {
         if (!this.project.pk) {
           this.$store.dispatch('createProject', formData).then(response => {
             this.project.pk = response['pk']
+            this.$emit('showSystemMessage', {response: response, state: 'success', send: false  })
             this.$emit('close', response)
           }).catch(err => {
             this.errors = err.response.data.errors
           })
         } else {
           this.$store.dispatch('editProject', {formData, pk: this.project.pk}).then(res => {
+            this.$emit('showSystemMessage', {response: res, state: 'success', send: false  })
           }).catch(err => {
             this.errors = err.response.data.errors
           })
@@ -308,10 +338,6 @@ export default {
     updateData() {
       this.$store.dispatch('getProjectDetail', this.project.pk).then(res => {
         console.log(res['pk'])
-        // this.$http({
-        //   method: "GET",
-        //   url: customConst.PAPERFLOW_API + `judicial-act/${res['pk']}/list/`,
-        // })
         this.$store.dispatch('getProjectAct', res['pk']).then(res => {
           let act = res.data.data.data
           if (act.length > 0) {
@@ -334,6 +360,15 @@ export default {
             this.project[key] = res[key]
           }
         })
+        if (this.project.legal_agent){
+          this.agent = this.$store.getters.legalEntityData.filter(obj => {
+            return obj.pk === this.project.legal_agent
+          })[0]
+        } else if (this.project.physical_agent) {
+          this.agent = this.$store.getters.physicalPersonData.filter(obj => {
+            return obj.pk === this.project.physical_agent
+          })[0]
+        }
         if (this.project.legal_contractor) {
           this.contractor = this.$store.getters.legalEntityData.filter(obj => {
             return obj.pk === this.project.legal_contractor
@@ -344,6 +379,23 @@ export default {
           })[0]
         }
       })
+    },
+    setCurt(item) {
+      if (item) {
+        let curtCode = item.split("-")[0]
+        let curt = this.courtList.filter(item => item.code === curtCode)[0]
+        this.project.court = curt["pk"]
+      }
+    },
+    setAgent(item){
+      switch (item.type) {
+        case "LegalEntity":
+          this.project.legal_agent = item['pk']
+          break
+        case "PhysicalPerson":
+          this.project.physical_agent = item['pk']
+          break
+      }
     },
     setContractor(item) {
       this.contractor = item
@@ -390,7 +442,7 @@ export default {
         url: customConst.REFERENCE_BOOK_API + 'get-case-from-arbitr',
         params: {'case-number': this.project.case_number}
       }).then(res => {
-          this.availableDoc = res.data.data.filter(obj => {
+        this.availableDoc = res.data.data.filter(obj => {
           if (obj.file) {
             return obj
           }
@@ -402,7 +454,7 @@ export default {
         this.$emit('showSystemMessage', {response: err, state: this.state})
       })
     },
-    clearDocumentArbitr(){
+    clearDocumentArbitr() {
       this.availableDoc = []
     },
     clearJudge(item) {
@@ -459,7 +511,7 @@ export default {
 }
 
 .comment {
-  height: 200px;
+  height: 300px;
 }
 
 >>> .v-text-field__details {

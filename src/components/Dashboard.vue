@@ -1,5 +1,6 @@
 <template>
   <v-app class="main-app">
+    <SystemUpdateNotice></SystemUpdateNotice>
     <v-navigation-drawer
         app
         v-model="drawer"
@@ -172,6 +173,8 @@
 <script>
 import moment from 'moment'
 import {mapGetters, mapActions} from 'vuex'
+import SystemUpdateNotice from "@/components/UI/SystemUpdateNotice.vue";
+import {eventBus} from "@/bus";
 
 
 export default {
@@ -219,6 +222,7 @@ export default {
       fab: false,
       loading: true,
       activeOrganization: '',
+      notice: {},
     }
   },
   computed: {
@@ -299,17 +303,25 @@ export default {
       this.$store.dispatch('changeOrganization', formData).then(() => {
         location.reload()
       })
-    }
+    },
   },
   async created() {
     await this.$store.dispatch('checkAuth')
+    await this.$store.dispatch('getSystemUpdateNotice').then( notice=>{
+      let showNotice = notice['display_user'].filter(obj=> obj.uuid === this.userData.uuid)
+      console.log(showNotice)
+      if (showNotice?.length){
+        eventBus.$emit('showSystemUpdateMessage', {notice, uuid: this.userData.uuid})
+      }
+
+    })
     await this.getDashboardTaskList()
     await this.$store.dispatch('getUserTaskList', {'user': -1, 'project': -1, 'tags': '-1'})
     // this.$store.dispatch('getUserEventList')
     this.selectedDate.push(this.today)
     this.activeOrganization = this.userData.profile['active_organization']['uuid']
   },
-  components: {}
+  components: {SystemUpdateNotice}
 }
 </script>
 

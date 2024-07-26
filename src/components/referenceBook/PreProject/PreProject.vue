@@ -37,7 +37,7 @@
               </v-card-title>
               <v-card-text>
                 <v-data-table height="41vh" :search="filter.search" :headers="headers" :items="preProjectList" :item-class="is_archive">
-                  <template v-slot:item.fio="{ item }">
+                  <template v-slot:item.fio="{ item }" :class="isValid? '': ''">
                     {{ item.fullName }}
                   </template>
                   <template v-slot:item.actions="{ item }">
@@ -47,6 +47,7 @@
                           multiple
                           color="primary"
                           v-model="selectedCase"
+                          :disabled="!item['heading_date']"
                       ></v-checkbox>
                       <v-btn icon color="primary">
                         <v-icon @click="editPreProject(item)">mdi-pencil</v-icon>
@@ -63,7 +64,7 @@
                                   :disabled="selectedCase.length < 1"
                                   :rules="emailRules">
                       <template v-slot:append-outer>
-                        <v-btn icon @click="sendTransition">
+                        <v-btn icon @click="sendTransition" :disabled="loading">
                           <v-icon>mdi-send</v-icon>
                         </v-btn>
                       </template>
@@ -71,11 +72,12 @@
                   </v-col>
                   или
                   <v-col class="ml-3">
-                    <a
+                    <v-btn
                         :class="[selectedCase.length > 0? 'download-enable' : 'download-disable',  ' v-btn download-link ']"
                         @click="generateTransition"
+                        :disabled="loading"
                     >Сформировать и скачать
-                    </a>
+                    </v-btn>
                     <a style="display: none" @click="removeURL" class="download-btn v-btn"></a>
                   </v-col>
                 </v-row>
@@ -113,6 +115,7 @@ export default {
   name: "PreProject",
   data() {
     return {
+
       headers: [
         {text: 'Номер', value: 'code'},
         {text: 'ФИО', value: 'fullName'},
@@ -154,9 +157,15 @@ export default {
   },
   methods: {
     is_archive(item) {
+      console.log(item)
       if (item.archive) {
         return 'archive'
+      } else if (!item['heading_date'] || !item['definition_date']){
+        return 'has-error'
       }
+    },
+    isValid(item){
+      console.log(item)
     },
     changeColsSize(l, r) {
       this.leftCols = l
@@ -188,6 +197,7 @@ export default {
     generateTransition() {
       let formData = new FormData()
       formData.append('cases', this.selectedCase)
+      this.loading = true
       const elem = document.getElementsByClassName('download-link')[0]
       elem.innerText = 'Формирование .....'
       return new Promise((resolve, reject) => {
@@ -206,10 +216,13 @@ export default {
           element.innerHTML = 'Скачать'
           this.downloadDocs = true
           URL.revokeObjectURL(element.href);
+          this.loading = false
           resolve()
           // element.style.textDecoration = 'none';
           // elem.appendChild(element);
           // element.click();
+        }).catch(()=>{
+          this.loading = false
         })
       })
     },
@@ -262,6 +275,10 @@ export default {
 }
 >>> .archive {
   color: rgba(88, 88, 88, 0.68) !important;
+}
+
+>>> .has-error{
+  color: rgba(117, 27, 27, 0.68) !important;
 }
 
 .download-disable {

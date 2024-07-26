@@ -25,12 +25,14 @@ import moneyExpenses from "./modules/money/moneyExpenses";
 import wallet from "./modules/money/wallet";
 import user from "./modules/user/user";
 import procedure from "@/store/modules/referenceBook/procedure";
+import accountOpening from "@/store/modules/referenceBook/acoountOpening";
 import generator from "./modules/docGenerator/generator";
 import invoice from "./modules/money/invoice";
 import act from "./modules/money/act";
 import regularInvoice from "./modules/money/regularInvoice";
 import documentStorage from "@/store/modules/documentStorage/documentStorage.js";
 import postOrder from "@/store/modules/crm/postOrder";
+import notify from "@/store/modules/notify/notify";
 
 Vue.use(Vuex)
 
@@ -66,6 +68,8 @@ export default new Vuex.Store({
         invoice,
         act,
         regularInvoice,
-        postOrder
+        postOrder,
+        notify,
+        accountOpening
     }
 })

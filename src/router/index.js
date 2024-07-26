@@ -1,6 +1,5 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import store from '../store'
 import Authorization from '../components/Authorization'
 import Dashboard from "../components/Dashboard";
 import ReferenceBook from "../components/ReferenceBook"
@@ -38,6 +37,7 @@ import DashboardTask from "../components/Dashboard/DashboardTask";
 import DashboardTaskDetail from "../components/Dashboard/DashboardTaskDetail";
 import ProjectNew from "../components/referenceBook/ProjectNew/ProjectNew";
 import ProjectDetail from "../components/referenceBook/ProjectNew/ProjectDetail";
+import store from "@/store";
 
 Vue.use(VueRouter)
 
@@ -179,6 +179,11 @@ const routes = [
                         ]
                     },
                     {
+                        path: 'account-opening',
+                        name: 'AccountOpening',
+                        component: () => import('../components/referenceBook/AccountOpening/AccountOpening.vue')
+                    },
+                    {
                         path: 'new-project',
                         name: 'new-project-list',
                         component: ProjectNew,
@@ -249,7 +254,7 @@ const routes = [
                         name: 'post-order',
                         path: 'post-order',
                         navName: 'Отправка почты',
-                        component: () => import('@/components/CRM/PaperFlow/PostOrder/PostOrderList'),
+                        component: () => import('@/components/CRM/PaperFlow/PostOrder/PostSendQueue.vue'),
                     },
                     {
                         name: 'incoming-post',

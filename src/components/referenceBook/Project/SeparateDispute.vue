@@ -8,7 +8,10 @@
               <v-list-item v-for="item in separateDisputeList" :key="item.id">
                 <v-list-item-content @click="showDetail(item)">
                   <v-list-item-title>{{ item.case_number }}</v-list-item-title>
-                  <v-list-item-subtitle>{{ item.court.name }} | {{ item.court.address }}</v-list-item-subtitle>
+                  <template v-if="item.court">
+                    <v-list-item-subtitle>{{ item.court.name }} | {{ item.court.address }}</v-list-item-subtitle>
+                  </template>
+                  <v-list-item-subtitle v-else>Суд не указан</v-list-item-subtitle>
                   <v-list-item-subtitle>{{ item.judge | getJudge }}</v-list-item-subtitle>
                 </v-list-item-content>
               </v-list-item>
@@ -24,7 +27,9 @@
           <v-card-text style="height: 75%">
             <v-row justify="start" class="mt-3">
               <v-col cols="3" class="mr-7">
-                <v-text-field outlined dense label="Номер дела" v-model="separateDispute.case_number"></v-text-field>
+                <v-text-field outlined dense label="Номер дела" v-model="separateDispute.case_number"
+                              @change="selectCurt"
+                ></v-text-field>
               </v-col>
             </v-row>
             <v-row justify="start" class="mt-3">
@@ -113,6 +118,13 @@ export default {
           this.separateDispute.judge = ''
         }
       }, 200)
+    },
+    selectCurt(item) {
+      if (item) {
+        let curtCode = item.split("-")[0]
+        let curt = this.courtList.filter(item => item.code === curtCode)[0]
+        this.separateDispute.court = curt["pk"]
+      }
     }
   },
   computed: {

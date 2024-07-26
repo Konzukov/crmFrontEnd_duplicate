@@ -1,7 +1,10 @@
 <template>
   <v-form class="mt-5" lazy-validation v-model="valid" ref="physicalPersonRegistrationForm">
     <v-row justify="start">
-      <v-col cols="12" class="pt-0 pb-0">
+      <v-col cols="3" class="pt-0 pb-0">
+        <v-text-field dense outlined label="Почтовый индекс" v-model="registration.postcode"></v-text-field>
+      </v-col>
+      <v-col cols="9" class="pt-0 pb-0">
         <v-text-field dense outlined class="required" :rules="required" label="Адрес регистрации" v-model="registration.address"></v-text-field>
       </v-col>
     </v-row>
@@ -30,6 +33,7 @@ export default {
     valid: false,
     registration: {
       pk: null,
+      postcode: null,
       address: null,
       end: null,
       start: null

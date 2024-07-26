@@ -12,6 +12,9 @@
       <v-tab :to="{name: 'preProject'}">
         <span>До Проект</span>
       </v-tab>
+      <v-tab :to="{name: 'AccountOpening'}">
+        <span>Заявки на открытие счета</span>
+      </v-tab>
       <!--            <v-tab :to="{name: 'new-project-list'}">-->
       <!--              <span>Проекты(Н)</span>-->
       <!--            </v-tab>-->

@@ -25,7 +25,7 @@
         </v-card>
       </v-col>
       <v-col md="6">
-        <LegalEntityCreate  :legalData="legalData"></LegalEntityCreate>
+        <LegalEntityCreate  :legalData="legalData" @close="closeForm"></LegalEntityCreate>
       </v-col>
     </v-row>
     <RelatedPersonCreate :legalEntity.sync="legalEntityDetail"></RelatedPersonCreate>
@@ -72,6 +72,11 @@ export default {
     }
   },
   methods: {
+    closeForm(){
+      console.log('asdasdasd')
+      this.legalData = null
+
+    },
     endLoading() {
       this.loading = false
     },

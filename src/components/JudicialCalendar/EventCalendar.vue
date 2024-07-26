@@ -96,7 +96,7 @@
               </p>
               <p>
                 <strong>Начало заседания</strong>
-                <span v-html="': ' + selectedEvent.date_begin"></span>
+                <span>: {{selectedEvent.date_begin | formatDate}}</span>
               </p>
               <p>
                 <strong>Место проведения</strong>
@@ -245,6 +245,8 @@ export default {
           return this.colors[1]
         case 7:
         case 8:
+        case 12:
+        case 13:
           return this.colors[3]
         case 4:
         case 5:
@@ -312,6 +314,9 @@ export default {
   filters: {
     moment: function (date) {
       return moment(date).format('DD.MM.YYYY');
+    },
+    formatDate: function (date){
+      return moment(date).format( 'DD.MM.YYYY HH:mm')
     }
   },
   created() {

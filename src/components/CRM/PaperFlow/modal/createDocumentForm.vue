@@ -118,7 +118,21 @@
                         append-outer-icon="mdi-plus"
                         @click:append-outer="addNewProject"
                         :disabled="!!uploadTemplate['id']"
-                    ></v-autocomplete>
+                    >
+                      <template v-slot:selection="data">
+                        <v-chip>
+                          {{ data.item.name }}
+                        </v-chip>
+                      </template>
+                      <template v-slot:item="data">
+                        <v-list-item-content>
+                          <v-list-item-title>{{ data.item.name }}</v-list-item-title>
+                          <v-list-item-subtitle style="font-size: 10px; color: #00a6ee">{{ data.item.code }} -
+                            {{ data.item.procedure | getProcedure }}
+                          </v-list-item-subtitle>
+                        </v-list-item-content>
+                      </template>
+                    </v-autocomplete>
                     <span class="error-message error--text  ">{{ projectError }}</span>
                   </v-col>
                   <v-col md="5" sm="5">
@@ -172,6 +186,7 @@ import {mapGetters} from 'vuex'
 import ConfirmDialog from "@/components/CRM/PaperFlow/modal/ConfirmDialog";
 import ProjectCreateModal from "@/components/referenceBook/Project/modal/ProjectCreateModal";
 import ContractorCreateModal from "@/components/referenceBook/ContractorCreateModal";
+import {ProcedureType} from "@/const/dataTypes";
 
 export default {
   name: "createDocumentForm",
@@ -426,6 +441,28 @@ export default {
       }
     }
 
+  },
+  filters: {
+    getProcedure(item) {
+      let legal = ProcedureType.Legal
+      let physical = ProcedureType.Physical
+      let physicalVal = physical.filter(obj => {
+        if (obj.value === item) {
+          return obj
+        }
+      })[0]
+      let legalVal = legal.filter(obj => {
+        if (obj.value === item) {
+          return obj
+        }
+      })[0]
+      if (physicalVal) {
+        return physicalVal.text
+      } else if (legalVal) {
+        return legalVal.text
+      }
+
+    }
   },
   created() {
     this.checkFileNameValid()

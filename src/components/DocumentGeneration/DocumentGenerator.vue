@@ -75,8 +75,8 @@
           </v-col>
           <v-col cols="7">
             <h5>Список полей в шаблоне</h5>
-            <v-list class="field__list" v-for="field in template.fields" :key="field.id">
-              <v-form v-model="vueStore.valid" ref="generator">
+            <v-form v-model="vueStore.valid" ref="generator" lazy-validation>
+              <v-list class="field__list" v-for="field in template.fields" :key="field.id">
                 <template v-if="field['selected']">
                   <v-row v-if="field.value ==='BAILIFFS'" justify="start">
                     <v-col cols="4">
@@ -91,6 +91,21 @@
                                       item-value="id"
                                       :rules="rules.required"
                                       v-model="templateFields[field.value]"></v-autocomplete>
+                    </v-col>
+                  </v-row>
+                  <v-row v-if="field.value ==='FNS'" justify="start">
+                    <v-col cols="12">
+                      {{fns}}
+                      <v-autocomplete outlined dense :label="field.name"
+                                      :items="fnsList"
+                                      item-text="name"
+                                      item-value="id"
+                                      :rules="rules.required"
+                                      return-object
+                                      :append-outer-icon="!fns? 'mdi-plus': 'mdi-pencil'"
+                                      :error-messages="fns && fns.legal_address === 'null'? 'Необходимо заполнить данные': ''"
+                                      @click:append-outer="editContractor(fns)"
+                                      v-model="fns"></v-autocomplete>
                     </v-col>
                   </v-row>
                   <v-row v-if="field.value ==='FROM_MONTH'" justify="start" class="mr-1 ml-1">
@@ -141,23 +156,28 @@
                   </v-row>
                 </template>
                 <template v-else-if="field['is_date']">
-                  <v-text-field type="date" :rules="rules.required"
+                  <v-text-field type="date" :rules="field.required? rules.required: []"
+                                @change="checkForm"
                                 dense outlined v-model="templateFields[field.value]" :label="field.name">
                   </v-text-field>
                 </template>
                 <template v-else-if="field['is_datetime']">
-                  <v-text-field type="datetime-local" :rules="rules.required"
+                  <v-text-field type="datetime-local" :rules="field.required? rules.required: []"
+                                @change="checkForm"
                                 dense outlined v-model="templateFields[field.value]" :label="field.name">
                   </v-text-field>
                 </template>
                 <template v-else-if="field['is_file']">
-                  <v-file-input :rules="rules.required"
+                  <v-file-input :rules="field.required? rules.required: []"
+                                @change="checkForm"
                                 dense outlined v-model="dataFile" :label="field.name"></v-file-input>
                 </template>
-                <v-text-field v-else-if="!field['auto_generated']" :rules="rules.required"
+                <v-text-field v-else-if="!field['auto_generated']" :rules="field.required? rules.required: []"
+                              @change="checkForm"
                               dense outlined v-model="templateFields[field.value]" :label="field.name"></v-text-field>
-              </v-form>
-            </v-list>
+
+              </v-list>
+            </v-form>
           </v-col>
         </v-row>
       </v-card-text>
@@ -195,7 +215,10 @@
               <v-btn color="error" @click="confirmSave=!confirmSave">Отмена</v-btn>
             </v-col>
             <v-col cols="auto">
-              <v-btn color="success" @click="saveDoc">Сохранить</v-btn>
+              <v-btn color="success" @click="saveDoc(false)">Сохранить</v-btn>
+            </v-col>
+            <v-col cols="auto">
+              <v-btn color="success" @click="saveDoc(true)">Подготовить к отправке</v-btn>
             </v-col>
           </v-row>
         </v-card-actions>
@@ -247,6 +270,7 @@ export default {
     contract: null,
     creditor: null,
     bank: null,
+    fns: null,
     docId: null,
     legalContractor: null,
     sendEmailAddress: '',
@@ -257,7 +281,8 @@ export default {
     contractList: null,
     state: '',
     rules: {
-      required: [v => !!v || 'Не удалось сапоставить значение']
+      required: [v => !!v || 'Не удалось сапоставить значение'],
+      arbitrary: [v => v || v]
     },
     monthList: [
       {value: '1', text: 'Январь'},
@@ -282,7 +307,8 @@ export default {
       currentUser: 'authUserData',
       allRefList: 'allRefData',
       legalList: 'legalEntityData',
-      creditOrganizationList: 'creditOrganizationListData'
+      creditOrganizationList: 'creditOrganizationListData',
+      fnsList: 'fnsListData'
     }),
     bailiffsList: function () {
       let bailiffs = this.$store.getters.bailiffsListData
@@ -306,9 +332,13 @@ export default {
       if ('DOC_TOTAL_PRICE' in val) {
         this.getDocPrice()
       }
+
     }
   },
   methods: {
+    checkForm() {
+      this.$refs.generator.validate()
+    },
     getProjectDetail(item) {
       this.$store.dispatch('getProjectDetail', item).then(data => {
         this.projectData = data
@@ -334,6 +364,7 @@ export default {
             this.templateFields = data
           })
         })
+        this.$refs.generator.validate()
       })
     },
     getCreditOrganizationDetail(item) {
@@ -356,6 +387,9 @@ export default {
       formData.append('filename', `${this.template.name}_${this.fileName}_${this.currentUser.id}`)
       if (this.contract) {
         formData.append('contract', this.contract.pk)
+      }
+      if (this.fns) {
+        formData.append('FNS', this.fns.id)
       }
       if (this.bankAccount) {
         formData.append('BANK_NAME', this.bankAccount.bank.name)
@@ -398,13 +432,18 @@ export default {
         responseType: 'blob'
       }).then(res => {
         let fileName;
-        if (this.templateFields['OUT_NUMBER']) {
-          fileName = `${this.fileName}_${this.template.name.replaceAll(' ', '_')}_${this.templateFields['OUT_NUMBER']}`
-        } else {
+        if (this.template.name.startsWith('Счет') || this.template.name.startsWith('Акт')) {
           fileName = `${this.fileName}_${this.template.name.replaceAll(' ', '_')}_${this.templateFields['NUMBER']}`
-        }
-        if (this.template.name === 'ходатайтсво об ознакомлении с материалами дела') {
-          fileName += '_1л'
+        } else {
+          if (this.templateFields['OUT_NUMBER']) {
+            // fileName = `${this.fileName}_${this.template.name.replaceAll(' ', '_')}_${this.templateFields['OUT_NUMBER']}`
+            fileName = `${this.projectData.code}-${this.templateFields['OUT_NUMBER']}`
+          } else {
+            fileName = `${this.projectData.code}_${this.templateFields['NUMBER']}`
+          }
+          if (this.template.name === 'ходатайтсво об ознакомлении с материалами дела') {
+            fileName += '_1л'
+          }
         }
         saveAs(res.data, fileName)
         this.overlay = false
@@ -419,12 +458,13 @@ export default {
         this.$emit('showSystemMessage', {response: err, state: this.state})
       })
     },
-    async saveDoc() {
+    async saveDoc(readyToSend = false, postOrder = false) {
       this.overlay = true
       this.loading = true
       let formData = this.setFormData()
       formData.append('project', this.project)
       formData.append('docType', this.docType)
+      formData.append('docSend', readyToSend.toString())
       return new Promise((resolve, reject) => {
         this.$http({
           method: "POST",
@@ -440,7 +480,11 @@ export default {
             this.overlay = false
             this.loading = false
             this.state = 'success'
-            this.$emit('showSystemMessage', {response: res, state: this.state})
+            if (!postOrder) {
+              this.$emit('showSystemMessage', {response: res, state: this.state, send: readyToSend})
+            } else {
+              this.$emit('showSystemMessage', {response: res, state: this.state, send: readyToSend})
+            }
             resolve()
 
           }, 1000)
@@ -505,7 +549,7 @@ export default {
       })
     },
     async sendPostMail() {
-      await this.saveDoc()
+      await this.saveDoc(false, true)
       this.$emit('createPostMail', {
         legalData: this.legalContractor,
         project: this.projectData,

@@ -106,7 +106,7 @@
         <v-spacer></v-spacer>
         <v-btn color="error darken-1"
                class="mr-4"
-               @click="dialog = false"
+               @click="close"
         >Отмена
         </v-btn>
         <v-btn
@@ -119,6 +119,7 @@
     </v-card>
     <BankAccountCreateModal></BankAccountCreateModal>
     <ContactInfoEdit></ContactInfoEdit>
+    <SystemMessage :state.sync="state"/>
   </v-container>
 
 </template>
@@ -130,6 +131,7 @@ import BankAccountCreate from "@/components/referenceBook/Bank/BankAccountCreate
 import {mapGetters} from 'vuex'
 import BankAccountCreateModal from "@/components/referenceBook/Bank/BankAccountCreateModal";
 import ContactInfoEdit from "@/components/modalWindows/ContactInfoEdit";
+import SystemMessage from "@/components/UI/SystemMessage.vue";
 
 export default {
   name: "LegalEntityCreate",
@@ -153,6 +155,7 @@ export default {
         {val: 'FSSP', text: 'Федеральная служба судебных приставов'},
         {val: 'FNS', text: 'Федеральная налоговая служба'}
       ],
+      state: '',
       formData: {
         pk: '',
         legal_type: 'EMPTY',
@@ -200,16 +203,25 @@ export default {
     })
   },
   methods: {
+    close(){
+      this.$refs.legalEntity.reset()
+    },
     addLegalEntity() {
       if (this.$refs.legalEntity.validate()) {
         let data = func.createFormData(this.formData)
         if (this.formData.pk) {
-          this.$store.dispatch('editLegalEntity', {data, legalEntityDetail: this.formData}).then(data=>{
-            this.$emit('closeModal', data)
+          this.$store.dispatch('editLegalEntity', {data, legalEntityDetail: this.formData}).then(res=>{
+            console.log(res)
+            this.$emit('closeModal', res.data.data.data)
+            this.state = 'success'
+            this.$emit('showSystemMessage', {response: res, state: this.state, send: false})
           })
         } else {
-          this.$store.dispatch('createLegalEntity', data).then(data=>{
-            this.$emit('closeModal', data)
+          this.$store.dispatch('createLegalEntity', data).then(res=>{
+            this.$emit('closeModal', res.data.data.data)
+            this.state = 'success'
+            this.$emit('showSystemMessage', {response: res, state: this.state, send: false})
+            this.close()
           })
         }
       }
@@ -237,6 +249,7 @@ export default {
     }
   },
   components: {
+    SystemMessage,
     BankAccountCreate,
     BankAccountCreateModal,
     ContactInfoEdit
@@ -244,6 +257,8 @@ export default {
   created() {
     if (this.rectifiedLegalEntity) {
       this.updateData(this.rectifiedLegalEntity)
+    }else{
+      Object.assign(this.$data, this.$options.data())
     }
     this.$store.dispatch('getBankList')
   }

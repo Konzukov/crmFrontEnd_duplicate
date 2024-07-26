@@ -75,7 +75,21 @@
                       chips
                       multiple
                       append-outer-icon="mdi-plus"
-                  ></v-autocomplete>
+                  >
+                    <template v-slot:selection="data">
+                      <v-chip>
+                        {{ data.item.name }}
+                      </v-chip>
+                    </template>
+                    <template v-slot:item="data">
+                      <v-list-item-content>
+                        <v-list-item-title>{{ data.item.name }}</v-list-item-title>
+                        <v-list-item-subtitle style="font-size: 10px; color: #00a6ee">{{ data.item.code }} -
+                          {{ data.item.procedure | getProcedure }}
+                        </v-list-item-subtitle>
+                      </v-list-item-content>
+                    </template>
+                  </v-autocomplete>
                 </v-col>
                 <v-col md="5" sm="5">
                   <AddTag ref="tagsList"></AddTag>

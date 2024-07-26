@@ -104,6 +104,21 @@ export default {
                     reject(err)
                 })
             })
+        },
+        downloadPreProjectReport({commit}){
+            return new Promise((resolve, reject) => {
+                axios({
+                    method: "GET",
+                    url: customConst.REFERENCE_BOOK_API + 'download-pre-project-report',
+                    responseType: "blob"
+                }).then(res=>{
+                    console.log(res)
+                    resolve(res)
+                }).catch(err=>{
+                    console.log(err)
+                    reject(err)
+                })
+            })
         }
     },
     getters: {

@@ -2,6 +2,7 @@
 let  BASE_URL = 'http://127.0.0.1:8181'
 // let  BASE_URL = 'http://tcrm.planer-studio.ru'
 // let  BASE_URL = 'http://crm.planer-studio.ru:9090'
+// 193.93.122.9
 const REFERENCE_BOOK_API = `${BASE_URL}/api/reference_book/`
 const AUTH_API = `${BASE_URL}/api/auth/`
 const CRM_API = `${BASE_URL}/api/crm/`
@@ -12,6 +13,7 @@ const FILE_MANAGER = `${BASE_URL}/api/filemanager/`
 const MONEY = `${BASE_URL}/api/money/`
 const PROCEDURE = `${BASE_URL}/api/procedure/`
 const GENERATOR = `${BASE_URL}/api/document-generator/`
+const NOTIFY = `${BASE_URL}/api/notify/`
 
 export default {
     BASE_URL,
@@ -24,7 +26,8 @@ export default {
     FILE_MANAGER,
     MONEY,
     PROCEDURE,
-    GENERATOR
+    GENERATOR,
+    NOTIFY
 }
 
 

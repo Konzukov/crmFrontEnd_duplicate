@@ -70,7 +70,17 @@ export default {
     },
     getters: {
         docTemplateData(state) {
-            return state.docTemplate
+            return state.docTemplate.reduce((accumulator, currentObject) => {
+                // Проверяем, существует ли уже ключ в аккумуляторе для текущей категории
+                const key = currentObject.category;
+                if (!accumulator[key]) {
+                    // Если нет, создаем новый массив для этой категории
+                    accumulator[key] = [];
+                }
+                // Добавляем текущий объект в соответствующий массив
+                accumulator[key].push(currentObject);
+                return accumulator;
+            }, {})
         },
         templateFieldsData(state) {
             return state.templateField

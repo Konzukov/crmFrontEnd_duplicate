@@ -13,6 +13,7 @@ import excel from 'vue-excel-export'
 import VueExcelXlsx from "vue-excel-xlsx";
 import VCalendar from 'v-calendar';
 import CKEditor from '@ckeditor/ckeditor5-vue2';
+import Fragment from 'vue-fragment'
 import { DocumentEditorContainerPlugin } from '@syncfusion/ej2-vue-documenteditor';
 Vue.use(DocumentEditorContainerPlugin);
 Vue.use( CKEditor );
@@ -46,6 +47,7 @@ Vue.use(ElementUI);
 Vue.use(VCalendar, {
   componentPrefix: 'vc',  // Use <vc-calendar /> instead of <v-calendar />
 });
+Vue.use(Fragment.Plugin)
 
 new Vue({
     router,

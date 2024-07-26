@@ -86,9 +86,8 @@ export default {
     }
   },
   created() {
-    this.$parent.$on('showSystemMessage', async ({response, state}) => {
+    this.$parent.$on('showSystemMessage', async ({response, state, send}) => {
       console.log(response)
-      console.log(state)
       let data;
       if (state === 'error') {
         if (typeof response.response.data === "object") {
@@ -108,7 +107,9 @@ export default {
       } else {
         console.log('response.data', response.data)
         data = response.data.data.data
-        console.log('data', data)
+        if (send){
+          data.text += ' и ожидает отправки'
+        }
         this.systemMessage = {
           subject: data.subject,
           text: data.text

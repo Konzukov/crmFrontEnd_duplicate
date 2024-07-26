@@ -35,6 +35,7 @@ export default {
       })
     } else {
       console.log('Not Auth')
+      this.$router.push('/login')
     }
 
   }

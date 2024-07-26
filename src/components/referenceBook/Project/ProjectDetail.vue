@@ -97,7 +97,7 @@
         </v-btn>
       </v-row>
     </v-item-group>
-    <router-view :project="projectPK" :collapsed="collapse" :act="projectDetail.act" class="main-content">
+    <router-view :project="projectPK" :collapsed="collapse" :act="projectDetail.act" :freePart="projectFreePart" class="main-content">
 
     </router-view>
     <v-fab-transition>
@@ -114,21 +114,50 @@
         <v-icon>mdi-folder-download</v-icon>
       </v-btn>
     </v-fab-transition>
-<!--    <v-speed-dial v-model="fab" bottom left>-->
-<!--      <template v-slot:activator>-->
-<!--        <v-btn v-model="fab" color="blue darken-2" dark fab>-->
-<!--          <v-icon v-if="fab">-->
-<!--            mdi-close-->
-<!--          </v-icon>-->
-<!--          <v-icon v-else>-->
-<!--            mdi-cloud-download-outline-->
-<!--          </v-icon>-->
-<!--        </v-btn>-->
-<!--      </template>-->
-<!--      <v-btn fab dark small color="red" @click="downloadArchive(projectPK)">-->
-<!--        <v-icon>mdi-folder-download</v-icon>-->
-<!--      </v-btn>-->
-<!--    </v-speed-dial>-->
+    <v-dialog v-model="showDownloadUrl" width="40vw">
+      <v-card>
+        <v-toolbar dense>
+          <v-toolbar-title>Ссылка на файл</v-toolbar-title>
+          <v-spacer></v-spacer>
+          <v-btn icon @click="showDownloadUrl = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-toolbar>
+        <v-card-text style="height: 30vh; align-content: center;" >
+          <v-row justify="start">
+            <v-col cols="12">
+              <h3>{{downloadUrl}}</h3>
+              <h3>Данная ссылку будет доступна в течении 30 минут</h3>
+            </v-col>
+          </v-row>
+        </v-card-text>
+        <v-card-actions>
+          <v-row class="ma-0">
+                        <v-col cols="auto">
+              <v-btn color="success" @click="downloadFile">Скачать</v-btn>
+            </v-col>
+            <v-col cols="auto">
+              <v-btn color="primary" @click="copyUrl">{{copyUrlText?"Ссылка скопирована":"Скопировать ссылку"}}</v-btn>
+            </v-col>
+          </v-row>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+    <!--    <v-speed-dial v-model="fab" bottom left>-->
+    <!--      <template v-slot:activator>-->
+    <!--        <v-btn v-model="fab" color="blue darken-2" dark fab>-->
+    <!--          <v-icon v-if="fab">-->
+    <!--            mdi-close-->
+    <!--          </v-icon>-->
+    <!--          <v-icon v-else>-->
+    <!--            mdi-cloud-download-outline-->
+    <!--          </v-icon>-->
+    <!--        </v-btn>-->
+    <!--      </template>-->
+    <!--      <v-btn fab dark small color="red" @click="downloadArchive(projectPK)">-->
+    <!--        <v-icon>mdi-folder-download</v-icon>-->
+    <!--      </v-btn>-->
+    <!--    </v-speed-dial>-->
   </v-container>
 </template>
 
@@ -137,37 +166,48 @@ import {mapGetters,} from 'vuex'
 import customConst from "@/const/customConst";
 import ProjectDetailParts from "@/components/referenceBook/Project/ProjectDetail/ProjectDetailParts";
 import ProjectDetailJudge from "@/components/referenceBook/Project/ProjectDetail/ProjectDetailJudge";
-import {saveAs} from 'file-saver'
+// import {saveAs} from 'file-saver'
 import moment from "moment";
 
 
 export default {
   name: "ProjectDetail",
   data: () => ({
+    showDownloadUrl: false,
+    copyUrlText: false,
+    downloadUrl: '',
     collapse: true,
     activeTab: null,
     activeMenu: 1,
     fab: false,
     projectPK: null,
+    projectFreePart: null,
     archiveLoader: false,
     downloadProgress: 0,
   }),
   methods: {
-
+    copyUrl() {
+      navigator.clipboard.writeText(this.downloadUrl).then(() => {
+        this.copyUrlText = true
+      }).catch(err => {
+        alert('Ошибка при копировании ссылки.');
+      });
+    },
+    downloadFile() {
+      window.location.href = this.downloadUrl;
+    },
     downloadArchive(projectPK) {
       this.archiveLoader = true
       this.$http({
         method: 'GET',
         url: customConst.REPORT_API + 'download-docs/' + projectPK,
-        responseType: "blob",
-        onDownloadProgress: (progressEvent) => {
-          this.downloadProgress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-        }
       }).then((response) => {
-        console.log(response)
-        saveAs(response.data, 'report.zip')
+        this.showDownloadUrl = true
         this.archiveLoader = false
-        this.downloadProgress = 0
+        this.downloadUrl = `${customConst.BASE_URL}/media/generated_report_archive/${response.data.data.data}`
+      }).catch(err => {
+        this.archiveLoader = false
+        console.log(err)
       })
     },
     uploadToCloud(projectPK) {
@@ -209,7 +249,8 @@ export default {
   },
   async mounted() {
     this.projectPK = this.$route.params['pk']
-    await this.$store.dispatch('getProjectDetail', this.$route.params['pk']).then(async () => {
+    await this.$store.dispatch('getProjectDetail', this.$route.params['pk']).then(async (data) => {
+      this.projectFreePart = data?.['procedure_free_part']
       await this.$router.push({name: 'project-report'})
     })
   },
@@ -221,6 +262,12 @@ export default {
 </script>
 
 <style scoped>
+.link-actions input[type="text"] {
+  width: 100%;
+  padding: 8px;
+  margin-right: 10px;
+}
+
 .v-btn--example {
   bottom: 0;
   position: absolute;
@@ -230,6 +277,7 @@ export default {
 
 .main-content {
   height: 60vh;
+  overflow: auto;
 }
 
 .main-menu {

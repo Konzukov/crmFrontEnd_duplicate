@@ -1,8 +1,15 @@
-
-
-
-
-
+let ProcedureType = {
+    "Physical": [
+        {value: "RCP", text: "Реструктуризация имущества гражданина"},
+        {value: "SDP", text: "Реализация имущества должника"},
+    ],
+    "Legal": [
+        {value: "OBS", text: "Наблюдение"},
+        {value: "ECL", text: "Внешнее управление"},
+        {value: "FCR", text: "Финансовое оздоровление"},
+        {value: "BPS", text: "Конкурсное производство"}
+    ]
+}
 
 let ThirdStageType = [
     {value: 'empty', text: 'Не указано'},
@@ -15,3 +22,4 @@ let ThirdStageType = [
 
 
 export {ThirdStageType}
+export {ProcedureType}

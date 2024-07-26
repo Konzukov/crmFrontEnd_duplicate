@@ -229,17 +229,20 @@
     <v-dialog v-model="dialogSelectDefine"
               scrollable
               max-width="550px">
-      <v-card height="30vh">
+      <v-card height="50vh">
         <v-card-title>
           Выберете файл определения
         </v-card-title>
         <v-divider></v-divider>
-        <v-card-text class="pt-4">
+        <v-card-text style="padding-top: 100px !important;">
           <v-radio-group
               row
               v-model="selectedDefine"
           >
-            <v-radio v-for="(item, i) in availableFile" :key="i" :value="item" :label="item.description">
+            <v-radio v-for="(item, i) in availableFile" :key="i" :value="item">
+              <template v-slot:label>
+                {{item.date}} | {{item.description}}
+              </template>
             </v-radio>
           </v-radio-group>
         </v-card-text>
@@ -263,6 +266,7 @@ export default {
     return {
       valid: true,
       overlay: false,
+      loading: false,
       dialogSelectDefine: false,
       loadMessage: 'Получение данных...',
       form: {

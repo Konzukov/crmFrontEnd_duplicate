@@ -10,7 +10,8 @@ Vue.use(VueCookies)
 export default {
     state: {
         projectList: [],
-        projectDetail: ''
+        projectDetail: '',
+        creditorMeeting: [],
     },
     mutations: {
         syncProjectList(state, projects) {
@@ -29,7 +30,8 @@ export default {
         },
         syncProjectDetail(state, project) {
             state.projectDetail = project
-        }
+        },
+
     },
     actions: {
         getProjectList({commit}) {
@@ -123,7 +125,7 @@ export default {
         },
         editSeparatedDispute({commit}, {formData, id}) {
             console.log(formData)
-            console.log('id',id)
+            console.log('id', id)
             return new Promise((resolve, reject) => {
                 axios({
                     method: "PUT",
@@ -138,19 +140,20 @@ export default {
                 })
             })
         },
-        getEnforcementProceedings({commit}, project){
+        getEnforcementProceedings({commit}, project) {
             return new Promise((resolve, reject) => {
                 axios({
                     method: "GET",
                     url: customConst.REFERENCE_BOOK_API + 'enforcement-proceedings',
                     params: {project: project}
-                }).then(res=>{
+                }).then(res => {
                     resolve(res.data.data.data)
-                }).catch(err=>{
+                }).catch(err => {
                     console.log(err)
                 })
             })
-        }
+        },
+
     },
     getters: {
         projectListData(state) {
@@ -159,5 +162,6 @@ export default {
         projectDetailData(state) {
             return state.projectDetail
         },
+
     },
 }
