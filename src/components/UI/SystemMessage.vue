@@ -50,8 +50,10 @@
             <v-col cols="auto">
               {{ systemMessage.text }}
             </v-col>
-
           </v-row>
+          <template v-if="systemMessage.redirect">
+             <v-btn text color="warning" link :to="{name: systemMessage.redirect, params: {pk: project}}" target="_blank">Перейти на страницу проекта</v-btn>
+          </template>
         </v-container>
       </v-card-text>
     </v-card>
@@ -68,6 +70,9 @@ export default {
     },
     message: {
       type: Object,
+    },
+    project: {
+      type: Number
     }
   },
   name: "SystemMessage",
@@ -75,7 +80,8 @@ export default {
     dialog: false,
     systemMessage: {
       subject: '',
-      text: ''
+      text: '',
+      redirect: null
     }
   }),
   computed: {},
@@ -87,7 +93,6 @@ export default {
   },
   created() {
     this.$parent.$on('showSystemMessage', async ({response, state, send}) => {
-      console.log(response)
       let data;
       if (state === 'error') {
         if (typeof response.response.data === "object") {
@@ -98,14 +103,20 @@ export default {
         let parser = new DOMParser()
         let htmlDoc = parser.parseFromString(data, 'text/html')
         let container = htmlDoc.getElementById('summary')
-        console.log(container.getElementsByTagName('h1')[0].innerHTML)
-        console.log(container.getElementsByTagName('pre')[0].innerHTML)
+        let text = container.getElementsByTagName("pre")[0].innerHTML
+        let subject = container.getElementsByTagName('h1')[0].innerHTML
+        let redirect;
+        console.log(text)
+        console.log(subject)
+        if (text === "Основной расчетный счет не выбран"){
+          redirect = 'project-detail'
+        }
         this.systemMessage = {
-          subject: container.getElementsByTagName('h1')[0].innerHTML,
-          text: container.getElementsByTagName("pre")[0].innerHTML
+          subject: subject,
+          text: text,
+          redirect: redirect
         }
       } else {
-        console.log('response.data', response.data)
         data = response.data.data.data
         if (send){
           data.text += ' и ожидает отправки'

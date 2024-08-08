@@ -103,6 +103,7 @@ export default {
             state.correspondenceType = correspondenceTypeList
         },
         syncDocSendQueue(state, docSend) {
+            console.log(docSend)
             state.docSendQueue = [...docSend]
         },
         syncDelDocSendQueue(state, id) {

@@ -23,7 +23,22 @@ export default {
         country: [],
         region: [],
         bailiffs: [],
-        fns: []
+        fns: [],
+        employmentService: [],
+        marriageService: [],
+        curt: [],
+        gibdd: [],
+        osfr: [],
+        ufsvn: [],
+        git: [],
+        gims: [],
+        technicalSupervision: [],
+        addressDesk: [],
+        mvd: [],
+        bti: [],
+        kio: [],
+        dizo: [],
+        pfr: [],
     },
     mutations: {
         syncSystemUser(state, userList) {
@@ -66,6 +81,22 @@ export default {
             state.status = 'legalEntityList success'
             state.legalEntity = legalEntity
             state.fns = legalEntity.filter(obj => obj['org_type'] === 'FNS')
+            state.employmentService = legalEntity.filter(obj => obj['org_type'] === 'EMPLS')
+            state.bailiffs = legalEntity.filter(obj => obj['org_type'] === 'FSSP')
+            state.osfr = legalEntity.filter(obj => obj['org_type'] === 'OSFR')
+            state.marriageService = legalEntity.filter(obj => obj['org_type'] === 'ZAGS')
+            state.technicalSupervision = legalEntity.filter(obj => obj['org_type'] === 'TECHN')
+            state.addressDesk = legalEntity.filter(obj => obj['org_type'] === 'ADDRD')
+            state.pfr = legalEntity.filter(obj => obj['org_type'] === 'PFR')
+            state.mvd = legalEntity.filter(obj => obj['org_type'] === 'MVD')
+            state.git = legalEntity.filter(obj => obj['org_type'] === 'GIT')
+            state.bti = legalEntity.filter(obj => obj['org_type'] === 'BTI')
+            state.kio = legalEntity.filter(obj => obj['org_type'] === 'KIO')
+            state.dizo = legalEntity.filter(obj => obj['org_type'] === 'DIZO')
+            state.gims = legalEntity.filter(obj => obj['org_type'] === 'GIMS')
+            state.ufsvn = legalEntity.filter(obj => obj['org_type'] === 'UFSVN')
+            state.gibdd = legalEntity.filter(obj => obj['org_type'] === 'GIBDD')
+            state.curt = legalEntity.filter(obj => obj['org_type'] === 'ARBCR' || obj['org_type'] === 'GEJRD' || obj['org_type'] === 'MGSCR' || obj['org_type'] === 'MOSC')
         },
         legalEntityDetailInfo(state, obj) {
             state.status = 'Success'
@@ -85,6 +116,96 @@ export default {
                 return obj
             })
             state.fns.data = state.fns.map(obj => {
+                if (obj['pk'] === legalEntity['pk']) {
+                    return Object.assign({}, legalEntity)
+                }
+                return obj
+            })
+            state.employmentService.data = state.employmentService.map(obj => {
+                if (obj['pk'] === legalEntity['pk']) {
+                    return Object.assign({}, legalEntity)
+                }
+                return obj
+            })
+            state.bailiffs.data = state.bailiffs.map(obj => {
+                if (obj['pk'] === legalEntity['pk']) {
+                    return Object.assign({}, legalEntity)
+                }
+                return obj
+            })
+            state.marriageService.data = state.marriageService.map(obj => {
+                if (obj['pk'] === legalEntity['pk']) {
+                    return Object.assign({}, legalEntity)
+                }
+                return obj
+            })
+            state.curt.data = state.curt.map(obj => {
+                if (obj['pk'] === legalEntity['pk']) {
+                    return Object.assign({}, legalEntity)
+                }
+                return obj
+            })
+            state.gibdd.data = state.gibdd.map(obj => {
+                if (obj['pk'] === legalEntity['pk']) {
+                    return Object.assign({}, legalEntity)
+                }
+                return obj
+            })
+            state.osfr.data = state.osfr.map(obj => {
+                if (obj['pk'] === legalEntity['pk']) {
+                    return Object.assign({}, legalEntity)
+                }
+                return obj
+            })
+            state.ufsvn.data = state.ufsvn.map(obj => {
+                if (obj['pk'] === legalEntity['pk']) {
+                    return Object.assign({}, legalEntity)
+                }
+                return obj
+            })
+            state.gims.data = state.gims.map(obj => {
+                if (obj['pk'] === legalEntity['pk']) {
+                    return Object.assign({}, legalEntity)
+                }
+                return obj
+            })
+            state.technicalSupervision.data = state.technicalSupervision.map(obj => {
+                if (obj['pk'] === legalEntity['pk']) {
+                    return Object.assign({}, legalEntity)
+                }
+                return obj
+            })
+            state.addressDesk.data = state.addressDesk.map(obj => {
+                if (obj['pk'] === legalEntity['pk']) {
+                    return Object.assign({}, legalEntity)
+                }
+                return obj
+            })
+            state.mvd.data = state.mvd.map(obj => {
+                if (obj['pk'] === legalEntity['pk']) {
+                    return Object.assign({}, legalEntity)
+                }
+                return obj
+            })
+            state.bti.data = state.bti.map(obj => {
+                if (obj['pk'] === legalEntity['pk']) {
+                    return Object.assign({}, legalEntity)
+                }
+                return obj
+            })
+            state.kio.data = state.kio.map(obj => {
+                if (obj['pk'] === legalEntity['pk']) {
+                    return Object.assign({}, legalEntity)
+                }
+                return obj
+            })
+            state.dizo.data = state.dizo.map(obj => {
+                if (obj['pk'] === legalEntity['pk']) {
+                    return Object.assign({}, legalEntity)
+                }
+                return obj
+            })
+            state.pfr.data = state.pfr.map(obj => {
                 if (obj['pk'] === legalEntity['pk']) {
                     return Object.assign({}, legalEntity)
                 }
@@ -713,6 +834,51 @@ export default {
         },
         fnsListData(state) {
             return state.fns
-        }
+        },
+        employmentServiceListData(state) {
+            return state.employmentService
+        },
+        marriageServiceListData(state) {
+            return state.marriageService
+        },
+        curtListData(state) {
+            return state.curt
+        },
+        gibddListData(state) {
+            return state.gibdd
+        },
+        osfrListData(state) {
+            return state.osfr
+        },
+        ufsvnListData(state) {
+            return state.ufsvn
+        },
+        gitListData(state) {
+            return state.git
+        },
+        gimsListData(state) {
+            return state.gims
+        },
+        technicalSupervisionListData(state) {
+            return state.technicalSupervision
+        },
+        addressDeskListData(state) {
+            return state.addressDesk
+        },
+        mvdListData(state) {
+            return state.mvd
+        },
+        btiListData(state) {
+            return state.bti
+        },
+        kioListData(state) {
+            return state.kio
+        },
+        dizoListData(state) {
+            return state.dizo
+        },
+        pfrListData(state) {
+            return state.pfr
+        },
     }
 }

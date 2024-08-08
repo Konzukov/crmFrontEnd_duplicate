@@ -101,6 +101,7 @@
       ></v-progress-circular>
       {{ loadMessage }}
     </v-overlay>
+    <SystemMessage :state.sync="state"/>
   </v-container>
 </template>
 
@@ -109,13 +110,15 @@
 
 import customConst from "../../../const/customConst";
 import * as moment from "moment";
+import SystemMessage from "@/components/UI/SystemMessage.vue";
 
 
 export default {
   name: "PreProject",
+  components: {SystemMessage},
   data() {
     return {
-
+      state: '',
       headers: [
         {text: 'Номер', value: 'code'},
         {text: 'ФИО', value: 'fullName'},
@@ -186,11 +189,16 @@ export default {
           setTimeout(() => {
             this.loading = false
           }, 1500)
-          this.loadMessage = 'Документы успешно отправлены'
+          this.state = 'success'
+          this.$emit('showSystemMessage', {response: res, state: this.state, send: false})
+          resolve()
           this.selectedCase = []
           this.email = ''
-        }).catch(() => {
+        }).catch((res) => {
           this.loading = false
+          this.state = 'error'
+          this.$emit('showSystemMessage', {response: res, state: this.state, send: false})
+          reject()
         })
       })
     },

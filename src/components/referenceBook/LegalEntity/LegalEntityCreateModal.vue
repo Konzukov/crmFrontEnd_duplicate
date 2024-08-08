@@ -34,7 +34,6 @@ export default {
       this.$emit('contractorAdded', item)
       this.dialog = false
     }
-
   },
   created() {
     this.$parent.$on('legalEntityModal', (item) => {

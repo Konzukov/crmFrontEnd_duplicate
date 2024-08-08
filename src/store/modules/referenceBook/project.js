@@ -159,6 +159,9 @@ export default {
         projectListData(state) {
             return state.projectList
         },
+        activeProjectListData(state) {
+            return state.projectList.filter(obj=>!obj['isArchive'])
+        },
         projectDetailData(state) {
             return state.projectDetail
         },

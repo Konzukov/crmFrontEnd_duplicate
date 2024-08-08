@@ -36,6 +36,10 @@ export async function compareFields(fields, data) {
             case "GENERATE_DATE":
                 compare[field['value']] = moment(new Date()).format('YYYY-MM-DD')
                 break
+            case "DATE_EXECUTION_REQUIREMENT":
+                compare[field['value']] = moment(new Date()).add(15, 'days').format('YYYY-MM-DD')
+                console.log(moment(new Date()).add(15, 'days').format('YYYY-MM-DD'))
+                break
             case "DEBTOR_FULLNAME":
                 if (person) {
                     compare[field['value']] = `${person['last_name']} ${person['first_name']} ${person['middle_name']}`
@@ -191,13 +195,6 @@ export async function compareFields(fields, data) {
             case "KOMM_PAGE":
                 if (data['publication_number_page']) {
                     compare[field['value']] = data['publication_number_page']
-                } else {
-                    compare[field['value']] = ''
-                }
-                break
-            case "BAILIFFS":
-                if (data['bailiffs']) {
-                    compare[field['value']] = data['bailiffs']
                 } else {
                     compare[field['value']] = ''
                 }

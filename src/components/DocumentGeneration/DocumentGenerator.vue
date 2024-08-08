@@ -11,7 +11,7 @@
                 outlined
                 label="Выберете проект"
                 v-model="project"
-                :items="projectList"
+                :items="activeProjectList"
                 item-text="name"
                 item-value="id"
                 @change="getProjectDetail"
@@ -89,13 +89,195 @@
                                       :items="bailiffsList"
                                       item-text="name"
                                       item-value="id"
+                                      return-object
+                                      :append-outer-icon="!bailiffs? 'mdi-plus': 'mdi-pencil'"
+                                      :error-messages="bailiffs && !bailiffs.legal_address? 'Необходимо заполнить данные': ''"
+                                      @click:append-outer="editContractor(bailiffs)"
                                       :rules="rules.required"
-                                      v-model="templateFields[field.value]"></v-autocomplete>
+                                      v-model="bailiffs"></v-autocomplete>
+                    </v-col>
+                  </v-row>
+                  <!--                  GIBDD-->
+                  <v-row v-if="field.value ==='GIBDD'" justify="start">
+                    <v-col cols="12">
+                      <v-autocomplete outlined dense :label="field.name"
+                                      :items="gibddList"
+                                      item-text="name"
+                                      item-value="id"
+                                      :rules="rules.required"
+                                      return-object
+                                      :append-outer-icon="!gibdd? 'mdi-plus': 'mdi-pencil'"
+                                      :error-messages="gibdd && !gibdd.legal_address? 'Необходимо заполнить данные': ''"
+                                      @click:append-outer="editContractor(gibdd)"
+                                      v-model="gibdd"></v-autocomplete>
+                    </v-col>
+                  </v-row>
+                  <!--                  OSFR-->
+                  <v-row v-if="field.value ==='OSFR'" justify="start">
+                    <v-col cols="12">
+                      <v-autocomplete outlined dense :label="field.name"
+                                      :items="osfrList"
+                                      item-text="name"
+                                      item-value="id"
+                                      :rules="rules.required"
+                                      return-object
+                                      :append-outer-icon="!osfr? 'mdi-plus': 'mdi-pencil'"
+                                      :error-messages="osfr && !osfr.legal_address? 'Необходимо заполнить данные': ''"
+                                      @click:append-outer="editContractor(osfr)"
+                                      v-model="osfr"></v-autocomplete>
+                    </v-col>
+                  </v-row>
+                  <!--                  TECHN-->
+                  <v-row v-if="field.value ==='TECHN'" justify="start">
+                    <v-col cols="12">
+                      <v-autocomplete outlined dense :label="field.name"
+                                      :items="technicalSupervisionList"
+                                      item-text="name"
+                                      item-value="id"
+                                      :rules="rules.required"
+                                      return-object
+                                      :append-outer-icon="!technicalSupervision? 'mdi-plus': 'mdi-pencil'"
+                                      :error-messages="technicalSupervision && !technicalSupervision.legal_address? 'Необходимо заполнить данные': ''"
+                                      @click:append-outer="editContractor(technicalSupervision)"
+                                      v-model="technicalSupervision"></v-autocomplete>
+                    </v-col>
+                  </v-row>
+                  <!--                 UFSVN -->
+                  <v-row v-if="field.value ==='UFSVN'" justify="start">
+                    <v-col cols="12">
+                      <v-autocomplete outlined dense :label="field.name"
+                                      :items="ufsvnList"
+                                      item-text="name"
+                                      item-value="id"
+                                      :rules="rules.required"
+                                      return-object
+                                      :append-outer-icon="!ufsvn? 'mdi-plus': 'mdi-pencil'"
+                                      :error-messages="ufsvn && !ufsvn.legal_address? 'Необходимо заполнить данные': ''"
+                                      @click:append-outer="editContractor(ufsvn)"
+                                      v-model="ufsvn"></v-autocomplete>
+                    </v-col>
+                  </v-row>
+                  <!--                  GIT-->
+                  <v-row v-if="field.value ==='GIT'" justify="start">
+                    <v-col cols="12">
+                      <v-autocomplete outlined dense :label="field.name"
+                                      :items="gitList"
+                                      item-text="name"
+                                      item-value="id"
+                                      :rules="rules.required"
+                                      return-object
+                                      :append-outer-icon="!git? 'mdi-plus': 'mdi-pencil'"
+                                      :error-messages="git && !git.legal_address? 'Необходимо заполнить данные': ''"
+                                      @click:append-outer="editContractor(git)"
+                                      v-model="git"></v-autocomplete>
+                    </v-col>
+                  </v-row>
+                  <!--                  GIMS-->
+                  <v-row v-if="field.value ==='GIMS'" justify="start">
+                    <v-col cols="12">
+                      <v-autocomplete outlined dense :label="field.name"
+                                      :items="gimsList"
+                                      item-text="name"
+                                      item-value="id"
+                                      :rules="rules.required"
+                                      return-object
+                                      :append-outer-icon="!gims? 'mdi-plus': 'mdi-pencil'"
+                                      :error-messages="gims && !gims.legal_address? 'Необходимо заполнить данные': ''"
+                                      @click:append-outer="editContractor(gims)"
+                                      v-model="gims"></v-autocomplete>
+                    </v-col>
+                  </v-row>
+                  <!--                  ADDRD-->
+                  <v-row v-if="field.value ==='ADDRD'" justify="start">
+                    <v-col cols="12">
+                      <v-autocomplete outlined dense :label="field.name"
+                                      :items="addressDeskList"
+                                      item-text="name"
+                                      item-value="id"
+                                      :rules="rules.required"
+                                      return-object
+                                      :append-outer-icon="!addressDesk? 'mdi-plus': 'mdi-pencil'"
+                                      :error-messages="addressDesk && !addressDesk.legal_address? 'Необходимо заполнить данные': ''"
+                                      @click:append-outer="editContractor(addressDesk)"
+                                      v-model="addressDesk"></v-autocomplete>
+                    </v-col>
+                  </v-row>
+                  <!--                  MVD-->
+                  <v-row v-if="field.value ==='MVD'" justify="start">
+                    <v-col cols="12">
+                      <v-autocomplete outlined dense :label="field.name"
+                                      :items="mvdList"
+                                      item-text="name"
+                                      item-value="id"
+                                      :rules="rules.required"
+                                      return-object
+                                      :append-outer-icon="!mvd? 'mdi-plus': 'mdi-pencil'"
+                                      :error-messages="mvd && !mvd.legal_address? 'Необходимо заполнить данные': ''"
+                                      @click:append-outer="editContractor(mvd)"
+                                      v-model="mvd"></v-autocomplete>
+                    </v-col>
+                  </v-row>
+                  <!--                  BTI-->
+                  <v-row v-if="field.value ==='BTI'" justify="start">
+                    <v-col cols="12">
+                      <v-autocomplete outlined dense :label="field.name"
+                                      :items="btiList"
+                                      item-text="name"
+                                      item-value="id"
+                                      :rules="rules.required"
+                                      return-object
+                                      :append-outer-icon="!bti? 'mdi-plus': 'mdi-pencil'"
+                                      :error-messages="bti && !bti.legal_address? 'Необходимо заполнить данные': ''"
+                                      @click:append-outer="editContractor(bti)"
+                                      v-model="bti"></v-autocomplete>
+                    </v-col>
+                  </v-row>
+                  <!--                  KIO-->
+                  <v-row v-if="field.value ==='KIO'" justify="start">
+                    <v-col cols="12">
+                      <v-autocomplete outlined dense :label="field.name"
+                                      :items="kioList"
+                                      item-text="name"
+                                      item-value="id"
+                                      :rules="rules.required"
+                                      return-object
+                                      :append-outer-icon="!kio? 'mdi-plus': 'mdi-pencil'"
+                                      :error-messages="kio && !kio.legal_address? 'Необходимо заполнить данные': ''"
+                                      @click:append-outer="editContractor(kio)"
+                                      v-model="kio"></v-autocomplete>
+                    </v-col>
+                  </v-row>
+                  <!--                  DIZO-->
+                  <v-row v-if="field.value ==='DIZO'" justify="start">
+                    <v-col cols="12">
+                      <v-autocomplete outlined dense :label="field.name"
+                                      :items="dizoList"
+                                      item-text="name"
+                                      item-value="id"
+                                      :rules="rules.required"
+                                      return-object
+                                      :append-outer-icon="!dizo? 'mdi-plus': 'mdi-pencil'"
+                                      :error-messages="dizo && !dizo.legal_address? 'Необходимо заполнить данные': ''"
+                                      @click:append-outer="editContractor(dizo)"
+                                      v-model="dizo"></v-autocomplete>
+                    </v-col>
+                  </v-row>
+                  <v-row v-if="field.value ==='CURT_SELECT'" justify="start">
+                    <v-col cols="12">
+                      <v-autocomplete outlined dense :label="field.name"
+                                      :items="curtList"
+                                      item-text="name"
+                                      item-value="id"
+                                      :rules="rules.required"
+                                      return-object
+                                      :append-outer-icon="!curt? 'mdi-plus': 'mdi-pencil'"
+                                      :error-messages="curt && !curt.legal_address? 'Необходимо заполнить данные': ''"
+                                      @click:append-outer="editContractor(curt)"
+                                      v-model="curt"></v-autocomplete>
                     </v-col>
                   </v-row>
                   <v-row v-if="field.value ==='FNS'" justify="start">
                     <v-col cols="12">
-                      {{fns}}
                       <v-autocomplete outlined dense :label="field.name"
                                       :items="fnsList"
                                       item-text="name"
@@ -103,11 +285,40 @@
                                       :rules="rules.required"
                                       return-object
                                       :append-outer-icon="!fns? 'mdi-plus': 'mdi-pencil'"
-                                      :error-messages="fns && fns.legal_address === 'null'? 'Необходимо заполнить данные': ''"
+                                      :error-messages="fns && !fns.legal_address? 'Необходимо заполнить данные': ''"
                                       @click:append-outer="editContractor(fns)"
                                       v-model="fns"></v-autocomplete>
                     </v-col>
                   </v-row>
+                  <v-row v-if="field.value ==='MARRIAGE_SERVICE'" justify="start">
+                    <v-col cols="12">
+                      <v-autocomplete outlined dense :label="field.name"
+                                      :items="marriageServiceList"
+                                      item-text="name"
+                                      item-value="id"
+                                      :rules="rules.required"
+                                      return-object
+                                      :append-outer-icon="!marriageService? 'mdi-plus': 'mdi-pencil'"
+                                      :error-messages="marriageService && !marriageService.legal_address? 'Необходимо заполнить данные': ''"
+                                      @click:append-outer="editContractor(marriageService)"
+                                      v-model="marriageService"></v-autocomplete>
+                    </v-col>
+                  </v-row>
+                  <v-row v-if="field.value ==='EMPLOYMENT_SERVICE'" justify="start">
+                    <v-col cols="12">
+                      <v-autocomplete outlined dense :label="field.name"
+                                      :items="employmentServiceList"
+                                      item-text="name"
+                                      item-value="id"
+                                      :rules="rules.required"
+                                      return-object
+                                      :append-outer-icon="!employmentService? 'mdi-plus': 'mdi-pencil'"
+                                      :error-messages="employmentService && !employmentService.legal_address ? 'Необходимо заполнить данные': ''"
+                                      @click:append-outer="editContractor(employmentService)"
+                                      v-model="employmentService"></v-autocomplete>
+                    </v-col>
+                  </v-row>
+                  <!--EMPLOYMENT_SERVICE-->
                   <v-row v-if="field.value ==='FROM_MONTH'" justify="start" class="mr-1 ml-1">
                     <v-autocomplete outlined dense :label="field.name" :items="monthList" item-value="text"
                                     item-text="text" v-model="templateFields[field.value]"></v-autocomplete>
@@ -198,7 +409,7 @@
     </v-card>
     <CreatePostMail></CreatePostMail>
     <ContractorCreateModal></ContractorCreateModal>
-    <LegalEntityCreateModal></LegalEntityCreateModal>
+    <LegalEntityCreateModal @contractorAdded="updateItem"></LegalEntityCreateModal>
     <v-dialog v-model="confirmSave" width="500">
       <v-card height="30vh">
         <v-card-title>Подтверждение сохранения документа</v-card-title>
@@ -218,13 +429,14 @@
               <v-btn color="success" @click="saveDoc(false)">Сохранить</v-btn>
             </v-col>
             <v-col cols="auto">
-              <v-btn color="success" @click="saveDoc(true)">Подготовить к отправке</v-btn>
+              <v-btn color="success" :disabled="this.docType === 'docx'" @click="saveDoc(true)">Подготовить к отправке</v-btn>
             </v-col>
           </v-row>
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <SystemMessage :state.sync="state"/>
+    <SystemMessage :state.sync="state" :project="project"/>
+    <DocumentPreview></DocumentPreview>
   </v-container>
 </template>
 
@@ -237,6 +449,7 @@ import CreatePostMail from "@/components/PostMail/CreatePostMail";
 import ContractorCreateModal from "@/components/referenceBook/ContractorCreateModal";
 import LegalEntityCreateModal from "@/components/referenceBook/LegalEntity/LegalEntityCreateModal.vue";
 import SystemMessage from "@/components/UI/SystemMessage.vue";
+import DocumentPreview from "@/components/DocumentGeneration/DocumentPreview.vue";
 
 
 let vueStore = {
@@ -271,6 +484,21 @@ export default {
     creditor: null,
     bank: null,
     fns: null,
+    employmentService: null,
+    bailiffs: null,
+    marriageService: null,
+    curt: null,
+    gibdd: null,
+    osfr: null,
+    ufsvn: null,
+    git: null,
+    gims: null,
+    bti: null,
+    technicalSupervision: null,
+    mvd: null,
+    kio: null,
+    dizo: null,
+    addressDesk: null,
     docId: null,
     legalContractor: null,
     sendEmailAddress: '',
@@ -302,21 +530,37 @@ export default {
   computed: {
     ...mapGetters({
       projectList: 'projectListData',
+      activeProjectList: 'activeProjectListData',
       regionList: 'regionListData',
       participantDetail: 'participantFullDetail',
       currentUser: 'authUserData',
       allRefList: 'allRefData',
       legalList: 'legalEntityData',
       creditOrganizationList: 'creditOrganizationListData',
-      fnsList: 'fnsListData'
+      fnsList: 'fnsListData',
+      employmentServiceList: 'employmentServiceListData',
+      bailiffsList: 'bailiffsListData',
+      marriageServiceList: 'marriageServiceListData',
+      curtList: 'curtListData',
+      gibddList: 'gibddListData',
+      osfrList: 'osfrListData',
+      ufsvnList: 'ufsvnListData',
+      gitList: 'gitListData',
+      gimsList: 'gimsListData',
+      technicalSupervisionList: 'technicalSupervisionListData',
+      addressDeskList: 'addressDeskListData',
+      mvdList: 'mvdListData',
+      btiList: 'btiListData',
+      kioList: 'kioListData',
+      dizoList: 'dizoListData',
     }),
-    bailiffsList: function () {
-      let bailiffs = this.$store.getters.bailiffsListData
-      // if (this.region) {
-      //   return bailiffs.filter(obj => obj.region.id === this.region)
-      // }
-      return bailiffs
-    },
+    // bailiffsList: function () {
+    //   let bailiffs = this.$store.getters.bailiffsListData
+    //   // if (this.region) {
+    //   //   return bailiffs.filter(obj => obj.region.id === this.region)
+    //   // }
+    //   return bailiffs
+    // },
   },
   watch: {
     template() {
@@ -336,6 +580,42 @@ export default {
     }
   },
   methods: {
+    updateItem(item) {
+      if (item['org_type'] === 'EMPLS') {
+        this.employmentService = item
+      } else if (item['org_type'] === 'FNS') {
+        this.fns = item
+      } else if (item['org_type'] === 'FSSP') {
+        this.bailiffs = item
+      } else if (item['org_type'] === 'GIBDD') {
+        this.gibdd = item
+      } else if (item['org_type'] === 'OSFR') {
+        this.osfr = item
+      } else if (item['org_type'] === 'TECHN') {
+        this.technicalSupervision = item
+      } else if (item['org_type'] === 'GIT') {
+        this.git = item
+      } else if (item['org_type'] === 'GIMS') {
+        this.gims = item
+      } else if (item['org_type'] === 'ADDRD') {
+        this.addressDesk = item
+      } else if (item['org_type'] === 'MVD') {
+        this.mvd = item
+      } else if (item['org_type'] === 'UFSVN') {
+        this.ufsvn = item
+      } else if (item['org_type'] === 'BTI') {
+        this.bti = item
+      } else if (item['org_type'] === 'KIO') {
+        this.kio = item
+      } else if (item['org_type'] === 'DIZO') {
+        this.dizo = item
+      } else if (item['org_type'] === 'ZAGS') {
+        this.marriageService = item
+      } else if (item['org_type'] === 'ARBCR' || item['org_type'] === 'GEJRD' || item['org_type'] === 'MGSCR' || item['org_type'] === 'MOSC') {
+        this.curt = item
+      }
+
+    },
     checkForm() {
       this.$refs.generator.validate()
     },
@@ -391,6 +671,51 @@ export default {
       if (this.fns) {
         formData.append('FNS', this.fns.id)
       }
+      if (this.bailiffs) {
+        formData.append('BAILIFFS', this.bailiffs.id)
+      }
+      if (this.employmentService) {
+        formData.append('EMPLOYMENT_SERVICE', this.employmentService.id)
+      }
+      if (this.marriageService) {
+        formData.append('MARRIAGE_SERVICE', this.marriageService.id)
+      }
+      if (this.git) {
+        formData.append('GIT', this.git.id)
+      }
+      if (this.curt) {
+        formData.append('CURT_SELECT', this.curt.id)
+      }
+      if (this.gibdd) {
+        formData.append('GIBDD', this.gibdd.id)
+      }
+      if (this.ufsvn) {
+        formData.append('UFSVN', this.ufsvn.id)
+      }
+      if (this.osfr) {
+        formData.append('OSFR', this.osfr.id)
+      }
+      if (this.gims) {
+        formData.append('GIMS', this.gims.id)
+      }
+      if (this.technicalSupervision) {
+        formData.append('TECHN', this.technicalSupervision.id)
+      }
+      if (this.addressDesk) {
+        formData.append('ADDRD', this.addressDesk.id)
+      }
+      if (this.mvd) {
+        formData.append('MVD', this.mvd.id)
+      }
+      if (this.bti) {
+        formData.append('BTI', this.bti.id)
+      }
+      if (this.kio) {
+        formData.append('KIO', this.kio.id)
+      }
+      if (this.dizo) {
+        formData.append('KIO', this.dizo.id)
+      }
       if (this.bankAccount) {
         formData.append('BANK_NAME', this.bankAccount.bank.name)
         formData.append('BANK_BIK', this.bankAccount.bank.bik)
@@ -421,7 +746,6 @@ export default {
       return formData
     },
     generateDocument() {
-      console.log(this.template.name)
       this.overlay = true
       this.loading = true
       let formData = this.setFormData()
@@ -449,9 +773,11 @@ export default {
         this.overlay = false
         this.loading = false
       }).then(() => {
-        this.confirmSave = true
-      }).catch(async (err) => {
+        if (!this.template.name.includes('ЕФРСБ')) {
+          this.confirmSave = true
+        }
 
+      }).catch(async (err) => {
         this.overlay = false
         this.loading = false
         this.state = 'error'
@@ -492,7 +818,12 @@ export default {
           this.overlay = false
           this.loading = false
           this.state = 'error'
-          this.$emit('showSystemMessage', {response: err, state: this.state})
+
+          this.$emit('showSystemMessage', {
+            response: err,
+            state: this.state,
+
+          })
         })
       })
     },
@@ -623,12 +954,13 @@ export default {
     await this.$store.dispatch('getParticipator')
     await this.$store.dispatch('getProjectList')
     await this.$store.dispatch('getRegion')
-    await this.$store.dispatch('getBailiffs')
+    // await this.$store.dispatch('getBailiffs')
     await this.$store.dispatch('getContractList')
     await this.$store.dispatch('getLegalEntity')
     await this.$store.dispatch('getPhysicalPerson')
   },
   components: {
+    DocumentPreview,
     SystemMessage,
     CreatePostMail,
     ContractorCreateModal,
