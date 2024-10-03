@@ -34,6 +34,34 @@ export default {
         },
     },
     actions: {
+        simpleLogin({commit}, data) {
+            console.log(data)
+            let userData = new FormData()
+            userData.set('username', data.login)
+            userData.set('password', data.password)
+            return new Promise((resolve, reject) => {
+                axios({
+                    method: 'post',
+                    url: customConst.AUTH_API + 'auth/token/login/',
+                    headers: {'Content-Type': 'application/vnd.api+json'},
+                    data: userData
+                }).then(response => {
+                    const userFullInfo = response.data.data.data
+                    const token = "Token " + response.data.data.attributes.auth_token
+                    Vue.$cookies.set('token', token, '1d')
+                    axios.defaults.headers.common['Authorization'] = token
+                    commit('auth_success', {token, userFullInfo})
+                    resolve(response)
+                })
+                    .catch(err => {
+                        commit('auth_error')
+                        localStorage.removeItem('token')
+                        Vue.$cookies.remove('token')
+                        reject(err)
+                    })
+            })
+
+        },
         login({commit}, data) {
             let userData = new FormData()
             userData.set('username', data.login)

@@ -20,6 +20,12 @@ let ThirdStageType = [
     {value: 'OR', text: 'Другое'},
 ]
 
+let DocumentNameTemplate = [
+    {id: 1, name : "Шаблон для входящих документов", helpText: "<code_code>-<date>-<other>", regExp: "(\\S+)_(\\d{8})_(\\S+)"},
+    {id: 2, name : "Шаблон для гос.услуг", helpText: "<other>___<date>", regExp: "___(\\d{8,8}).pdf"},
+]
+
 
 export {ThirdStageType}
 export {ProcedureType}
+export {DocumentNameTemplate}

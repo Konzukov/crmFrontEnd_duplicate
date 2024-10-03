@@ -200,16 +200,24 @@ export default {
         url: customConst.AUTH_API + 'check-password/',
         headers: {'Content-Type': 'application/vnd.api+json'},
         data: loginFormData
+      }).then((data) => {
+        console.log(data)
+        if (typeof data.data.data.data === "number") {
+          this.otpLength = data.data.data.data
+          this.loginForm.showPasswordField = !this.loginForm.showPasswordField
+          this.loginForm.showSMSPassword = !this.loginForm.showSMSPassword
+        } else {
+          this.$store.dispatch("simpleLogin", {
+            login: this.userLogin,
+            password: this.password,
+          }).then(() => this.$router.push('/dashboard'))
+              .catch(err => console.log(err))
+        }
+
+      }).catch((error) => {
+        this.error.errorCount -= 1
+        this.error.errorMessage = error.response.data.errors.message + 'Осталось ' + this.error.errorCount + ' попыток'
       })
-          .then((data) => {
-            this.otpLength = data.data.data.data
-            this.loginForm.showPasswordField = !this.loginForm.showPasswordField
-            this.loginForm.showSMSPassword = !this.loginForm.showSMSPassword
-          })
-          .catch((error) => {
-            this.error.errorCount -= 1
-            this.error.errorMessage = error.response.data.errors.message + 'Осталось ' + this.error.errorCount + ' попыток'
-          })
     },
     getUser() {
       this.userLogin = this.login
@@ -231,8 +239,8 @@ export default {
         }
 
       }).catch(() => {
-            this.error.accountError = !this.error.accountError
-          })
+        this.error.accountError = !this.error.accountError
+      })
 
     },
     smsVerification() {

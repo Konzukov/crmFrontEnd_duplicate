@@ -10,6 +10,7 @@ Vue.use(VueCookies)
 export default {
     state: {
         creditorMeeting: [],
+        basicCreditorClaim: []
     },
     mutations: {
         syncCreditorMeeting(state, data) {
@@ -23,6 +24,9 @@ export default {
             if (index !== -1) {
                 state.creditorMeeting.splice(index, 1, data);
             }
+        },
+        syncBasicCreditorClaim(state, data){
+            state.basicCreditorClaim=[...data]
         }
     },
     actions: {
@@ -56,6 +60,46 @@ export default {
                 axios({
                     method: "PUT",
                     url: customConst.REFERENCE_BOOK_API + 'creditors-claims/' + `${id}/`,
+                    data: formData
+                }).then((res => {
+                    resolve(res.data.data.data)
+                })).catch(err => {
+                    reject(err)
+                })
+            })
+        },
+        getBasicCreditorClaim({commit}, pk) {
+            return new Promise((resolve, reject) => {
+                axios({
+                    method: "GET",
+                    url: customConst.REFERENCE_BOOK_API + `basic-creditor-claim/`,
+                    params: {project: pk}
+                }).then((res => {
+                    commit('syncBasicCreditorClaim', res.data.data.data)
+                    resolve(res.data.data.data)
+                })).catch(err => {
+                    reject(err)
+                })
+            })
+        },
+        saveBasicCreditorClaim({commit}, formData) {
+            return new Promise((resolve, reject) => {
+                axios({
+                    method: "POST",
+                    url: customConst.REFERENCE_BOOK_API + 'basic-creditor-claim/',
+                    data: formData
+                }).then((res => {
+                    resolve(res.data.data.data)
+                })).catch(err => {
+                    reject(err)
+                })
+            })
+        },
+        editBasicCreditorClaim({commit}, {formData, id}) {
+            return new Promise((resolve, reject) => {
+                axios({
+                    method: "PUT",
+                    url: customConst.REFERENCE_BOOK_API + 'basic-creditor-claim/' + `${id}/`,
                     data: formData
                 }).then((res => {
                     resolve(res.data.data.data)
@@ -189,6 +233,9 @@ export default {
     getters: {
         creditorMeetingData(state) {
             return state.creditorMeeting
+        },
+        basicCreditorClaimData(state){
+            return state.basicCreditorClaim
         }
     }
 

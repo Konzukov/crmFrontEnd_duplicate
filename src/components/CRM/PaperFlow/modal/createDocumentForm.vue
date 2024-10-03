@@ -117,7 +117,7 @@
                         multiple
                         append-outer-icon="mdi-plus"
                         @click:append-outer="addNewProject"
-                        :disabled="!!uploadTemplate['id']"
+                        :disabled="uploadTemplate['id']===1"
                     >
                       <template v-slot:selection="data">
                         <v-chip>
@@ -351,25 +351,34 @@ export default {
     },
     checkFileNameValid() {
       if (this.uploadTemplate) {
-        const regex = /(\S+)_(\d{8})_(\S+)/g;
+        const regex = new RegExp(this.uploadTemplate.regExp, 'g');
+        console.log(regex)
         let testFileName = regex.exec(this.uploadFile['name'])
         if (!testFileName) {
           this.templateError = true
           this.errorMessage = "Шаблон не может быть применен. Проверьте корректность имени файла"
         } else {
-          let codeList = testFileName[1].split('-')
-          let existProject = this.projectList.filter(item => {
-            for (let code of codeList) {
-              if (item.code === code) {
-                return item
+          console.log(testFileName)
+          if (this.uploadTemplate.id === 1) {
+            let codeList = testFileName[1].split('-')
+            let fileDate = moment(testFileName[2], 'YYYYMMDD').format('YYYY-MM-DD')
+            this.form.receiving_date = fileDate
+            let existProject = this.projectList.filter(item => {
+              for (let code of codeList) {
+                if (item.code === code) {
+                  return item
+                }
               }
+            })
+            if (existProject.length >= 1) {
+              this.form.project = existProject
+            } else {
+              this.templateError = true
+              this.projectError = `Проекты с кодами ${codeList.toString()} не найдены`
             }
-          })
-          if (existProject.length >= 1) {
-            this.form.project = existProject
-          } else {
-            this.templateError = true
-            this.projectError = `Проекты с кодами ${codeList.toString()} не найдены`
+          } else if (this.uploadTemplate.id === 2) {
+            let fileDate = moment(testFileName[1], 'YYYYMMDD').format('YYYY-MM-DD')
+            this.form.receiving_date = fileDate
           }
         }
       }

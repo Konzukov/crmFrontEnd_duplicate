@@ -32,7 +32,7 @@
                         :items="uploadTemplates"
                         item-text="name"
                         item-value="id"
-                        :hint="template.pattern"
+                        :hint="template.helpText"
                         return-object
               ></v-select>
             </v-col>
@@ -90,6 +90,7 @@
 <script>
 import createDocumentForm from "./createDocumentForm";
 import {eventBus} from "../../../../bus";
+import {DocumentNameTemplate} from "@/const/dataTypes";
 
 export default {
   name: "createDocument",
@@ -114,9 +115,9 @@ export default {
     uploadTemplates: {
       get() {
         if (this.useTemplate) {
-          return this.$store.getters.uploadingTemplatesData
+          return DocumentNameTemplate
         }
-        return new Array()
+        return []
       }
     }
   },

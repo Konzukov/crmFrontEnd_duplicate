@@ -142,6 +142,30 @@
                                       v-model="technicalSupervision"></v-autocomplete>
                     </v-col>
                   </v-row>
+                  <!--RECEIVED_CREDITOR_CLAIM-->
+                  <v-row v-if="field.value ==='RECEIVED_CREDITOR_CLAIM'" justify="start">
+                    <v-col cols="12">
+                      <v-autocomplete outlined dense :label="field.name"
+                                      :items="basicCreditorClaimLIst"
+                                      item-text="name"
+                                      item-value="id"
+                                      :rules="rules.required"
+                                      multiple
+                                      v-model="receivedCreditorClaim">
+
+                        <template v-slot:selection="data">
+                          <v-chip close>
+                            {{ data.item.basis }} от {{ data.item.date_origin }}
+                          </v-chip>
+                        </template>
+                        <template v-slot:item="data">
+                          <v-list-item-content>
+                            <v-list-item-title>{{ data.item.basis }} от {{ data.item.date_origin }}</v-list-item-title>
+                          </v-list-item-content>
+                        </template>
+                      </v-autocomplete>
+                    </v-col>
+                  </v-row>
                   <!--                 UFSVN -->
                   <v-row v-if="field.value ==='UFSVN'" justify="start">
                     <v-col cols="12">
@@ -429,7 +453,8 @@
               <v-btn color="success" @click="saveDoc(false)">Сохранить</v-btn>
             </v-col>
             <v-col cols="auto">
-              <v-btn color="success" :disabled="this.docType === 'docx'" @click="saveDoc(true)">Подготовить к отправке</v-btn>
+              <v-btn color="success" :disabled="this.docType === 'docx'" @click="saveDoc(true)">Подготовить к отправке
+              </v-btn>
             </v-col>
           </v-row>
         </v-card-actions>
@@ -498,6 +523,7 @@ export default {
     mvd: null,
     kio: null,
     dizo: null,
+    receivedCreditorClaim: null,
     addressDesk: null,
     docId: null,
     legalContractor: null,
@@ -553,6 +579,7 @@ export default {
       btiList: 'btiListData',
       kioList: 'kioListData',
       dizoList: 'dizoListData',
+      basicCreditorClaimLIst: 'basicCreditorClaimData'
     }),
     // bailiffsList: function () {
     //   let bailiffs = this.$store.getters.bailiffsListData
@@ -622,6 +649,7 @@ export default {
     getProjectDetail(item) {
       this.$store.dispatch('getProjectDetail', item).then(data => {
         this.projectData = data
+        this.$store.dispatch('getBasicCreditorClaim', this.projectData.pk)
         if (data.legal_contractor) {
           this.legalContractor = data.legal_contractor
           this.sendEmailAddress = data.legal_contractor.contact_email
@@ -677,6 +705,9 @@ export default {
       if (this.employmentService) {
         formData.append('EMPLOYMENT_SERVICE', this.employmentService.id)
       }
+      if (this.receivedCreditorClaim) {
+        this.receivedCreditorClaim.forEach(item => formData.append('received_claim', item))
+      }
       if (this.marriageService) {
         formData.append('MARRIAGE_SERVICE', this.marriageService.id)
       }
@@ -714,7 +745,7 @@ export default {
         formData.append('KIO', this.kio.id)
       }
       if (this.dizo) {
-        formData.append('KIO', this.dizo.id)
+        formData.append('DIZO', this.dizo.id)
       }
       if (this.bankAccount) {
         formData.append('BANK_NAME', this.bankAccount.bank.name)
@@ -725,6 +756,7 @@ export default {
       if (this.creditor) {
         formData.append('CREDITOR', this.creditor.name)
         formData.append('CREDITOR_INN', this.creditor?.inn)
+        formData.append('CREDITOR_OGRN', this.creditor?.ogrn)
         formData.append('CREDITOR_ADDRESS', this.creditor?.legal_address)
       }
       if (this.bank) {
@@ -958,6 +990,7 @@ export default {
     await this.$store.dispatch('getContractList')
     await this.$store.dispatch('getLegalEntity')
     await this.$store.dispatch('getPhysicalPerson')
+
   },
   components: {
     DocumentPreview,

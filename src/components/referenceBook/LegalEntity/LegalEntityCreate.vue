@@ -240,6 +240,9 @@ export default {
             this.state = 'success'
             this.$emit('showSystemMessage', {response: res, state: this.state, send: false})
             this.close()
+          }).catch(err=>{
+              this.state = 'error'
+              this.$emit('showSystemMessage', {response: err, state: this.state, send: false})
           })
         }
       }

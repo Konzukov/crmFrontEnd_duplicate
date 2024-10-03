@@ -583,27 +583,73 @@
           </v-row>
         </v-expansion-panel-content>
       </v-expansion-panel>
-                  <ReceivedFunds :collapsed="collapsed"></ReceivedFunds>
-            <v-expansion-panel>
-              <v-expansion-panel-header class="pr-5 pl-5">Исполнительные производства
-              </v-expansion-panel-header>
-              <v-expansion-panel-content class="procedure_content" :style="collapsed? 'height: 63vh': 'height: 41vh'">
-                <v-card flat>
-                  <template v-for="(item, i) in enforcementProceedings">
-                    <v-card-text :key="i">
-                      <h4>{{ item.number }} от {{ item.initiation_date }} </h4>
-                      <p>{{ item.fssp_text }}</p>
-                      <p>{{ item.fssp_info }}</p>
-                      <v-divider></v-divider>
-                    </v-card-text>
+      <ReceivedFunds :collapsed="collapsed"></ReceivedFunds>
+      <v-expansion-panel>
+        <v-expansion-panel-header class="pr-5 pl-5">Исполнительные производства
+        </v-expansion-panel-header>
+        <v-expansion-panel-content class="procedure_content" :style="collapsed? 'height: 63vh': 'height: 41vh'">
+          <v-card flat>
+            <template v-for="(item, i) in enforcementProceedings">
+              <v-card-text :key="i">
+                <h4>{{ item.number }} от {{ item.initiation_date }} </h4>
+                <p>{{ item.fssp_text }}</p>
+                <p>{{ item.fssp_info }}</p>
+                <v-divider></v-divider>
+              </v-card-text>
 
-                  </template>
-                  <v-card-actions>
-                    <v-btn @click="loadEnforcementProceedings">Загрузить</v-btn>
-                  </v-card-actions>
-                </v-card>
-              </v-expansion-panel-content>
-            </v-expansion-panel>
+            </template>
+            <v-card-actions>
+              <v-btn @click="loadEnforcementProceedings">Загрузить</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-expansion-panel-content>
+      </v-expansion-panel>
+      <v-expansion-panel>
+        <v-expansion-panel-header>Требования кредиторов
+          <v-spacer></v-spacer>
+          <v-tooltip top>
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn small v-bind="attrs"
+                     v-on="on" icon color="success" @click.native.stop="addBasicCreditorClaim">
+                <v-icon>mdi-plus-thick</v-icon>
+              </v-btn>
+            </template>
+            <span>Добавить требования</span>
+          </v-tooltip>
+        </v-expansion-panel-header>
+        <v-expansion-panel-content>
+          <v-row justify="start" style="height: 80%">
+            <v-col :cols="selectedBargaining? '8': '12' ">
+              <v-card flat>
+                <v-card-text style="height: 80%">
+                  <v-data-table
+                      :headers="basicCreditorClaimHeaders"
+                      :items="basicCreditorClaim"
+                      :items-per-page="50"
+                      dense
+                      height="50%"
+                  >
+                    <template v-slot:item.creditor="{item}">
+                      {{ item | getCreditor }}
+                    </template>
+                    <template v-slot:item.actions="{ item }">
+
+                      <v-icon
+                          small
+                          class="mr-2"
+                          color="primary"
+                          @click="editBasicCreditorClaim($event, {item})"
+                      >
+                        mdi-pencil
+                      </v-icon>
+                    </template>
+                  </v-data-table>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-expansion-panel-content>
+      </v-expansion-panel>
     </v-expansion-panels>
     <loadAccountXlsx></loadAccountXlsx>
     <AccountStatementModal></AccountStatementModal>
@@ -615,6 +661,7 @@
                                    @updateEstateSaleProgress="updateEstateSale"></EstateSaleProgressCreateModal>
     <DocumentGeneratorModal :project="project"></DocumentGeneratorModal>
     <CreditorMeetingCreateModal :project="project"></CreditorMeetingCreateModal>
+    <BasicCreditorClaimCreateModal @updateBasicCreditorClaim="updateBasicCreditorClaim"></BasicCreditorClaimCreateModal>
   </v-container>
 </template>
 
@@ -649,6 +696,7 @@ import EstateSaleProgressCreateModal
 import CreditorMeeting from "@/components/referenceBook/Project/Procedure/CreditorMeeting.vue";
 import CreditorMeetingCreateModal
   from "@/components/referenceBook/Project/CreditorMeeting/CreditorMeetingCreateModal.vue";
+import BasicCreditorClaimCreateModal from "@/components/referenceBook/Project/Creditor/BasicCreditorClaimCreate.vue";
 
 export default {
   props: ['project', 'collapsed', 'act', 'freePart'],
@@ -690,6 +738,14 @@ export default {
       {text: 'Лот', value: 'lot'},
       {text: 'Действия', value: 'actions'},
     ],
+    basicCreditorClaimHeaders: [
+      {text: 'Кредитор', value: 'creditor'},
+      {text: 'Дата получения требования', value: 'date_receipt'},
+      {text: 'Основание возникновения требования', value: 'basis'},
+      {text: 'Дата возникновения требования', value: 'date_origin'},
+      {text: 'Сумма требования', value: 'claim_amount'},
+      {text: 'Действия', value: 'actions'},
+    ],
     applicantHeaders: [
       {text: 'Заявитель', value: 'applicant'},
       {text: 'Дата подачи заявки', value: 'application_date'},
@@ -710,7 +766,8 @@ export default {
   computed: {
     ...mapGetters({
       currentUser: 'authUserData',
-      documentTemplate: "docTemplateData"
+      documentTemplate: "docTemplateData",
+      basicCreditorClaim: 'basicCreditorClaimData'
     }),
   },
   methods: {
@@ -745,6 +802,9 @@ export default {
     },
     addCreditorClaim() {
       this.selectedCreditorClaim = {}
+    },
+    updateBasicCreditorClaim() {
+      this.$store.dispatch('getBasicCreditorClaim', this.project)
     },
     editCreditorClaim(event, {item}) {
       console.log(item)
@@ -837,6 +897,12 @@ export default {
     addBargaining() {
       this.$emit('addBargaining', this.$route.params['pk'])
     },
+    addBasicCreditorClaim() {
+      this.$emit('createBasicCreditorClaim', this.$route.params['pk'])
+    },
+    editBasicCreditorClaim(event, {item}){
+      this.$emit('editBasicCreditorClaim', item)
+    },
     editBargaining(item) {
       this.$emit('editBargaining', item)
     },
@@ -925,6 +991,7 @@ export default {
     }
   },
   created() {
+    this.$store.dispatch('getBasicCreditorClaim', this.project)
     this.$store.dispatch('getProjectDetail', this.project).then(res => {
       this.procedureType = res.procedure
     })
@@ -942,6 +1009,7 @@ export default {
     })
   },
   components: {
+    BasicCreditorClaimCreateModal,
     CreditorMeetingCreateModal,
     CreditorMeeting,
     EstateSaleProgressCreateModal,

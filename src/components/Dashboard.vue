@@ -261,7 +261,6 @@ export default {
           })
     },
     async endLoading() {
-
       this.activeOrganization = this.userData.profile.active_organization['uuid']
       this.loading = !this.loading
     },
@@ -306,15 +305,15 @@ export default {
     },
   },
   async created() {
-    await this.$store.dispatch('checkAuth')
-    await this.$store.dispatch('getSystemUpdateNotice').then( notice=>{
-      let showNotice = notice['display_user'].filter(obj=> obj.uuid === this.userData.uuid)
-      console.log(showNotice)
-      if (showNotice?.length){
-        eventBus.$emit('showSystemUpdateMessage', {notice, uuid: this.userData.uuid})
-      }
-
+    await this.$store.dispatch('checkAuth').then(async (data) => {
+      await this.$store.dispatch('getSystemUpdateNotice').then(notice => {
+        let showNotice = notice['display_user'].filter(obj => obj.uuid === this.userData.uuid)
+        if (showNotice?.length) {
+          eventBus.$emit('showSystemUpdateMessage', {notice, uuid: this.userData.uuid})
+        }
+      })
     })
+
     await this.getDashboardTaskList()
     await this.$store.dispatch('getUserTaskList', {'user': -1, 'project': -1, 'tags': '-1'})
     // this.$store.dispatch('getUserEventList')
