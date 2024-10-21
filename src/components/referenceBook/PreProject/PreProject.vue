@@ -190,7 +190,7 @@ export default {
             this.loading = false
           }, 1500)
           this.state = 'success'
-          this.$emit('showSystemMessage', {response: res, state: this.state, send: false})
+          this.$emit('showSystemMessage', {response: res, state: this.state, send: true})
           resolve()
           this.selectedCase = []
           this.email = ''

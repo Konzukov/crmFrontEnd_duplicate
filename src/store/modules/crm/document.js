@@ -360,6 +360,19 @@ export default {
                 })
             })
         },
+        async addDocToPost({commit}, formData){
+            return await new Promise((resolve, reject) => {
+                axios({
+                    method:"POST",
+                    url: customConst.PAPERFLOW_API + "add-doc-to-post",
+                    data: formData
+                }).then(res=>{
+                    resolve(res)
+                }).catch(err=>{
+                    reject(err)
+                })
+            })
+        },
         async addDocsToEvent({commit}, docs) {
             return await new Promise((resolve, reject) => {
                 axios({
@@ -411,16 +424,48 @@ export default {
                 })
             })
         },
-        sendDocumentQueue({commit}, formData){
+        sendDocumentQueue({commit}, {formData, sendMethod}){
             return new Promise((resolve, reject) => {
+                let responseType = 'json'
+                if (sendMethod !== "Email"){
+                    responseType = 'blob'
+                }
                 axios({
                     method: "POST",
                     url: customConst.PAPERFLOW_API + 'document-send-queue/send/',
                     data: formData,
-                    responseType: 'blob',
+                    responseType: responseType,
                 }).then(res=>{
-                    saveAs(res.data, 'otpravka.zip')
-                    resolve()
+                    if (sendMethod !== "Email"){
+                        saveAs(res.data, 'otpravka.zip')
+                    }
+                    resolve(res)
+                }).catch(err=>{
+                    reject(err)
+                })
+            })
+        },
+        changeCommunicationMethod({commit}, formData) {
+            return new Promise((resolve, reject) => {
+                axios({
+                    method: "POST",
+                    url: customConst.PAPERFLOW_API + 'document-send-queue/change-communication/',
+                    data: formData
+                }).then(res=>{
+                    resolve(res)
+                }).catch(err=>{
+                    reject(err)
+                })
+            })
+        },
+        addToSendQueue({commit}, formData){
+            return new Promise((resolve, reject) => {
+                axios({
+                    method:"POST",
+                    url: customConst.PAPERFLOW_API + 'document-send-queue/add-to-send-queue/',
+                    data: formData
+                }).then(res=>{
+                    resolve(res)
                 }).catch(err=>{
                     reject(err)
                 })

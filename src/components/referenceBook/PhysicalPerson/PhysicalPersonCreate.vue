@@ -29,17 +29,21 @@
             </v-row>
           </v-col>
           <v-row justify="start" class="mt-2">
-            <v-col cols="3">
-              <v-text-field height="30" outlined dense label="Дата рождения" type="date" v-model="form.birthday"
+            <v-col cols="auto">
+              <v-text-field  outlined dense label="Дата рождения" type="date" v-model="form.birthday"
                             class="shrink"></v-text-field>
             </v-col>
-            <v-col cols="3">
+            <v-col cols="auto">
               <v-autocomplete outlined dense label="Гражданство" :items="countryList" item-value="id" item-text="name"
                               v-model="form.citizenship"></v-autocomplete>
             </v-col>
-            <v-col cols="6">
+            <v-col cols="4">
               <v-textarea outlined dense label="Место рождения" rows="1"
                           v-model.trim="form.birthplace"></v-textarea>
+            </v-col>
+            <v-col cols="3">
+              <v-text-field outlined dense label="Электронная почта"
+                          v-model.trim="form.communication_email"></v-text-field>
             </v-col>
           </v-row>
 
@@ -184,7 +188,8 @@ export default {
       citizenship: '',
       hasPermission: false,
       snils: '',
-      inn: null
+      inn: null,
+      communication_email: ''
     },
     rules: {
       required: [

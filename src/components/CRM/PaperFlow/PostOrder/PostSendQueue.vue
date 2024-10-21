@@ -1,13 +1,14 @@
 <template>
   <v-container fluid class="mt-2">
     <v-list flat two-line v-if="sendQueueList" dense class="list-item">
-      <v-list-item-group multiple v-model="selected">
+      <v-list-item-group>
         <v-list-item v-for="(item, i) in sendQueueList" :key="i" :style="i%2!==0? 'background-color: #cfcfcf4d':''"
                      :disabled="disableListItem(item)" style="font-size: 14px">
+
           <v-row justify="start" class="pt-5 pb-5">
             <v-col cols="1">
               <v-checkbox dense class="ma-0 pa-0" v-model="selectedDocument" :value="item"
-                          :input-value="item.id"></v-checkbox>
+                        ></v-checkbox>
             </v-col>
             <v-col cols="1">
               {{ item | postNumber }}
@@ -51,8 +52,16 @@
             <v-col cols="3">
               <v-row justify="start">
                 <v-col cols="12" class="pb-0">{{ item.document.fromWho.fullName }}</v-col>
-                <v-col cols="12" style="font-size: 12px; color: #00a6ee">{{ item.document.fromWho.legal_address }}
-                </v-col>
+                <template v-if="item.document.fromWho['communication'] ==='ElectronicMail'">
+                  <v-col cols="12" style="font-size: 12px; color: #00a6ee">{{ item.document.fromWho.legal_address }}
+                  </v-col>
+                </template>
+                <template v-if="item.document.fromWho['communication'] ==='Email'">
+                  <v-col cols="12" :style="fontColor(item.document.fromWho)">
+                    {{ item.document.fromWho| getEmail }}
+                  </v-col>
+
+                </template>
               </v-row>
             </v-col>
             <v-col cols="2">
@@ -73,6 +82,10 @@
                     </v-icon>
                   </template>
                   <v-list flat class="action">
+                    <v-list-item link @click="changeCommunication(item.document)">
+                      <v-btn x-small text>Изменить способ отправки</v-btn>
+                    </v-list-item>
+                    <v-divider></v-divider>
                     <v-list-item link @click="editItem(item.document)">
                       <v-btn x-small text>Посмотреть</v-btn>
                     </v-list-item>
@@ -89,6 +102,7 @@
               </v-row>
             </v-col>
           </v-row>
+
         </v-list-item>
       </v-list-item-group>
     </v-list>
@@ -115,9 +129,11 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <ChangeCommunication @updateQueue="update"></ChangeCommunication>
     <ChangeFile></ChangeFile>
     <DeleteDocument></DeleteDocument>
     <editDocument></editDocument>
+    <SystemMessage :state.sync="state"/>
   </v-container>
 </template>
 
@@ -127,36 +143,69 @@ import {ProcedureType} from "@/const/dataTypes";
 import ChangeFile from "@/components/CRM/PaperFlow/modal/ChangeFile.vue";
 import editDocument from "@/components/CRM/PaperFlow/modal/editDocument.vue";
 import DeleteDocument from "@/components/CRM/PaperFlow/modal/deleteDocument";
+import ChangeCommunication from "@/components/CRM/PaperFlow/PostOrder/ChangeCommunication.vue";
+import SystemMessage from "@/components/UI/SystemMessage.vue";
 
 export default {
   name: "PostSendQueue",
   data: () => ({
+    state: '',
     selectedDocument: [],
     selected: [],
     show: false,
     deletedItem: null
   }),
   methods: {
+    fontColor(item) {
+      if (item.type === "LegalEntity") {
+        return item.contact_email? 'font-size: 12px; color: #00a6ee': 'font-size: 12px; color: #cb1313'
+      } else {
+        return item['communication_email'] ? 'font-size: 12px; color: #00a6ee': 'font-size: 12px; color: #cb1313'
+      }
+    },
+    update() {
+      this.$store.dispatch('getDocumentSendQueue').then(()=>{
+        this.selected = []
+        this.selectedDocument = []
+      })
+    },
+    changeCommunication(item) {
+      this.$emit('changeCommunication', item)
+    },
     send() {
       let formData = new FormData()
-      formData.append('sendMethod', this.selectedDocument[0].document.fromWho['communication'])
+      const sendMethod = this.selectedDocument[0].document.fromWho['communication']
+      formData.append('sendMethod', sendMethod)
       this.selectedDocument.forEach(obj => {
         formData.append('sendItem', obj.id)
 
       })
-      this.$store.dispatch('sendDocumentQueue', formData)
+      this.$store.dispatch('sendDocumentQueue', {formData, sendMethod}).then((res)=>{
+        this.update()
+        if (sendMethod === "Email"){
+            this.state = 'success'
+            this.$emit('showSystemMessage', {response: res, state: this.state, send: true})
+        }
+
+      })
     },
     disableListItem(item) {
-      console.log(item)
-      return item.document.fromWho['communication'] !== 'ElectronicMail';
-      // if (this.selectedDocument.length > 0) {
-      //   let firstItem = this.selectedDocument[0]
-      //   if (firstItem.document.fromWho['communication'] !== item.document.fromWho['communication']) {
-      //     return true
-      //   }
-      // } else {
-      //   return false
-      // }
+      if (item.document.fromWho['communication'] === 'Email'){
+        if (item.document.fromWho.type === 'LegalEntity'  && !item.document.fromWho.contact_email){
+          return true
+        } else if (item.document.fromWho.type === 'PhysicalPerson'  && !item.document.fromWho['communication_email']){
+          return true
+        }
+      }
+      // return item.document.fromWho['communication'] !== 'ElectronicMail' || item.document.fromWho['communication'] !== 'Email';
+      if (this.selectedDocument.length > 0) {
+        let firstItem = this.selectedDocument[0]
+        if (firstItem.document.fromWho['communication'] !== item.document.fromWho['communication']) {
+          return true
+        }
+      } else {
+        return false
+      }
 
     },
     showConfirm(item) {
@@ -212,14 +261,27 @@ export default {
       } else if (legalVal) {
         return legalVal.text
       }
-
+    },
+    getEmail(item) {
+      if (item.type === "LegalEntity") {
+        return item?.contact_email || 'Не указан'
+      } else {
+        return item?.['communication_email'] || 'Не указан'
+      }
     }
   },
 
   created() {
-    this.$store.dispatch('getDocumentSendQueue')
+    this.update()
+
+  },
+  mounted() {
+    this.selectedDocument = []
+    this.selected = []
   },
   components: {
+    SystemMessage,
+    ChangeCommunication,
     editDocument,
     ChangeFile,
     DeleteDocument
@@ -233,9 +295,11 @@ export default {
   min-height: 30px;
   overflow-y: scroll;
 }
->>>.v-item-group {
+
+>>> .v-item-group {
   overflow: hidden;
 }
+
 .list-item {
   max-height: 75vh;
   min-height: 75vh;

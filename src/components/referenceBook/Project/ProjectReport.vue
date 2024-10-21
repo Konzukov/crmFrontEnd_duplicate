@@ -78,6 +78,11 @@
                             Показать документ
                           </v-list-item-title>
                         </v-list-item>
+                        <v-list-item v-if="item.type === 'document'" link @click="addToSendQueue(item)">
+                          <v-list-item-title>
+                            Отправить документ
+                          </v-list-item-title>
+                        </v-list-item>
                         <v-divider></v-divider>
                         <v-list-item link @click="createTask(item)">
                           <v-list-item-title>
@@ -152,6 +157,7 @@
       <ChangeFile @finished="getData"></ChangeFile>
       <DeleteDocument @finished="getData"></DeleteDocument>
       <PostEdit></PostEdit>
+      <SystemMessage :state.sync="state" @forceAdd="addToSendQueue(sendQueueItem, true)"/>
     </v-container>
   </v-container>
 </template>
@@ -168,11 +174,13 @@ import DocumentViewer from "@/components/CRM/PaperFlow/DocumentViewer.vue";
 import TaskDetail from "@/components/CRM/Task/TaskDetail";
 import TaskCreateComponent from "@/components/CRM/Task/TaskCreateComponent";
 import EventCreateComponent from "@/components/CRM/Event/EventCreateComponent";
+import SystemMessage from "@/components/UI/SystemMessage.vue";
 
 export default {
   props: ['project', 'collapsed'],
   name: "ProjectReport",
   data: () => ({
+    state: '',
     cols: {
       left: 12,
       right: 0,
@@ -191,6 +199,7 @@ export default {
     rectifiedEvent: null,
     documentTask: null,
     documentEvent: null,
+    sendQueueItem: null,
     filter: {
       project: '',
       user: '',
@@ -220,6 +229,22 @@ export default {
     },
     orderingDate(item) {
       this.filter.range.sort()
+    },
+    addToSendQueue(item, force=false){
+      let formData = new FormData()
+      this.sendQueueItem = item
+      formData.append('doc', item.id)
+      formData.append('force', force.toString())
+      this.$store.dispatch('addToSendQueue', formData).then(res=>{
+        this.sendQueueItem = null
+        this.state = 'success'
+        this.$emit('showSystemMessage', {response: res, state: this.state, send: false})
+        console.log(res)
+      }).catch(err=>{
+        console.log(err.response)
+        this.state = 'error'
+        this.$emit('showSystemMessage', {response: err, state: this.state, send: false})
+      })
     },
     downloadItem(item) {
       switch (item.type) {
@@ -489,6 +514,7 @@ export default {
     this.filter.project = this.$route.params['pk']
   },
   components: {
+    SystemMessage,
     ErrorHandling,
     editDocument,
     TaskCreateComponent,

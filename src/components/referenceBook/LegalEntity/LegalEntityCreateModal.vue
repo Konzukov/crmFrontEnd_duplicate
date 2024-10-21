@@ -32,6 +32,7 @@ export default {
   methods: {
     updateAndClose(item) {
       this.$emit('contractorAdded', item)
+      this.$emit('contractorUpdate', item)
       this.dialog = false
     }
   },

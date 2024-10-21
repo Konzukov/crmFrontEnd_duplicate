@@ -74,7 +74,9 @@ export default {
       if (project) {
         this.loading = true
         await this.$store.dispatch('getProjectDocument', project).then(() => {
-          this.existDoc = existDoc
+          if (existDoc){
+            this.existDoc = existDoc
+          }
           this.loading = false
         })
       }

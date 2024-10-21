@@ -1,10 +1,10 @@
 <template>
   <v-container fluid>
     <v-row justify="start">
-      <v-col md="6">
+      <v-col md="5">
         <PhysicalPersonList @showDetail="showDetail"></PhysicalPersonList>
       </v-col>
-      <v-col cols="6" style="height: 90vh;">
+      <v-col cols="7" style="height: 90vh;">
         <PhysicalPersonCreate @clearRectified="showDetail(null)" :rectified-physical-person.sync="rectifiedPhysicalPerson"></PhysicalPersonCreate>
       </v-col>
     </v-row>

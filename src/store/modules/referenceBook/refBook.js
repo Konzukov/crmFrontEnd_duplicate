@@ -79,7 +79,7 @@ export default {
         },
         legalEntityList(state, legalEntity) {
             state.status = 'legalEntityList success'
-            state.legalEntity = legalEntity
+            state.legalEntity = [...legalEntity]
             state.fns = legalEntity.filter(obj => obj['org_type'] === 'FNS')
             state.employmentService = legalEntity.filter(obj => obj['org_type'] === 'EMPLS')
             state.bailiffs = legalEntity.filter(obj => obj['org_type'] === 'FSSP')

@@ -8,17 +8,17 @@
         scrollable
         v-model="drawer"
     >
-          <v-overlay v-model="overlay">
-      <v-progress-circular
-          indeterminate
-          size="64"
-      ></v-progress-circular>
-    </v-overlay>
+      <v-overlay v-model="overlay">
+        <v-progress-circular
+            indeterminate
+            size="64"
+        ></v-progress-circular>
+      </v-overlay>
       <v-card>
         <v-toolbar dark color="primary" max-height="60">
           <v-toolbar-title>{{ postForm['pk'] ? "Редактирование почты" : "Создать почту" }}</v-toolbar-title>
           <v-spacer></v-spacer>
-          <v-btn icon dark @click="drawer = false">
+          <v-btn icon dark @click="close">
             <v-icon>mdi-close</v-icon>
           </v-btn>
         </v-toolbar>
@@ -26,7 +26,7 @@
           <v-col sm="12" md="7" lg="7" xl="7">
             <v-form lazy-validation>
               <v-row justify="start" align="center">
-                <v-col md="4">
+                <v-col md="3">
                   <v-select
                       dense
                       outlined
@@ -49,6 +49,18 @@
                       v-model="postForm['entry_date']"
                   >
                   </v-text-field>
+                </v-col>
+                <v-col md="4">
+                  <v-autocomplete
+                      outlined
+                      dense
+                      label="Тип почты"
+                      :items="postType"
+                      item-text="text"
+                      item-value="value"
+                      v-model="postForm['post_type']"
+                  >
+                  </v-autocomplete>
                 </v-col>
               </v-row>
               <v-row justify="start" align="center">
@@ -284,7 +296,7 @@
                   </v-col>
                 </v-row>
               </template>
-              <v-row justify="start">
+              <v-row justify="start" v-if="postForm.post_type==='EPOST'">
                 <v-col cols="auto">
                   <v-text-field outlined label="РПО" dense v-model="postForm['rpo']" :disabled="action ==='edit'">
                     <template v-slot:append-outer v-if="action==='create'">
@@ -373,7 +385,8 @@
                 </v-list-item-action>
               </v-list-item>
             </v-list>
-            <v-btn @click="addDocument" :disabled="!postForm['pk']">Добавить документ</v-btn>
+            <v-btn @click="addDocument" :disabled="!postForm['pk']" class="mr-5" color="primary">Добавить документ</v-btn>
+            <v-btn @click="addProjectDocument" color="success">Выбрать документ</v-btn>
           </v-col>
         </v-row>
       </v-card>
@@ -385,6 +398,7 @@
     <editDocument></editDocument>
     <TaskCreate></TaskCreate>
     <createDocument></createDocument>
+    <ChooseDocument @chooseDocs="chooseDocs"></ChooseDocument>
   </v-container>
 </template>
 
@@ -400,6 +414,7 @@ import editDocument from "@/components/CRM/PaperFlow/modal/editDocument";
 import createDocument from "@/components/CRM/PaperFlow/modal/createDocument";
 import customConst from "@/const/customConst";
 import ProjectCreateModal from "@/components/referenceBook/Project/modal/ProjectCreateModal";
+import ChooseDocument from "@/components/CRM/PaperFlow/modal/ChooseDocument.vue";
 
 
 // import {eventBus} from "@/bus";
@@ -415,8 +430,13 @@ export default {
         {value: "IN", text: "Входящее"},
         {value: "OUT", text: "Исходящее"},
       ],
+      postType: [
+        {value: 'EPOST', text: 'Почта'},
+        {value: 'EMAIL', text: 'Электронная почта'},
+      ],
       postForm: {
         rpo: '',
+        post_type: "EPOST",
         departure_date: '',
         receiving_date: '',
         from_custom: '',
@@ -461,6 +481,15 @@ export default {
       "createPost",
       "getCorrespondenceType"
     ]),
+    async chooseDocs(data){
+      for (let doc of data.chooseDocs){
+        let formData = new FormData()
+        formData.append('post', this.postForm?.pk)
+        formData.append('doc', doc.id)
+        await this.$store.dispatch('addDocToPost', formData)
+      }
+      await this.loadPostData(this.postForm.pk)
+    },
     getPostTracingData() {
       this.$http({
         method: 'POST',
@@ -585,6 +614,12 @@ export default {
       //   this.$emit("newPostDocument", this.postForm["pk"]);
       // });
     },
+    addProjectDocument(){
+      let id = this.postForm.project.map(obj=> {
+        return obj.id
+      })
+      this.$emit('chooseDocs', {project: id, existDoc: this.postForm['post_document']})
+    },
     createNewTask() {
       this.snackbar.show = true;
       this.snackbar.text = "Сохранение изменений";
@@ -605,6 +640,7 @@ export default {
     loadPostData(pk) {
       this.getPostDetail(pk).then(() => {
         this.postForm = Object.assign({}, this.postDetail);
+        console.log(this.postForm)
         this.postForm["departure_date"] = moment(
             this.postForm["departure_date"]
         ).format("YYYY-MM-DDThh:mm");
@@ -646,6 +682,7 @@ export default {
     this.overlay = false
   },
   components: {
+    ChooseDocument,
     ProjectCreateModal,
     AddTag,
     createDocument,

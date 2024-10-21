@@ -146,9 +146,9 @@ export default {
                 })
             })
         },
-        getPostDetail({commit}, pk) {
-            return new Promise((resolve, reject) => {
-                axios({
+        async getPostDetail({commit}, pk) {
+            return await new Promise(async (resolve, reject) => {
+                await axios({
                     method: "GET",
                     url: customConst.PAPERFLOW_API + 'post-detail/' + pk
                 }).then(res => {

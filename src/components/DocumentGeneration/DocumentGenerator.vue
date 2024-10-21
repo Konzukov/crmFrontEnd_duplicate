@@ -354,7 +354,7 @@
                   <v-row v-if="field.value ==='BANK'" justify="start" class="mr-1 ml-1">
                     <v-autocomplete outlined dense :label="field.name" :items="legalList" item-value="id"
                                     :append-outer-icon="!bank? 'mdi-plus': 'mdi-pencil'"
-                                    :error-messages="bank && (!bank.inn || !bank.legal_address)? 'Необходимо заполнить данные': ''"
+                                    :error-messages="bank && !bank.legal_address? 'Необходимо заполнить данные': ''"
                                     @click:append-outer="editContractor(bank)"
                                     item-text="name" return-object v-model="bank"></v-autocomplete>
                   </v-row>
@@ -362,7 +362,7 @@
                     <v-autocomplete outlined dense :label="field.name" :items="allRefList" item-value="id"
                                     :append-outer-icon="!creditor? 'mdi-plus': 'mdi-pencil'"
                                     @click:append-outer="editContractor(creditor)"
-                                    :error-messages="!creditor || (!creditor.inn || !creditor.legal_address)? 'Необходимо заполнить данные': ''"
+                                    :error-messages="!creditor || !creditor.legal_address? 'Необходимо заполнить данные': ''"
                                     item-text="name" return-object v-model="creditor"></v-autocomplete>
                   </v-row>
                   <v-row v-if="field.value ==='BANK_ACCOUNT'" justify="start">
@@ -433,7 +433,7 @@
     </v-card>
     <CreatePostMail></CreatePostMail>
     <ContractorCreateModal></ContractorCreateModal>
-    <LegalEntityCreateModal @contractorAdded="updateItem"></LegalEntityCreateModal>
+    <LegalEntityCreateModal @contractorAdded="updateItem" @contractorUpdate="update"></LegalEntityCreateModal>
     <v-dialog v-model="confirmSave" width="500">
       <v-card height="30vh">
         <v-card-title>Подтверждение сохранения документа</v-card-title>
@@ -607,12 +607,18 @@ export default {
     }
   },
   methods: {
+    update(item){
+      console.log("update()", item)
+      this.$store.dispatch('getLegalEntity')
+    },
     updateItem(item) {
       if (item['org_type'] === 'EMPLS') {
         this.employmentService = item
-      } else if (item['org_type'] === 'FNS') {
+      } else if (item['org_type'] === 'BANK' || item['org_type']==='EMPTY') {
+        this.bank = item
+      }else if (item['org_type'] === 'FNS') {
         this.fns = item
-      } else if (item['org_type'] === 'FSSP') {
+      }else if (item['org_type'] === 'FSSP') {
         this.bailiffs = item
       } else if (item['org_type'] === 'GIBDD') {
         this.gibdd = item
@@ -978,7 +984,6 @@ export default {
       } else {
         this.$emit('addContractor')
       }
-
     },
   },
   async created() {

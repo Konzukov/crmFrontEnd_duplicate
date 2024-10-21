@@ -51,8 +51,14 @@
               {{ systemMessage.text }}
             </v-col>
           </v-row>
-          <template v-if="systemMessage.redirect">
+          <template v-if="systemMessage.redirect ==='project-detail'">
              <v-btn text color="warning" link :to="{name: systemMessage.redirect, params: {pk: project}}" target="_blank">Перейти на страницу проекта</v-btn>
+          </template>
+          <template v-else-if="systemMessage.redirect === 'force'" >
+            <v-row justify="center">
+              <v-btn color="warning" @click="forceSendQueue" class="mt-4 justify-center" >Добавить в отправку</v-btn>
+            </v-row>
+
           </template>
         </v-container>
       </v-card-text>
@@ -89,6 +95,10 @@ export default {
     close() {
       this.dialog = false
       Object.assign(this.$data, this.$options.data())
+    },
+    forceSendQueue(){
+      this.$emit('forceAdd')
+      this.close()
     }
   },
   created() {
@@ -106,10 +116,10 @@ export default {
         let text = container.getElementsByTagName("pre")[0].innerHTML
         let subject = container.getElementsByTagName('h1')[0].innerHTML
         let redirect;
-        console.log(text)
-        console.log(subject)
         if (text === "Основной расчетный счет не выбран"){
           redirect = 'project-detail'
+        }else if (text === 'Документ уже был оправлен ранее'){
+          redirect = 'force'
         }
         this.systemMessage = {
           subject: subject,
@@ -119,7 +129,7 @@ export default {
       } else {
         data = response.data.data.data
         if (send){
-          data.text += ' и ожидает отправки'
+          data.text += ' '
         }
         this.systemMessage = {
           subject: data.subject,
