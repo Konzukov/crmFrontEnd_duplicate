@@ -18,12 +18,15 @@
       <v-tab :to="{name: 'correspondence'}">
         <span>Корреспонденция</span>
       </v-tab>
-<!--      <v-tab :to="{name: 'processed-document-list'}">-->
-<!--        <span>Обработанные документы</span>-->
-<!--      </v-tab>-->
-<!--      <v-tab :to="{name: 'unprocessed-document-list'}">-->
-<!--        <span>Не обработанные документы</span>-->
-<!--      </v-tab>-->
+      <v-tab :to="{name: 'email'}">
+        <span>Email</span>
+      </v-tab>
+      <!--      <v-tab :to="{name: 'processed-document-list'}">-->
+      <!--        <span>Обработанные документы</span>-->
+      <!--      </v-tab>-->
+      <!--      <v-tab :to="{name: 'unprocessed-document-list'}">-->
+      <!--        <span>Не обработанные документы</span>-->
+      <!--      </v-tab>-->
       <v-tab :to="{name: 'trash-document-list'}">
         <span>Корзина</span>
       </v-tab>

@@ -134,6 +134,11 @@ const routes = [
                         component: () => import('../components/referenceBook/Project/ProjectDetail.vue'),
                         children: [
                             {
+                                path: 'file-view',
+                                name: 'file-view',
+                                component: () => import('../components/referenceBook/Project/FileView/FileView')
+                            },
+                            {
                                 path: 'procedure',
                                 name: 'procedure',
                                 component: () => import('../components/referenceBook/Project/Procedure')
@@ -273,6 +278,12 @@ const routes = [
                         name: 'correspondence',
                         navName: 'Корреспонденция',
                         component: () => import('@/components/CRM/PaperFlow/Correspondence')
+                    },
+                    {
+                        path: 'email',
+                        name: 'email',
+                        navName: 'Электронная почта',
+                        component: () => import('@/components/CRM/PaperFlow/Email')
                     },
                     // {
                     //     path: 'processed-document-list',

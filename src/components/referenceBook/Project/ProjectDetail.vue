@@ -73,6 +73,12 @@
             </v-card>
           </v-item>
           <v-item v-slot="{ active, toggle }">
+            <v-card :to="{name: 'file-view'}" class="text-center nav-btn"
+                    @click="toggle">
+              Файлы
+            </v-card>
+          </v-item>
+          <v-item v-slot="{ active, toggle }">
             <v-card :to="{name: 'project-questionnaire'}" class="text-center nav-btn"
                     @click="toggle">
               Анкета
@@ -97,7 +103,8 @@
         </v-btn>
       </v-row>
     </v-item-group>
-    <router-view :project="projectPK" :collapsed="collapse" :act="projectDetail.act" :freePart="projectFreePart" class="main-content">
+    <router-view :project="projectPK" :collapsed="collapse" :act="projectDetail.act" :freePart="projectFreePart"
+                 class="main-content">
 
     </router-view>
     <v-fab-transition>
@@ -123,21 +130,22 @@
             <v-icon>mdi-close</v-icon>
           </v-btn>
         </v-toolbar>
-        <v-card-text style="height: 30vh; align-content: center;" >
+        <v-card-text style="height: 30vh; align-content: center;">
           <v-row justify="start">
             <v-col cols="12">
-              <h3>{{downloadUrl}}</h3>
+              <h3>{{ downloadUrl }}</h3>
               <h3>Данная ссылку будет доступна в течении 30 минут</h3>
             </v-col>
           </v-row>
         </v-card-text>
         <v-card-actions>
           <v-row class="ma-0">
-                        <v-col cols="auto">
+            <v-col cols="auto">
               <v-btn color="success" @click="downloadFile">Скачать</v-btn>
             </v-col>
             <v-col cols="auto">
-              <v-btn color="primary" @click="copyUrl">{{copyUrlText?"Ссылка скопирована":"Скопировать ссылку"}}</v-btn>
+              <v-btn color="primary" @click="copyUrl">{{ copyUrlText ? "Ссылка скопирована" : "Скопировать ссылку" }}
+              </v-btn>
             </v-col>
           </v-row>
         </v-card-actions>
