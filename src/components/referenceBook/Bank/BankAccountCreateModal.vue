@@ -4,79 +4,84 @@
       <v-card>
         <v-card-text>
           <v-form lazy-validation class="pt-4">
-        <v-row>
-          <v-col cols="2">
-            <v-autocomplete label="Тип счета" outlined dense
-                            :items="bankAccountType"
-                            item-text="text"
-                            item-value="value"
-                            v-model="form.account_type"
-            ></v-autocomplete>
-          </v-col>
-          <v-col cols="2">
-            <v-autocomplete dense label="Банк" outlined v-model="form.bank" append-outer-icon="mdi-plus"
-                            @click:append-outer="addBank" :items="bankList" item-text="name" item-value="id">
+            <v-row justify="start">
+              <v-col cols="4">
+                <v-autocomplete label="Тип счета" outlined dense
+                                :items="bankAccountType"
+                                item-text="text"
+                                item-value="value"
+                                v-model="form.account_type"
+                ></v-autocomplete>
+              </v-col>
+              <v-col cols="4">
+                <v-autocomplete dense label="Банк" outlined v-model="form.bank" append-outer-icon="mdi-plus"
+                                @click:append-outer="addBank" :items="bankList" item-text="name" item-value="id">
 
-            </v-autocomplete>
-          </v-col>
-          <v-col cols="4">
-            <v-text-field dense outlined label="Расчетный счет" v-model="form.account" counter="20" :rules="rules"
-                          append-outer-icon="mdi-file-document"
+                </v-autocomplete>
+              </v-col>
+            </v-row>
+            <v-row justify="start">
+              <v-col cols="4">
+                <v-text-field dense outlined label="Расчетный счет" v-model="form.account" counter="20" :rules="rules"
+                              append-outer-icon="mdi-file-document"
 
 
-            >
-              <template v-slot:append-outer>
-                <v-menu
-                    open-on-hover
-                    top
-                    offset-y
                 >
-                  <template v-slot:activator="{ on, attrs }">
-                    <v-btn
-                        :color="account_statement.length > 0? 'primary': 'grey darken-1 '"
-                        dark
-                        icon
-                        v-bind="attrs"
-                        v-on="on"
-                        @click="addBankStatement"
+                  <template v-slot:append-outer>
+                    <v-menu
+                        open-on-hover
+                        top
+                        offset-y
                     >
-                      <v-icon>mdi-file-document-outline</v-icon>
-                    </v-btn>
+                      <template v-slot:activator="{ on, attrs }">
+                        <v-btn
+                            :color="account_statement.length > 0? 'primary': 'grey darken-1 '"
+                            dark
+                            icon
+                            v-bind="attrs"
+                            v-on="on"
+                            @click="addBankStatement"
+                        >
+                          <v-icon>mdi-file-document-outline</v-icon>
+                        </v-btn>
+                      </template>
+
+                      <v-list>
+                        <v-list-item
+                            v-for="(item, index) in account_statement"
+                            :key="index"
+                            link
+                        >
+
+                          <v-list-item-subtitle>Выписка {{ item.date_from }} - {{ item.date_to }}</v-list-item-subtitle>
+                        </v-list-item>
+                      </v-list>
+                    </v-menu>
                   </template>
+                </v-text-field>
+              </v-col>
+              <v-col cols="4">
+                <v-text-field dense outlined label="Дата открытия" type="date" v-model="form.opening_date"
+                              append-outer-icon="mdi-file-document">
 
-                  <v-list>
-                    <v-list-item
-                        v-for="(item, index) in account_statement"
-                        :key="index"
-                        link
-                    >
-
-                      <v-list-item-subtitle>Выписка {{ item.date_from }} - {{ item.date_to }}</v-list-item-subtitle>
-                    </v-list-item>
-                  </v-list>
-                </v-menu>
-              </template>
-            </v-text-field>
-          </v-col>
-          <v-col cols="2">
-            <v-text-field dense outlined label="Дата открытия" type="date" v-model="form.opening_date"
-                          append-outer-icon="mdi-file-document">
-
-            </v-text-field>
-          </v-col>
-          <v-col cols="2">
-            <v-text-field dense outlined label="Дата закрытия" type="date" v-model="form.closing_date"
-                          append-outer-icon="mdi-file-document">
-            </v-text-field>
-          </v-col>
-        </v-row>
-
-      </v-form>
+                </v-text-field>
+              </v-col>
+              <v-col cols="4">
+                <v-text-field dense outlined label="Дата закрытия" type="date" v-model="form.closing_date"
+                              append-outer-icon="mdi-file-document">
+                </v-text-field>
+              </v-col>
+            </v-row>
+          </v-form>
         </v-card-text>
         <v-card-actions>
           <v-row justify="center">
-            <v-col cols="auto"><v-btn color="error" @click="close"></v-btn></v-col>
-            <v-col cols="auto"><v-btn @click="save" color="success">Сохранить</v-btn></v-col>
+            <v-col cols="auto">
+              <v-btn color="error" @click="close">Отмена</v-btn>
+            </v-col>
+            <v-col cols="auto">
+              <v-btn @click="save" color="success">Сохранить</v-btn>
+            </v-col>
           </v-row>
         </v-card-actions>
       </v-card>
@@ -91,6 +96,7 @@
 import BankCreate from "./BankCreate";
 import {mapGetters} from 'vuex'
 import AccountStatementModal from "@/components/referenceBook/Bank/AccountStatementModal.vue";
+import moment from "moment";
 
 export default {
   props: ['bankData', 'project'],
@@ -142,21 +148,41 @@ export default {
     addBank() {
       this.$emit('addBank')
     },
-    close(){
+    close() {
       Object.assign(this.$data, this.$options.data())
       this.dialog = false
     }
   },
   mounted() {
+    this.$store.dispatch('getBankList')
+    this.$parent.$on('editBankAccount', item => {
+      this.form.id = item.id
+      this.form.account = item.account
+      this.form.bank = item.bank.id
+      this.form.opening_date = moment(item.opening_date, 'DD.MM.YYYY').format('YYYY-MM-DD')
+      if (item.closing_date){
+        this.form.closing_date = moment(item.closing_date, 'DD.MM.YYYY').format('YYYY-MM-DD')
+      }
+      this.dialog = true
+    })
     this.$parent.$on('addBankAccount', (instance) => {
+      Object.keys(this.form).forEach(key=>{
+        if (instance.hasOwnProperty(key)){
+          if (key==='physical'){
+            this.form[key] = instance[key].id
+          }else {
+            this.form[key] = instance[key]
+          }
+        }
+      })
       if (instance.physical_contractor) {
         this.form.physical = instance.physical_contractor.id
       } else if (instance.legal_contractor) {
         this.form.legal = instance.legal_contractor.id
       }
-      this.$store.dispatch('getBankList')
       this.dialog = true
     })
+
   },
   components: {
     AccountStatementModal,

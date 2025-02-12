@@ -14,7 +14,7 @@
               {{ item | postNumber }}
             </v-col>
             <v-col cols="1">
-              <template v-if="item.document.fromWho['communication'] ==='ElectronicMail'">
+              <template v-if="item.document.fromWho['comm'] ==='ElectronicMail'">
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on, attrs }">
                     <v-icon v-bind="attrs" v-on="on">mdi-email-outline
@@ -23,7 +23,7 @@
                   <span>Электронное письмо</span>
                 </v-tooltip>
               </template>
-              <template v-if="item.document.fromWho['communication'] ==='PaperMail'">
+              <template v-if="item.document.fromWho['comm'] ==='PaperMail'">
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on, attrs }">
                     <v-icon v-bind="attrs" v-on="on">mdi-email-open-outline</v-icon>
@@ -31,7 +31,7 @@
                   <span>Бумажное письмо</span>
                 </v-tooltip>
               </template>
-              <template v-else-if="item.document.fromWho['communication'] ==='Email'">
+              <template v-else-if="item.document.fromWho['comm'] ==='Email'">
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on, attrs }">
                     <v-icon v-bind="attrs" v-on="on">mdi-gmail</v-icon>
@@ -52,11 +52,12 @@
             <v-col cols="3">
               <v-row justify="start">
                 <v-col cols="12" class="pb-0">{{ item.document.fromWho.fullName }}</v-col>
-                <template v-if="item.document.fromWho['communication'] ==='ElectronicMail'">
-                  <v-col cols="12" style="font-size: 12px; color: #00a6ee">{{ item.document.fromWho.legal_address }}
+                <template v-if="item.document.fromWho['comm'] ==='ElectronicMail'">
+                  <v-col cols="12" style="font-size: 12px; color: #00a6ee">
+                    {{ item.document.fromWho.legal_address }}
                   </v-col>
                 </template>
-                <template v-if="item.document.fromWho['communication'] ==='Email'">
+                <template v-if="item.document.fromWho['comm'] ==='Email'">
                   <v-col cols="12" :style="fontColor(item.document.fromWho)">
                     {{ item.document.fromWho| getEmail }}
                   </v-col>
@@ -130,7 +131,7 @@
       </v-card>
     </v-dialog>
     <ChangeCommunication @updateQueue="update"></ChangeCommunication>
-    <ChangeFile></ChangeFile>
+    <ChangeFile @finished="update"></ChangeFile>
     <DeleteDocument></DeleteDocument>
     <editDocument></editDocument>
     <SystemMessage :state.sync="state"/>
@@ -174,7 +175,7 @@ export default {
     },
     send() {
       let formData = new FormData()
-      const sendMethod = this.selectedDocument[0].document.fromWho['communication']
+      const sendMethod = this.selectedDocument[0].document.fromWho['comm']
       formData.append('sendMethod', sendMethod)
       this.selectedDocument.forEach(obj => {
         formData.append('sendItem', obj.id)
@@ -190,7 +191,7 @@ export default {
       })
     },
     disableListItem(item) {
-      if (item.document.fromWho['communication'] === 'Email'){
+      if (item.document.fromWho['comm'] === 'Email'){
         if (item.document.fromWho.type === 'LegalEntity'  && !item.document.fromWho.contact_email){
           return true
         } else if (item.document.fromWho.type === 'PhysicalPerson'  && !item.document.fromWho['communication_email']){
@@ -200,7 +201,7 @@ export default {
       // return item.document.fromWho['communication'] !== 'ElectronicMail' || item.document.fromWho['communication'] !== 'Email';
       if (this.selectedDocument.length > 0) {
         let firstItem = this.selectedDocument[0]
-        if (firstItem.document.fromWho['communication'] !== item.document.fromWho['communication']) {
+        if (firstItem.document.fromWho['comm'] !== item.document.fromWho['comm']) {
           return true
         }
       } else {

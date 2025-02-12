@@ -1,6 +1,6 @@
 <template>
   <v-container fluid>
-    <v-tabs center-active
+    <v-tabs
             height="30px"
             background-color="primary"
             class="mb-3"
@@ -9,7 +9,7 @@
         <v-icon class="mr-2">{{ subsystem.icon }}</v-icon>
         <span>{{ subsystem.name }}</span>
       </v-tab>
-      <v-tab :to="{name: 'preProject'}">
+      <v-tab :to="{name: 'preProject'}" >
         <span>До Проект</span>
       </v-tab>
       <v-tab :to="{name: 'AccountOpening'}">

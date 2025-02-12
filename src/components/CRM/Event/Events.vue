@@ -52,6 +52,7 @@
             <EventCreateComponent
                 ref="eventForm"
                 :task="task"
+                :collapsed="true"
                 :rectifiedEvent.sync="rectifiedEvent" v-if="showCreateEvent"
                 @createTask="createTask"
                 @hideCreate="hideCreate()"></EventCreateComponent>
@@ -95,6 +96,7 @@ export default {
   },
   methods: {
     createEvent(item) {
+      console.log(item)
       if (item) {
         if (item.type === 'task') {
           this.task = item
@@ -108,6 +110,7 @@ export default {
         this.rectifiedEvent = null
       }
       setTimeout(() => {
+        console.log('asdasd')
         this.showDetail = false
         this.showCreateTask = false
         this.showCreateEvent = true
@@ -115,6 +118,9 @@ export default {
       console.log(this.showDetail, this.showCreateTask, this.showCreateEvent)
     },
     loadData() {
+      if (this.projectList?.length > 0 ) {
+        return Promise.resolve(); // Возвращаем успешный промис и завершаем выполнение
+      }
       this.$store.dispatch('allSystemUser')
       this.$store.dispatch('getProjectList')
       this.$store.dispatch('getUserEvent')

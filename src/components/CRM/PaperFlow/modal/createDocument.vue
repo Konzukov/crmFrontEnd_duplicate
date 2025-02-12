@@ -44,6 +44,7 @@
                   <v-file-input counter
                                 label="Добавьте файлы"
                                 multiple
+                                :accept="template.id === 3? '.yml,.yaml': ''"
                                 v-model="files"
                                 placeholder="Выберете или перетащите файлы"
                                 outlined
@@ -55,7 +56,13 @@
               </v-col>
             </v-row>
             <v-row class="ml-5 mr-5 mb-4">
-              <v-expansion-panels flat focusable>
+              <v-expansion-panels flat focusable v-if="template.id === 3">
+                <yaml-file-processing  v-for="(item, i) in files"
+                                       :uploadFile.sync="item"
+                                       :key="i"
+                ></yaml-file-processing>
+              </v-expansion-panels>
+              <v-expansion-panels flat focusable v-else>
                 <createDocumentForm v-for="(item, i) in files"
                                     :ref="`docForm`"
                                     :key="i" :uploadFile.sync="item"
@@ -77,7 +84,8 @@
                 <v-btn @click="close" color="error">Закрыть</v-btn>
               </v-col>
               <v-col cols="auto">
-                <v-btn color="success" :disabled="files.length === 0" @click="saveAll">Сохранить все</v-btn>
+                <v-btn v-if="template.id ===3 " color="success" :disabled="files.length === 0" @click="processYaml">Обработать</v-btn>
+                <v-btn  v-else color="success" :disabled="files.length === 0" @click="saveAll">Сохранить все</v-btn>
               </v-col>
             </v-row>
           </v-card-actions>
@@ -91,6 +99,7 @@
 import createDocumentForm from "./createDocumentForm";
 import {eventBus} from "../../../../bus";
 import {DocumentNameTemplate} from "@/const/dataTypes";
+import YamlFileProcessing from "@/components/CRM/PaperFlow/modal/yamlFileProcessing.vue";
 
 export default {
   name: "createDocument",
@@ -122,6 +131,9 @@ export default {
     }
   },
   methods: {
+    processYaml(){
+
+    },
     open() {
       this.dialog = true
       this.loadingData = true
@@ -194,6 +206,7 @@ export default {
       let droppedFiles = e.dataTransfer.files;
       if (!droppedFiles) return false;
       ([...droppedFiles]).forEach(file => {
+        console.log(file)
         this.files.push(file)
       })
     },
@@ -283,6 +296,7 @@ export default {
     })
   },
   components: {
+    YamlFileProcessing,
     createDocumentForm,
   },
 }

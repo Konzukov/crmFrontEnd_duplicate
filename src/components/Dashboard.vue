@@ -29,7 +29,10 @@
                          :key="id"
                          :to="{name: system.app_name}"
             >
-              <v-list-item-icon>
+              <v-list-item-icon v-if="system.app_name === 'money'">
+                <span class="money-icon"></span>
+              </v-list-item-icon>
+              <v-list-item-icon v-else>
                 <v-icon v-text="system.icon"></v-icon>
               </v-list-item-icon>
               <v-list-item-content>
@@ -325,6 +328,15 @@ export default {
 </script>
 
 <style scoped>
+.money-icon {
+  max-height: 30px;
+  height: 24px;
+  max-width: 30px;
+  width: 24px;
+  background-size: 25px auto !important;
+  background: url("../assets/icon/minimal-wallet-with-money-v2.svg") no-repeat;
+}
+
 >>> .v-main {
   height: 70vh;
   width: 100%;

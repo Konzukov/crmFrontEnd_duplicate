@@ -74,7 +74,7 @@ export default {
                         resolve(response.data.data.data)
                     } else {
                         commit('editProjectSync', response.data.data.data)
-                        resolve()
+                        resolve(response)
                     }
 
                 }).catch((err) => {

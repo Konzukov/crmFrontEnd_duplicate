@@ -285,6 +285,7 @@ export default {
   color: rgba(88, 88, 88, 0.68) !important;
 }
 
+
 >>> .has-error{
   color: rgba(117, 27, 27, 0.68) !important;
 }

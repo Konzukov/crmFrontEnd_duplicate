@@ -1,14 +1,14 @@
 <template>
-  <v-dialog v-model="dialog" width="500" >
-    <v-card>
+  <v-dialog v-model="dialog" width="50vw">
+    <v-card height="30vh">
       <v-card-title class="headline grey lighten-3">
-        Замена файла
+        Замена файла {{form.fileName}}
       </v-card-title>
-      <v-card-text >
-        <v-row justify="start" align="center">
-          <v-col md="10" sm="10">
+      <v-card-text>
+        <v-row justify="center" align="center">
+          <v-col cols="12">
             <v-form>
-              <v-file-input v-model="form.file"></v-file-input>
+              <v-file-input v-model="newFile" truncate-length="100" clearable></v-file-input>
             </v-form>
           </v-col>
           <v-col md="2" sm="2">
@@ -37,12 +37,12 @@
       </v-card-text>
       <v-card-actions>
         <v-row justify="center">
-          <v-col md="5" sm="5">
+          <v-col cols="auto">
             <v-btn color="error" @click="close" :disabled="uploadProcess.uploading">
               Отмена
             </v-btn>
           </v-col>
-          <v-col md="5" sm="5">
+          <v-col cols="auto">
             <v-btn color="darken-1 success" :disabled="uploadProcess.uploading"
                    @click="save">Заменить
             </v-btn>
@@ -74,19 +74,21 @@ export default {
           hasError: false
         }
       },
-      form: '',
+      newFile: null,
+      form: {},
     }
   },
   methods: {
     close() {
-      this.dialog = false
       Object.assign(this.$data, this.$options.data())
+      this.dialog = false
     },
     save() {
       let formData = new FormData()
-      formData.set('file', this.form.file)
-      formData.set('fileName', this.form.file.name)
-
+      formData.set('file', this.newFile)
+      formData.set('fileName', this.newFile.name)
+      console.log(this.newFile)
+      console.log(this.newFile.name)
       for (let pair of formData.entries()) {
         console.log(pair[0] + ', ' + pair[1]);
       }
@@ -104,6 +106,8 @@ export default {
           this.uploadProcess.errors.message = err.response.data.errors.message
         } else {
           let fileName = this.form.file.name
+          this.uploadProcess.uploaded = false
+          this.uploadProcess.uploading = false
           this.$emit('hasError', {err, fileName})
           this.uploadProcess.errors.hasError = true
           this.uploadProcess.errors.message = err
@@ -113,14 +117,14 @@ export default {
   },
   created() {
     this.$parent.$on('changeFile', obj => {
-      this.$store.dispatch('getDocumentDetail', obj.pk).then(() => {
-        let doc = this.$store.getters.singleDocumentData
+
+      this.$store.dispatch('getDocumentDetail', obj.pk).then((data) => {
+        let doc = data
+        console.log(doc)
         this.form = Object.assign({}, doc)
 
       })
       this.dialog = true
-      // this.form = Object.assign({}, item)
-      console.log(this.form)
     })
   },
   updated() {

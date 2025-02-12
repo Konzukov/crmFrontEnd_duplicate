@@ -254,11 +254,17 @@ const routes = [
                 path: 'paper-flow',
                 name: 'paper_flow',
                 component: PaperFlow,
+                meta: {
+                    authRequire: true
+                },
                 children: [
                     {
                         name: 'post-order',
                         path: 'post-order',
                         navName: 'Отправка почты',
+                        meta: {
+                            authRequire: true
+                        },
                         component: () => import('@/components/CRM/PaperFlow/PostOrder/PostSendQueue.vue'),
                     },
                     {

@@ -30,8 +30,9 @@
           </v-col>
           <v-row justify="start" class="mt-2">
             <v-col cols="auto">
-              <v-text-field  outlined dense label="Дата рождения" type="date" v-model="form.birthday"
-                            class="shrink"></v-text-field>
+              <DatePicker v-model="form.birthday" value-type="format" format="DD.MM.YYYY" placeholder="Дата рождения" :clearable="false"></DatePicker>
+<!--              <v-text-field outlined dense label="Дата рождения" v-model="form.birthday"-->
+<!--              ></v-text-field>-->
             </v-col>
             <v-col cols="auto">
               <v-autocomplete outlined dense label="Гражданство" :items="countryList" item-value="id" item-text="name"
@@ -43,7 +44,7 @@
             </v-col>
             <v-col cols="3">
               <v-text-field outlined dense label="Электронная почта"
-                          v-model.trim="form.communication_email"></v-text-field>
+                            v-model.trim="form.communication_email"></v-text-field>
             </v-col>
           </v-row>
 
@@ -155,6 +156,7 @@
 import PhysicalPersonPassport from "@/components/referenceBook/PhysicalPerson/PhysicalPersonPassport";
 import PhysicalPersonRegistration from "@/components/referenceBook/PhysicalPerson/PhysicalPersonRegistration";
 import {mapGetters} from 'vuex'
+import moment from "moment/moment";
 
 // import moment from "moment";
 // import Vue from 'vue'
@@ -177,7 +179,7 @@ export default {
     registrationCount: [],
     registrationFormsData: [],
     passportFormsData: [],
-
+    date: null,
     form: {
       pk: '',
       last_name: '',
@@ -204,15 +206,43 @@ export default {
     })
   },
   methods: {
+    handleInput(event) {
+      const input = event.target.value;
+      console.log(event.target.value)
+      // Проверяем, что введенная строка соответствует формату даты
+      if (/^\d{2}\.\d{2}\.\d{4}$/.test(input)) {
+        this.form.birthday = input;
+        this.date = new Date(input.replace(/\./g, '/'));
+      } else {
+        this.formattedDate = '';
+      }
+    },
+    handlePaste(event) {
+      const clipboardData = event.clipboardData || window.clipboardData;
+      let pastedText = '';
+
+      if (clipboardData) {
+        pastedText = clipboardData.getData('text');
+      }
+
+      // Проверяем, что скопированный текст соответствует формату даты
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(pastedText)) {
+        this.formattedDate = pastedText.replace(/\//g, '.');
+        this.date = new Date(pastedText);
+      }
+    },
     updateData() {
       this.passportCount = []
       this.passportFormsData = []
       this.registrationCount = []
       this.registrationFormsData = []
       this.$store.dispatch('getPhysicalPersonDetail', this.rectifiedPhysicalPerson['pk']).then(data => {
-        console.log(data)
         Object.keys(this.form).forEach(key => {
-          this.form[key] = data[key]
+          if (key === 'birthday'){
+            this.form[key] = moment(data[key]).format('DD.MM.YYYY')
+          }else{
+            this.form[key] = data[key]
+          }
         })
         if (data['passports'].length > 0) {
           data['passports'].forEach((obj, index) => {
@@ -272,7 +302,14 @@ export default {
         let formData = new FormData()
         Object.keys(this.form).forEach(key => {
           if (this.form[key]) {
-            formData.append(key, this.form[key])
+            if (key === 'birthday'){
+              console.log(this.form[key])
+              if (this.form[key] !== "Invalid date"){
+                formData.append(key, moment(this.form[key], 'DD.MM.YYYY').format('YYYY-MM-DD'))
+              }
+            }else {
+              formData.append(key, this.form[key])
+            }
           } else {
             if (key !== 'pk') {
               formData.append(key, '')
@@ -427,6 +464,7 @@ export default {
     }
   },
   watch: {
+
     rectifiedPhysicalPerson(val) {
       if (val) this.updateData()
     },
@@ -447,6 +485,13 @@ export default {
 </script>
 
 <style scoped>
+
+>>>.mx-input:hover, >>>.mx-input:focus {
+  border-color: #000000;
+}
+>>>.mx-input:focus {
+  border: 2px solid black;
+}
 .v-card__title, .v-card__text {
   margin: 0;
   padding: 0;

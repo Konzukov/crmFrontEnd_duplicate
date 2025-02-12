@@ -221,6 +221,7 @@ export default {
   },
   methods: {
     close(){
+      this.$emit('close')
       this.$refs.legalEntity.reset()
     },
     addLegalEntity() {
@@ -252,7 +253,6 @@ export default {
     },
     updateData(val) {
       this.formData.bankAccount = []
-      console.log(val)
       Object.keys(val).filter(key => {
         if (val[key] !== 'null') {
           if (key === 'fullName') {

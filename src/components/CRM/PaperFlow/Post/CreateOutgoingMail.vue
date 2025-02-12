@@ -81,7 +81,7 @@ export default {
   }),
   methods: {
     chekOutPostArchive() {
-      let formData = new FormData
+      let formData = new FormData()
       formData.append('file', this.outMail)
       return new Promise((resolve, reject) => {
         this.$http({

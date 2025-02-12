@@ -73,7 +73,8 @@
                           </v-list-item-title>
                         </v-list-item>
                         <v-divider></v-divider>
-                        <v-list-item v-if="item.type === 'document'" link @click="showDocument(item)">
+                        <v-list-item v-if="item.type === 'document' || item.type === 'post'" link
+                                     @click="showDocument(item)">
                           <v-list-item-title>
                             Показать документ
                           </v-list-item-title>
@@ -125,7 +126,8 @@
         <v-card height="100%"
                 flat
                 class="overflow-x-hidden">
-          <DocumentViewer :documentUrl="documentUrl" @closeView="closeView" v-if="detailView"></DocumentViewer>
+          <DocumentPreView :document-list="selectedDocumentList"></DocumentPreView>
+<!--          <DocumentViewer :documentUrl="documentUrl" @closeView="closeView" v-if="detailView"></DocumentViewer>-->
           <TaskDetail v-if="showDetail" :task="selectedTask"
                       @hideDetail="hideDetail()"
                       @editTask="editTask"
@@ -170,12 +172,12 @@ import ChangeFile from "@/components/CRM/PaperFlow/modal/ChangeFile";
 import DeleteDocument from "@/components/CRM/PaperFlow/modal/deleteDocument";
 import PostEdit from "@/components/CRM/PaperFlow/Post/modal/PostEdit";
 // import DocumentDetail from "@/components/CRM/PaperFlow/DocumentView";
-import DocumentViewer from "@/components/CRM/PaperFlow/DocumentViewer.vue";
+// import DocumentViewer from "@/components/CRM/PaperFlow/DocumentViewer.vue";
 import TaskDetail from "@/components/CRM/Task/TaskDetail";
 import TaskCreateComponent from "@/components/CRM/Task/TaskCreateComponent";
 import EventCreateComponent from "@/components/CRM/Event/EventCreateComponent";
 import SystemMessage from "@/components/UI/SystemMessage.vue";
-
+import DocumentPreView from "@/components/CRM/PaperFlow/DocumentPreView/DocumentPreView.vue";
 export default {
   props: ['project', 'collapsed'],
   name: "ProjectReport",
@@ -194,6 +196,7 @@ export default {
     showCreateTask: false,
     showCreateEvent: false,
     documentUrl: null,
+    selectedDocumentList: [],
     selectedTask: {},
     rectifiedTask: null,
     rectifiedEvent: null,
@@ -230,18 +233,16 @@ export default {
     orderingDate(item) {
       this.filter.range.sort()
     },
-    addToSendQueue(item, force=false){
+    addToSendQueue(item, force = false) {
       let formData = new FormData()
       this.sendQueueItem = item
       formData.append('doc', item.id)
       formData.append('force', force.toString())
-      this.$store.dispatch('addToSendQueue', formData).then(res=>{
+      this.$store.dispatch('addToSendQueue', formData).then(res => {
         this.sendQueueItem = null
         this.state = 'success'
         this.$emit('showSystemMessage', {response: res, state: this.state, send: false})
-        console.log(res)
-      }).catch(err=>{
-        console.log(err.response)
+      }).catch(err => {
         this.state = 'error'
         this.$emit('showSystemMessage', {response: err, state: this.state, send: false})
       })
@@ -276,7 +277,6 @@ export default {
     },
     downloadReport() {
       this.reportLoading = true
-
       this.$store.dispatch('downloadReport', this.filter.project).then((res) => {
         this.reportLoading = false
       }).catch((err) => {
@@ -287,7 +287,6 @@ export default {
       })
     },
     createTask(item) {
-      console.log(item)
       this.cols.right = 6
       this.cols.left = 6
       this.reset()
@@ -309,7 +308,6 @@ export default {
       }, 400)
     },
     createEvent(item) {
-      console.log(item)
       this.cols.right = 6
       this.cols.left = 6
       this.reset()
@@ -347,7 +345,6 @@ export default {
           this.$emit('editPost', item.pk)
           break
       }
-      console.log(item)
     },
     hideDetail() {
       this.showDetail = false
@@ -365,10 +362,16 @@ export default {
       this.cols.left = 12
     },
     showDocument(item) {
-      this.documentUrl = item.url
       this.detailView = true
       this.cols.left = 6
       this.cols.right = 6
+      if (item.type === 'post') {
+        console.log(item)
+        this.selectedDocumentList = [...item['post_documents']]
+
+      }else{
+        this.documentUrl = item.url
+      }
     },
     closeView() {
       this.detailView = false
@@ -443,7 +446,6 @@ export default {
               }
             })
           }
-          console.log(data)
           return data
         }
         return new Array()
@@ -501,7 +503,6 @@ export default {
         if (Array.isArray(item['post_documents'])) {
           for (let docs of item['post_documents']) {
             files.push(docs.fileName)
-            console.log(files)
           }
           return files.join(', ')
         }
@@ -514,6 +515,7 @@ export default {
     this.filter.project = this.$route.params['pk']
   },
   components: {
+    DocumentPreView,
     SystemMessage,
     ErrorHandling,
     editDocument,
@@ -522,7 +524,7 @@ export default {
     TaskDetail,
     ChangeFile,
     DeleteDocument,
-    DocumentViewer,
+    // DocumentViewer,
     PostEdit
   }
 }

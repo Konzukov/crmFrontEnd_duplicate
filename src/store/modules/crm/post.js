@@ -13,9 +13,13 @@ export default {
         singlePost: {},
         incomingPost: [],
         outgoingPost: [],
+        postAccount: []
 
     },
     mutations: {
+        syncPostAccount(state, postAccount){
+          state.postAccount = postAccount
+        },
         syncIncomingPost(state, inPostList) {
             state.incomingPost = inPostList
         },
@@ -63,6 +67,19 @@ export default {
         }
     },
     actions: {
+        getPostAccount({commit}){
+          return new Promise((resolve, reject) => {
+              axios({
+                  method: "GET",
+                  url: customConst.PAPERFLOW_API + 'post-account'
+              }).then(res=>{
+                  commit('syncPostAccount', res.data.data.data)
+                  resolve(res)
+              }).catch(err=>{
+                  reject(err)
+              })
+          })
+        },
         getAllPost({commit}) {
             return new Promise((resolve, reject) => {
                 axios({
@@ -190,6 +207,10 @@ export default {
 
     },
     getters: {
+        postAccountData(state){
+            console.log(state.postAccount)
+          return state.postAccount.filter(obj=> obj['post_type'] === 'ElectronicMail')
+        },
         allPostListData(state) {
             return state.post
         },

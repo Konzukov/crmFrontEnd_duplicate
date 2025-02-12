@@ -17,7 +17,7 @@
     </v-row>
     <v-row justify="start">
       <v-col cols="5" class="pt-0 pb-0">
-        <v-text-field outlined dense label="Код подраздиления"
+        <v-text-field outlined dense label="Код подразделения"
                       v-model="passport.division_code"></v-text-field>
       </v-col>
       <v-col cols="5" class="pt-0 pb-0">

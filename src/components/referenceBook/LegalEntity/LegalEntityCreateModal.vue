@@ -40,17 +40,15 @@ export default {
     this.$parent.$on('legalEntityModal', (item) => {
       console.log(item)
       this.$store.dispatch('getLegalEntityDetailInfo', item.pk).then((item) => {
-
         setTimeout(() => {
           this.legalData = Object.assign({}, item)
         }, 100)
 
         this.dialog = !this.dialog
       })
-
-      // if (this.subsystem.name === name) {
-      //
-      // }
+    })
+    this.$parent.$on('createLegalEntity', ()=>{
+      this.dialog = true
     })
   }
 }

@@ -496,8 +496,8 @@ export default {
                     method: "GET",
                     url: customConst.REFERENCE_BOOK_API + 'legal-entity-detail/' + pk,
                 }).then((response) => {
-                    resolve(response.data.data.attributes)
-                    commit('legalEntityDetailInfo', response.data.data.attributes)
+                    resolve(response.data.data.data)
+                    commit('legalEntityDetailInfo', response.data.data.data)
 
                 })
             })
@@ -524,7 +524,6 @@ export default {
                     url: customConst.REFERENCE_BOOK_API + 'legal-entity-update/' + data.legalEntityDetail.pk,
                     data: data.data
                 }).then((response) => {
-                    console.log(response.data.data.data)
                     commit('updateLegalEntity', response.data.data.data)
                     resolve(response)
                 }).catch(err => {
@@ -543,6 +542,21 @@ export default {
                 console.log(error)
             })
         },
+
+        async createLegalEntityNew({commit}, formData) {
+            return await new Promise(async (resolve, reject) => {
+                await Axios({
+                    method: "Post",
+                    url: customConst.REFERENCE_BOOK_API + 'legal-entity-new/',
+                    data: formData,
+                }).then(res => {
+                    resolve(res)
+                }).catch(err => {
+                    reject(err)
+                })
+            })
+        },
+
         createRelatedPerson({commit}, formData) {
             return new Promise((resolve, reject) => {
                 Axios({
@@ -762,6 +776,32 @@ export default {
                 })
             })
         },
+        addCommunication({commit}, formData) {
+            return new Promise((resolve, reject) => {
+                Axios({
+                    method: "POST",
+                    url: customConst.REFERENCE_BOOK_API + 'communication/',
+                    data: formData
+                }).then(res => {
+                    resolve(res)
+                }).catch(err => {
+                    reject(err)
+                })
+            })
+        },
+        editCommunication({commit}, {formData, id}) {
+            return new Promise((resolve, reject) => {
+                Axios({
+                    method: "PUT",
+                    url: customConst.REFERENCE_BOOK_API + `communication/${id}/`,
+                    data: formData
+                }).then(res => {
+                    resolve(res)
+                }).catch(err => {
+                    reject(err)
+                })
+            })
+        }
     },
     getters: {
         relatedUserData(state) {
@@ -780,14 +820,7 @@ export default {
             return state.legalEntity
         },
         allRefData(state) {
-            let data = [];
-            if (state.legalEntity) {
-                data.push(...state.legalEntity)
-            }
-            if (state.physicalPerson) {
-                data.push(...state.physicalPerson)
-            }
-            return data
+            return [...state.legalEntity, ...state.physicalPerson]
             // if (state.legalEntity && state.physicalPerson) {
             //     return state.legalEntity.concat(state.physicalPerson)
             // }

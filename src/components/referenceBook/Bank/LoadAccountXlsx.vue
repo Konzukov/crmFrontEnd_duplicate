@@ -1,8 +1,8 @@
 <template>
-  <v-container>
-    <v-dialog v-model="dialog" width="45vw">
+  <v-container fluid>
+    <v-dialog v-model="dialog" width="65vw">
       <v-card height="70vh">
-        <v-card-text style="height: 40%; align-items: center; display: flex;">
+        <v-card-text style="height: 25%; align-items: center; display: flex;">
           <v-container>
             <v-row justify="center">
               <v-btn
@@ -36,7 +36,7 @@
             </h4>
           </v-row>
         </v-card-text>
-        <v-card-text style="height: 50%; overflow-y: scroll">
+        <v-card-text style="height: 60%; overflow-y: scroll">
           <v-row v-if="errorMessage" class="error_container mt-4" justify="center">
             <h3>Ошибка</h3>
             {{ errorMessage }}
@@ -47,20 +47,33 @@
           <v-row v-if="successMessages" justify="center">
             <v-data-table :items="successMessages" :headers="headers" hide-default-footer :items-per-page="999">
               <template v-slot:item.added="{item}">
-                <span v-if="item.added">Да</span>
+                <span v-if="item.added">
+                  <v-tooltip bottom>
+                    <template v-slot:activator="{ on, attrs }">
+                      <v-icon
+                          color="success"
+                          v-bind="attrs"
+                          v-on="on">mdi-check</v-icon>
+                    </template>
+                    <span>{{ item.comment }}</span>
+                  </v-tooltip>
+                </span>
                 <span v-else>Нет
                   <v-tooltip bottom>
                     <template v-slot:activator="{ on, attrs }">
-        <v-icon
-            color="error"
-            v-bind="attrs"
-            v-on="on"
-        >
-          mdi-information
-        </v-icon>
-      </template>
-      <span>{{item.comment}}</span>
-    </v-tooltip></span>
+                      <v-icon
+                          color="error"
+                          v-bind="attrs"
+                          v-on="on">mdi-information</v-icon>
+                    </template>
+                    <span>{{ item.comment }}</span>
+                  </v-tooltip>
+                </span>
+              </template>
+              <template v-slot:item.actions="{item}">
+                <v-btn icon small>
+                  <v-icon color="primary">mdi-pencil</v-icon>
+                </v-btn>
               </template>
             </v-data-table>
           </v-row>
@@ -90,6 +103,7 @@ export default {
       {text: 'Банк', value: 'bank'},
       {text: 'Номер счета', value: 'account'},
       {text: 'Загружен', value: 'added'},
+      {text: 'Действия', value: 'actions'},
     ],
     project: null,
     dataType: null,
@@ -102,25 +116,31 @@ export default {
   }),
   methods: {
     close() {
+
+      // Устанавливаем null значения для всех важных свойств
+      this.dialog = false;
+      this.selectedFile = null;
+      this.isSelecting = null;
+      this.errorMessage = null;
+      this.successMessages = null;
+
+      // Обновляем родительский компонент в зависимости от типа данных
       if (this.dataType === 'bankAccount') {
-        this.$emit('updateAccountList')
+        this.$emit('updateAccountList');
       } else if (this.dataType === 'bankCard') {
-        this.$emit('updateBankCardList')
+        this.$emit('updateBankCardList');
       }
-      Object.assign(this.$data, this.$options.data())
-      this.selectedFile = null
-      this.isSelecting = null
-      this.dialog = false
+
+      // Добавляем небольшую задержку перед закрытием диалога
+      setTimeout(() => {
+        this.dialog = false;
+      }, 100);
+
+      // Очищаем input файл
+      this.$refs.uploader.value = '';
     },
     handleFileImport() {
       this.isSelecting = true;
-
-      // // After obtaining the focus when closing the FilePicker, return the button state to normal
-      // window.addEventListener('focus', () => {
-      //   this.isSelecting = false
-      // }, {once: false});
-
-      // Trigger click on the FileInput
       this.$refs.uploader.click();
     },
     onFileChanged(e) {

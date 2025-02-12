@@ -51,15 +51,16 @@
               :search="filter.search"
               item-key="pk"
               :headers="headers"
-
           >
             <template v-slot:body="{ items }">
               <tbody>
-<!--              :style="item.act?'':'backgroundColor: #fb00004d'"-->
+              <!--              :style="item.act?'':'backgroundColor: #fb00004d'" headingDate: existAct(item.act)-->
               <tr v-for="item in items"
 
                   :key="item.pk"
-                  :class="{archive: item.isArchive}"
+                  :class="[{archive: item.isArchive, },
+                  existAct(item.act)
+                  ]"
               >
                 <td>
                   <v-checkbox dense v-model="selectedProject" :value="item"
@@ -70,6 +71,9 @@
                 <td width="100">{{ item.code }}</td>
                 <td>{{ item.case_number }} <br>
                   <span style="font-size: 10px; color: #00a6ee">{{ item.procedure | getProcedure }}</span>
+                </td>
+                <td>
+                  <template v-if="item.act">{{ item.act | filterDate }}</template>
                 </td>
                 <td>{{ item.responsible }}</td>
                 <td v-if="item.judge">{{ item.judge.full_name }}</td>
@@ -109,7 +113,7 @@
             </template>
             <template v-slot:footer>
               <tr>
-                <td >
+                <td>
                   <export-excel
                       :data="selectedProject"
                       :fields="excelField"
@@ -147,12 +151,14 @@ import addToArchive from "./modal/addToArchive";
 import {mapGetters} from 'vuex'
 import {ProcedureType} from "@/const/dataTypes";
 import {saveAs} from 'file-saver'
-
+import moment from "moment/moment";
 
 export default {
   name: "Project",
   data() {
     return {
+      sortBy: [],
+      sortDesc: [],
       display: {
         left: 12,
         right: 0
@@ -172,6 +178,7 @@ export default {
         {text: 'Проект', value: 'name'},
         {text: 'Код', value: 'code'},
         {text: 'Номер дела', value: 'case_number'},
+        {text: 'Дата решения/заседания', value: 'act.heading_date'},
         {text: 'Ответственный', value: 'responsible'},
         {text: 'Судья', value: 'judge'},
         {text: 'Действия', value: 'actions', sortable: false},
@@ -250,15 +257,42 @@ export default {
       })[0]
       if (physicalVal) {
         return physicalVal.text
-      } else if(legalVal){
+      } else if (legalVal) {
         return legalVal.text
       }
 
+    },
+    filterDate(item) {
+      if (item.heading_date) return moment(item.heading_date).format('DD.MM.YYYY')
+      return ''
     }
   },
   methods: {
-    getPreProjectReport(){
-      this.$store.dispatch('downloadPreProjectReport').then(res=>{
+    existAct(item) {
+      const now = moment()
+      if (item) {
+        if (!item.act) {
+          const date = moment(item.heading_date)
+          if (date.isAfter(now)) {
+            return 'headingDate'
+          } else {
+            return 'expiredDate'
+          }
+        }
+      }
+
+      // if (isObject(item)) {
+      //   const date = moment(item.heading_date)
+      //   if (date.isAfter(now)) {
+      //     return 'headingDate'
+      //   } else {
+      //     return 'expiredDate'
+      //   }
+      // }
+      // return ''
+    },
+    getPreProjectReport() {
+      this.$store.dispatch('downloadPreProjectReport').then(res => {
         saveAs(res.data, 'preProject-report.xlsx')
       })
     },
@@ -338,6 +372,14 @@ td {
 table > tbody > tr.archive {
   font-weight: 100;
   color: rgba(0, 0, 0, 0.5);
+}
+
+>>> .headingDate {
+  color: #b76f00;
+}
+
+>>> .expiredDate {
+  color: #ee0000;
 }
 
 table > tbody > tr {

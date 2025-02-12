@@ -296,7 +296,7 @@
                   </v-col>
                 </v-row>
               </template>
-              <v-row justify="start" v-if="postForm.post_type==='EPOST'">
+              <v-row justify="start" >
                 <v-col cols="auto">
                   <v-text-field outlined label="РПО" dense v-model="postForm['rpo']" :disabled="action ==='edit'">
                     <template v-slot:append-outer v-if="action==='create'">
@@ -306,13 +306,17 @@
                     </template>
                   </v-text-field>
                 </v-col>
-                <v-col cols="auto">
+                <v-col cols="auto" v-if="postForm.post_type==='EPOST'">
                   <v-text-field outlined label="Код пакета" dense v-model="postForm['package_code']"
                                 :disabled="action ==='edit'"></v-text-field>
                 </v-col>
                 <v-col cols="auto">
                   <v-text-field outlined dense type="number" label="Цена" :disabled="action ==='edit'"
                                 v-model.number="postForm['price']"></v-text-field>
+                </v-col>
+                                <v-col cols="auto">
+                  <v-text-field outlined dense type="number" label="Расчетная стоимость"
+                                v-model.number="postForm['calculated_price']"></v-text-field>
                 </v-col>
               </v-row>
               <v-row justify="start" align="center">
@@ -385,8 +389,10 @@
                 </v-list-item-action>
               </v-list-item>
             </v-list>
-            <v-btn @click="addDocument" :disabled="!postForm['pk']" class="mr-5" color="primary">Добавить документ</v-btn>
+            <v-btn @click="addDocument" :disabled="!postForm['pk']" class="mr-5" color="primary">Добавить документ
+            </v-btn>
             <v-btn @click="addProjectDocument" color="success">Выбрать документ</v-btn>
+
           </v-col>
         </v-row>
       </v-card>
@@ -433,9 +439,11 @@ export default {
       postType: [
         {value: 'EPOST', text: 'Почта'},
         {value: 'EMAIL', text: 'Электронная почта'},
+        {value: 'EDO', text: '"ЭДО"'},
       ],
       postForm: {
         rpo: '',
+        post_account: '',
         post_type: "EPOST",
         departure_date: '',
         receiving_date: '',
@@ -445,6 +453,7 @@ export default {
         route: '',
         package_code: '',
         price: '',
+        calculated_price: '',
         project: '',
         description: '',
         tags: '',
@@ -481,8 +490,11 @@ export default {
       "createPost",
       "getCorrespondenceType"
     ]),
-    async chooseDocs(data){
-      for (let doc of data.chooseDocs){
+    viewDocument(item) {
+
+    },
+    async chooseDocs(data) {
+      for (let doc of data.chooseDocs) {
         let formData = new FormData()
         formData.append('post', this.postForm?.pk)
         formData.append('doc', doc.id)
@@ -578,7 +590,7 @@ export default {
         });
       }
       if (this.action === 'edit') {
-        await this.editPost({formData, pk: this.postForm["pk"]}).then(() => {
+        await this.$store.dispatch('editPost', {formData, pk: this.postForm["pk"]}).then(() => {
           this.snackbar.text = "Успешно";
         }).finally(() => {
           this.saving = false;
@@ -590,8 +602,10 @@ export default {
         for (let pair of formData.entries()) {
           console.log(pair[0] + ', ' + pair[1]);
         }
-        await this.createPost(formData).then((data) => {
+        await this.$store.dispatch('createPost', formData).then((data) => {
           this.loadPostData(data.pk)
+          this.drawer = false
+          this.$emit('postCreated', data)
           this.action = 'edit'
           this.snackbar.text = "Успешно";
         }).finally(() => {
@@ -614,8 +628,8 @@ export default {
       //   this.$emit("newPostDocument", this.postForm["pk"]);
       // });
     },
-    addProjectDocument(){
-      let id = this.postForm.project.map(obj=> {
+    addProjectDocument() {
+      let id = this.postForm.project.map(obj => {
         return obj.id
       })
       this.$emit('chooseDocs', {project: id, existDoc: this.postForm['post_document']})
@@ -663,7 +677,18 @@ export default {
       this.action = 'edit'
       this.loadPostData(pk)
     });
-    this.$parent.$on('createSingleOutPost', () => {
+    this.$parent.$on('createSingleOutPost', (item) => {
+      if (item){
+        this.postForm.post_type = this.postType[2].value
+        this.postForm.rpo = item.rpo
+        this.postForm.post_account = item.post_account.id
+        this.postForm.departure_date = moment(item.departure_date, 'YYYY-MM-DD').format('YYYY-MM-DD HH:mm:ss')
+        this.postForm.from_who = item.from_legal
+        this.postForm.from_custom = item.from_custom
+        this.postForm.project = item.project
+        this.postForm.description = item.description
+        this.postForm.calculated_price = item.calculated_price
+      }
       this.action = 'create'
       this.postForm.route = this.route[1].value
       this.postForm['to'] = this.participatorList[0]

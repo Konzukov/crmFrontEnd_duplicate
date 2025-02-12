@@ -274,7 +274,6 @@ export default {
   },
   methods: {
     ProcedureType(val) {
-      console.log(val)
       if (val === 'PhysicalPerson') return ProcedureType.Physical
       else if (val === 'LegalEntity') return ProcedureType.Legal
       else return ProcedureType.Physical
@@ -292,7 +291,6 @@ export default {
       this.$emit('close')
     },
     save() {
-      console.log('call')
       if (this.$refs.projectCreate.validate()) {
         let formData = new FormData()
         Object.keys(this.project).forEach(key => {
@@ -306,14 +304,16 @@ export default {
         if (!this.project.pk) {
           this.$store.dispatch('createProject', formData).then(response => {
             this.project.pk = response['pk']
-            this.$emit('showSystemMessage', {response: response, state: 'success', send: false  })
+            this.state = 'success'
+            this.$emit('showSystemMessage', {response: response, state: this.state, send: false  })
             this.$emit('close', response)
           }).catch(err => {
             this.errors = err.response.data.errors
           })
         } else {
           this.$store.dispatch('editProject', {formData, pk: this.project.pk}).then(res => {
-            this.$emit('showSystemMessage', {response: res, state: 'success', send: false  })
+            this.state = 'success'
+            this.$emit('showSystemMessage', {response: res, state:  this.state, send: false  })
           }).catch(err => {
             this.errors = err.response.data.errors
           })

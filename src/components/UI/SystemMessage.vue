@@ -52,11 +52,13 @@
             </v-col>
           </v-row>
           <template v-if="systemMessage.redirect ==='project-detail'">
-             <v-btn text color="warning" link :to="{name: systemMessage.redirect, params: {pk: project}}" target="_blank">Перейти на страницу проекта</v-btn>
+            <v-btn text color="warning" link :to="{name: systemMessage.redirect, params: {pk: project}}"
+                   target="_blank">Перейти на страницу проекта
+            </v-btn>
           </template>
-          <template v-else-if="systemMessage.redirect === 'force'" >
+          <template v-else-if="systemMessage.redirect === 'force'">
             <v-row justify="center">
-              <v-btn color="warning" @click="forceSendQueue" class="mt-4 justify-center" >Добавить в отправку</v-btn>
+              <v-btn color="warning" @click="forceSendQueue" class="mt-4 justify-center">Добавить в отправку</v-btn>
             </v-row>
 
           </template>
@@ -68,6 +70,8 @@
 </template>
 
 <script>
+import {eventBus} from "@/bus";
+
 export default {
   props: {
     state: {
@@ -92,17 +96,7 @@ export default {
   }),
   computed: {},
   methods: {
-    close() {
-      this.dialog = false
-      Object.assign(this.$data, this.$options.data())
-    },
-    forceSendQueue(){
-      this.$emit('forceAdd')
-      this.close()
-    }
-  },
-  created() {
-    this.$parent.$on('showSystemMessage', async ({response, state, send}) => {
+    async createMessage({response, state, send}) {
       let data;
       if (state === 'error') {
         if (typeof response.response.data === "object") {
@@ -116,9 +110,9 @@ export default {
         let text = container.getElementsByTagName("pre")[0].innerHTML
         let subject = container.getElementsByTagName('h1')[0].innerHTML
         let redirect;
-        if (text === "Основной расчетный счет не выбран"){
+        if (text === "Основной расчетный счет не выбран") {
           redirect = 'project-detail'
-        }else if (text === 'Документ уже был оправлен ранее'){
+        } else if (text === 'Документ уже был оправлен ранее') {
           redirect = 'force'
         }
         this.systemMessage = {
@@ -128,7 +122,7 @@ export default {
         }
       } else {
         data = response.data.data.data
-        if (send){
+        if (send) {
           data.text += ' '
         }
         this.systemMessage = {
@@ -136,6 +130,23 @@ export default {
           text: data.text
         }
       }
+    },
+    close() {
+      this.dialog = false
+      Object.assign(this.$data, this.$options.data())
+    },
+    forceSendQueue() {
+      this.$emit('forceAdd')
+      this.close()
+    }
+  },
+  created() {
+    eventBus.$on('showSystemMessage', async ({response, state, send}) => {
+      await this.createMessage({response, state, send})
+      this.dialog = true
+    })
+    this.$parent.$on('showSystemMessage', async ({response, state, send}) => {
+      await this.createMessage({response, state, send})
       this.dialog = true
     })
   }

@@ -360,15 +360,15 @@ export default {
                 })
             })
         },
-        async addDocToPost({commit}, formData){
+        async addDocToPost({commit}, formData) {
             return await new Promise((resolve, reject) => {
                 axios({
-                    method:"POST",
+                    method: "POST",
                     url: customConst.PAPERFLOW_API + "add-doc-to-post",
                     data: formData
-                }).then(res=>{
+                }).then(res => {
                     resolve(res)
-                }).catch(err=>{
+                }).catch(err => {
                     reject(err)
                 })
             })
@@ -424,10 +424,10 @@ export default {
                 })
             })
         },
-        sendDocumentQueue({commit}, {formData, sendMethod}){
+        sendDocumentQueue({commit}, {formData, sendMethod}) {
             return new Promise((resolve, reject) => {
                 let responseType = 'json'
-                if (sendMethod !== "Email"){
+                if (sendMethod !== "Email") {
                     responseType = 'blob'
                 }
                 axios({
@@ -435,12 +435,12 @@ export default {
                     url: customConst.PAPERFLOW_API + 'document-send-queue/send/',
                     data: formData,
                     responseType: responseType,
-                }).then(res=>{
-                    if (sendMethod !== "Email"){
+                }).then(res => {
+                    if (sendMethod !== "Email") {
                         saveAs(res.data, 'otpravka.zip')
                     }
                     resolve(res)
-                }).catch(err=>{
+                }).catch(err => {
                     reject(err)
                 })
             })
@@ -451,22 +451,39 @@ export default {
                     method: "POST",
                     url: customConst.PAPERFLOW_API + 'document-send-queue/change-communication/',
                     data: formData
-                }).then(res=>{
+                }).then(res => {
                     resolve(res)
-                }).catch(err=>{
+                }).catch(err => {
                     reject(err)
                 })
             })
         },
-        addToSendQueue({commit}, formData){
+        addToSendQueue({commit}, formData) {
             return new Promise((resolve, reject) => {
                 axios({
-                    method:"POST",
+                    method: "POST",
                     url: customConst.PAPERFLOW_API + 'document-send-queue/add-to-send-queue/',
                     data: formData
-                }).then(res=>{
+                }).then(res => {
                     resolve(res)
-                }).catch(err=>{
+                }).catch(err => {
+                    reject(err)
+                })
+            })
+        },
+        yamlProcessing({commit}, {formData, file}) {
+            return new Promise((resolve, reject) => {
+                axios({
+                    method: "POST",
+                    url: customConst.PAPERFLOW_API + "processing-yaml",
+                    data: formData,
+                    onUploadProgress: (progressEvent) => {
+                        let progress = String(Math.round((progressEvent.loaded / progressEvent.total) * 100))
+                        eventBus.$emit('updateProgress', {progress, file})
+                    }
+                }).then(res => {
+                    resolve(res.data.data.data)
+                }).catch(err => {
                     reject(err)
                 })
             })

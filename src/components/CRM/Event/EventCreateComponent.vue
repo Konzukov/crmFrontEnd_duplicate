@@ -521,6 +521,20 @@ export default {
     },
     delDocToUpload(i) {
       this.docsToUpload.splice(i, 1);
+    },
+    loadData() {
+      // Проверяем, есть ли данные (например, длина массива или наличие данных)
+      if (this.projectList?.length > 0 && this.eventCategory?.length > 0) {
+        this.load = true;
+        return Promise.resolve(); // Возвращаем успешный промис и завершаем выполнение
+      }
+
+      // Если данных нет, загружаем их
+      return this.$store.dispatch('getProjectList')
+          .then(() => this.$store.dispatch('getEventCategory'))
+          .finally(() => {
+            this.load = true; // Устанавливаем флаг загрузки
+          });
     }
   },
   watch: {
@@ -538,9 +552,12 @@ export default {
     },
   },
   async created() {
-    await this.$store.dispatch('getProjectList');
-    await this.$store.dispatch('getEventCategory');
-    this.event.author = this.systemUser.filter(obj => obj.user.id === this.currentUser.id)[0]
+    await this.loadData()
+    this.event.author = this.systemUser.filter(obj => {
+      if (obj.hasOwnProperty('user')) {
+        return obj?.user?.id === this.currentUser.id
+      }
+    })[0]
     if (this.rectifiedEvent) {
       await this.updateEventData()
     } else {
@@ -555,7 +572,7 @@ export default {
       }
     }
 
-    this.load = true
+
   },
   components: {
     AddTag,

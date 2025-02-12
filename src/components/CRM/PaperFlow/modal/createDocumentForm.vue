@@ -66,6 +66,12 @@
                                   hint="Если оставить пустым, номер будет получен автоматически"
                                   v-model="form.out_number"></v-text-field>
                   </v-col>
+
+                  <v-col cols="auto"
+                         v-if="form.correspondence_type['name'] === 'Платежный документ' || form.correspondence_type['name']==='Счет на оплату'">
+                    <v-text-field label="Сумма документа" dense outlined v-model="form.price"
+                                  @keypress="isNumber($event)"></v-text-field>
+                  </v-col>
                 </v-row>
                 <v-row justify="start">
                   <v-col md="5" sm="5" class="mr-2">
@@ -137,12 +143,6 @@
                   </v-col>
                   <v-col md="5" sm="5">
                     <AddingTag ref="tagsList"></AddingTag>
-                  </v-col>
-                </v-row>
-                <v-row justify="start" v-if="form.correspondence_type['name'] === 'Платежный документ'">
-                  <v-col cols="3">
-                    <v-text-field label="Сумма документа" dense outlined v-model="form.price"
-                                  @keypress="isNumber($event)"></v-text-field>
                   </v-col>
                 </v-row>
               </v-form>
@@ -470,7 +470,6 @@ export default {
       } else if (legalVal) {
         return legalVal.text
       }
-
     }
   },
   created() {

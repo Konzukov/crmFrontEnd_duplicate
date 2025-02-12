@@ -6,9 +6,12 @@
           <PhysicalPersonCreate v-if="contractor.type==='PhysicalPerson'" :rectified-physical-person="contractor"
                                 :callSave="callSave"
                                 :show-action-button="false"></PhysicalPersonCreate>
-          <LegalEntityCreate v-else :rectifiedLegalEntity.sync="contractor"
-                             :callSave="callSave"
-                             :show-action-button="false"></LegalEntityCreate>
+          <LegalEntityForm v-else :legalEntityData.sync="contractor"
+                           :callSave="callSave"
+                           :show-action-button="false"></LegalEntityForm>
+          <!--          <LegalEntityForm v-else :legalEntityData.sync="contractor"-->
+          <!--                             :callSave="callSave"-->
+          <!--                             :show-action-button="false"></LegalEntityForm>-->
         </v-card-text>
       </v-col>
       <v-col cols="6" :style="collapsed? 'height: 73vh': 'height: 45vh'">
@@ -34,7 +37,7 @@
 <script>
 import PhysicalPersonCreate from "@/components/referenceBook/PhysicalPerson/PhysicalPersonCreate";
 import ProjectCreate from "@/components/referenceBook/Project/ProjectCreate";
-import LegalEntityCreate from "@/components/referenceBook/LegalEntity/LegalEntityCreate";
+import LegalEntityForm from "@/components/referenceBook/LegalEntity/LelagEntityForm.vue";
 
 
 export default {
@@ -83,7 +86,7 @@ export default {
     })
   },
   components: {
-    LegalEntityCreate,
+    LegalEntityForm,
     PhysicalPersonCreate,
     ProjectCreate
   }

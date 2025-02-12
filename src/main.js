@@ -15,11 +15,12 @@ import VCalendar from 'v-calendar';
 import CKEditor from '@ckeditor/ckeditor5-vue2';
 import Fragment from 'vue-fragment'
 import { DocumentEditorContainerPlugin } from '@syncfusion/ej2-vue-documenteditor';
+import DatePicker from 'vue2-datepicker';
+import 'vue2-datepicker/index.css';
+import 'vue2-datepicker/locale/ru'
+
 Vue.use(DocumentEditorContainerPlugin);
 Vue.use( CKEditor );
-
-
-
 
 Vue.prototype.$http = Axios
 Vue.prototype.$http.defaults.baseURL = 'api/';
@@ -40,6 +41,7 @@ if (token) {
 
 Vue.use(ElementUI,{locale});
 Vue.use(VueMask)
+Vue.use(DatePicker)
 Vue.use(VueCookies)
 Vue.use(excel)
 Vue.use(VueExcelXlsx)

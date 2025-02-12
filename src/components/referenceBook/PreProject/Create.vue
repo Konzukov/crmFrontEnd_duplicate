@@ -18,6 +18,7 @@
                   outlined
                   :rules="required"
                   v-model="form.code"
+                  class="small"
               ></v-text-field>
             </v-col>
             <v-col cols="4">
@@ -132,11 +133,14 @@
               <v-text-field type="date"
                             outlined
                             v-model="form.definition.date"
+                            class="small-input"
                             label="Дата определения">
+
               </v-text-field>
               <v-text-field type="datetime-local"
                             outlined
                             v-model="form.heading_date"
+                            class="small-input"
                             label="Дата заседания">
               </v-text-field>
             </v-col>
@@ -154,6 +158,7 @@
                   :items="agreementTemplateData"
                   item-value="id"
                   item-text="attributes.name"
+                  class="small-input"
               >
                 <template v-slot:append-outer>
                   <v-btn @click="generateAgreement">Сформировать</v-btn>
@@ -178,6 +183,7 @@
                 </v-row>
                 <v-file-input
                     v-else
+                    class="small-input"
                     outlined
                     prepend-icon=""
                     label="Файл согласия в docx"
@@ -196,6 +202,7 @@
                 </v-row>
                 <v-file-input
                     v-else
+                    class="small-input"
                     outlined
                     prepend-icon=""
                     label="Файл согласия в pdf"
@@ -207,34 +214,32 @@
             <v-col>
               <v-text-field type="date"
                             outlined
+                            class="small-input"
                             v-model="form.agreement.date"
                             label="Дата согласия">
               </v-text-field>
             </v-col>
           </v-row>
         </v-form>
-
       </v-card-text>
       <v-card-actions class="justify-space-around">
         <v-btn color="success" @click="save" :disabled="!valid">Сохранить</v-btn>
       </v-card-actions>
-    </v-card>
-    <v-overlay :value="overlay">
+          <v-overlay :value="overlay">
       <v-progress-circular
           indeterminate
           size="64"
       ></v-progress-circular>
       {{ loadMessage }}
     </v-overlay>
+    </v-card>
     <v-dialog v-model="dialogSelectDefine"
-              scrollable
-              max-width="550px">
-      <v-card height="50vh">
-        <v-card-title>
-          Выберете файл определения
-        </v-card-title>
-        <v-divider></v-divider>
-        <v-card-text style="padding-top: 100px !important;">
+              max-width="60vw">
+      <v-card height="60vh">
+        <v-toolbar dense>
+          <v-toolbar-title>Выберете файл определения</v-toolbar-title>
+        </v-toolbar>
+        <v-card-text style="height: 80%; overflow-y: scroll">
           <v-radio-group
               row
               v-model="selectedDefine"
@@ -587,8 +592,7 @@ export default {
 >>> .v-input__append-outer {
   margin-top: 2px;
 }
-
->>> .v-input__slot {
+ .small-input >>>.v-input__slot {
   max-height: 40px;
   min-height: 40px !important;
 }
@@ -622,5 +626,9 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+>>>.v-input--radio-group__input {
+  flex-direction: column !important;
 }
 </style>

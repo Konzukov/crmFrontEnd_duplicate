@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 80">
+  <!-- Основа кошелька -->
+  <rect x="15" y="20" width="50" height="40" fill="none" stroke="black" stroke-width="0.5"/>
+  
+  <!-- Купюры, выглядывающие сверху -->
+  <rect x="20" y="15" width="35" height="8" fill="white" stroke="black" stroke-width="0.5"/>
+  <rect x="22" y="13" width="35" height="8" fill="white" stroke="black" stroke-width="0.5"/>
+  
+  <!-- Банковские карты -->
+  <rect x="20" y="25" width="40" height="25" fill="white" stroke="black" stroke-width="0.5"/>
+  <rect x="22" y="28" width="40" height="25" fill="white" stroke="black" stroke-width="0.5"/>
+  
+  <!-- Магнитная полоса на картах -->
+  <line x1="25" y1="35" x2="55" y2="35" stroke="black" stroke-width="0.3"/>
+  <line x1="27" y1="38" x2="57" y2="38" stroke="black" stroke-width="0.3"/>
+  
+  <!-- Отделение для монет -->
+  <path d="M15 45 Q40 45 65 45" fill="none" stroke="black" stroke-width="0.5"/>
+  
+  <!-- Монеты справа, накладывающиеся на край -->
+  <circle cx="70" cy="55" r="8" fill="none" stroke="black" stroke-width="0.5"/>
+  <circle cx="80" cy="58" r="6" fill="none" stroke="black" stroke-width="0.5"/>
+  <circle cx="75" cy="62" r="7" fill="none" stroke="black" stroke-width="0.5"/>
+</svg>

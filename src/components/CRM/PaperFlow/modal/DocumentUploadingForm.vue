@@ -25,6 +25,10 @@
                                   item-text="name"
                                   item-value="id" v-model="form.correspondence_type"></v-autocomplete>
                 </v-col>
+                <v-col cols="auto" v-if="form.correspondence_type['name'] === 'Платежный документ' || form.correspondence_type['name']==='Счет на оплату'">
+                  <v-text-field label="Сумма документа" dense outlined v-model="form.price"
+                                @keypress="isNumber($event)"></v-text-field>
+                </v-col>
               </v-row>
               <v-row justify="space-around">
                 <v-col md="5" sm="5" class="mr-2">
@@ -139,6 +143,15 @@ export default {
     },
   },
   methods: {
+    isNumber(evt) {
+      evt = (evt) ? evt : window.event;
+      let charCode = (evt.which) ? evt.which : evt.keyCode;
+      if ((charCode > 31 && (charCode < 48 || charCode > 57)) && charCode !== 46 && charCode !== 44) {
+        evt.preventDefault();
+      } else {
+        return true;
+      }
+    },
     addContractor() {
       this.$emit('addContractor')
     },
