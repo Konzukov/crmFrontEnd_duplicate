@@ -59,6 +59,7 @@ export default {
       this.$emit('chooseDocs', {project: this.project.id, existDoc: existDoc})
     },
     async save() {
+      console.log('call')
       let formData = new FormData()
       if (!this.judicialAct.id) {
         formData.append('url', this.judicialAct.url)

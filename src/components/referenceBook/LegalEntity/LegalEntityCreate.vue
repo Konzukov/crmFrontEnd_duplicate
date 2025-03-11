@@ -199,6 +199,7 @@ export default {
   },
   watch: {
     legalData(val) {
+      console.log(val)
       if (val) {
         this.updateData(val)
       }
@@ -229,7 +230,6 @@ export default {
         let data = func.createFormData(this.formData)
         if (this.formData.pk) {
           this.$store.dispatch('editLegalEntity', {data, legalEntityDetail: this.formData}).then(res=>{
-            console.log(res)
             this.$emit('closeModal', res.data.data.data)
             this.state = 'success'
             this.$emit('showSystemMessage', {response: res, state: this.state, send: false})
@@ -252,6 +252,7 @@ export default {
       this.$emit('addBankAccount', this.formData)
     },
     updateData(val) {
+      console.log(val)
       this.formData.bankAccount = []
       Object.keys(val).filter(key => {
         if (val[key] !== 'null') {

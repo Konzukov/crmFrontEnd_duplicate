@@ -53,31 +53,31 @@
             </v-col>
           </v-row>
           <v-row>
-            <v-col cols="4">
-              <v-text-field
-                  outlined
-                  dense
-                  label="Номер дела"
-                  v-model="form.case_number"
-                  :rules="required"
-              >
-                <template v-slot:append-outer>
-                  <v-tooltip
-                      bottom
-                  >
-                    <template v-slot:activator="{ on }">
-                      <v-btn icon @click="syncCaseData" :disabled="!form.case_number">
-                        <v-icon v-on="on" size="30" color="primary">
-                          mdi-sync
-                        </v-icon>
-                      </v-btn>
-                    </template>
-                    Получить данные из "Мой арбитр"
-                  </v-tooltip>
-                </template>
-              </v-text-field>
+            <v-col cols="5">
+              <v-row>
+                <v-text-field
+                    outlined
+                    dense
+                    label="Номер дела"
+                    v-model="form.case_number"
+                    :rules="required"
+                >
+                </v-text-field>
+              </v-row>
+              <v-row>
+                <v-col cols="5">
+                  <v-btn small @click="syncCaseData" :disabled="!form.case_number">
+                    Загрузить
+                  </v-btn>
+                </v-col>
+                <v-col cols="7">
+                  <v-btn small color="primary" @click="syncCaseDataNew" :disabled="!form.case_number">
+                    Загрузить (Новый)
+                  </v-btn>
+                </v-col>
+              </v-row>
             </v-col>
-            <v-col cols="8">
+            <v-col cols="7">
               <v-card flat height="30vh" style="overflow-y: scroll" width="100%">
                 <v-row class="ml-2 mr-2" justify="start" v-for="(record, i) in caseHistory" :key="i"
                        :class="[record.type ==='Ошибка'? 'error--text': '']">
@@ -225,13 +225,13 @@
       <v-card-actions class="justify-space-around">
         <v-btn color="success" @click="save" :disabled="!valid">Сохранить</v-btn>
       </v-card-actions>
-          <v-overlay :value="overlay">
-      <v-progress-circular
-          indeterminate
-          size="64"
-      ></v-progress-circular>
-      {{ loadMessage }}
-    </v-overlay>
+      <v-overlay :value="overlay">
+        <v-progress-circular
+            indeterminate
+            size="64"
+        ></v-progress-circular>
+        {{ loadMessage }}
+      </v-overlay>
     </v-card>
     <v-dialog v-model="dialogSelectDefine"
               max-width="60vw">
@@ -246,7 +246,7 @@
           >
             <v-radio v-for="(item, i) in availableFile" :key="i" :value="item">
               <template v-slot:label>
-                {{item.date}} | {{item.description}}
+                {{ item.date }} | {{ item.description }}
               </template>
             </v-radio>
           </v-radio-group>
@@ -331,6 +331,54 @@ export default {
         console.log(res)
       }).catch(err => {
         console.log(err)
+      })
+    },
+    syncCaseDataNew() {
+      this.caseHistory = new Array()
+      return new Promise((resolve, reject) => {
+        this.overlay = true
+        this.$http({
+          method: "GET",
+          // url: customConst.REFERENCE_BOOK_API + 'get-case-from-arbitr',
+          url: `http://80.254.125.196:9563/parse?case_number=${this.form.case_number}`,
+          // url: `http://127.0.0.1:8000/parse?case_number=${this.form.case_number}`,
+          // params: {'case-number': this.form.case_number}
+        }).then(res => {
+          console.log(res.data)
+          this.caseHistory = res.data.data
+          this.ics.url = res.data.url
+          this.ics.cookie = res.data.cookie
+          this.caseHistory.map(obj => {
+            if (obj.type === 'Определение') {
+              this.availableFile.push(obj)
+              if (obj.description.indexOf('О принятии заявления о признании должника банкротом') !== -1) {
+                this.form.definition.date = new Date(obj.date)
+                if (obj['additionalInfo'].indexOf('Дата и время судебного заседания') !== -1) {
+                  this.judicialSitting = obj['additionalInfo']
+                  const dateRegExp = new RegExp('\\d{2}([.\\-/ ])\\d{2}\\1\\d{4}, \\d{2}:\\d{2}')
+                  try {
+                    this.form.heading_date = moment(dateRegExp.exec(obj['additionalInfo'])[0], 'DD.MM.YYYY, HH:mm').format('YYYY-MM-DDTHH:mm')
+                  } catch (e) {
+                    console.log(e)
+                  }
+                }
+              }
+            }
+          })
+          this.loadMessage = 'Формирование данных'
+          setTimeout(() => {
+            this.overlay = false
+          }, 1500)
+          resolve()
+        }).catch(err => {
+          console.log(err)
+          this.overlay = false
+          this.caseHistory = new Array({
+            date: moment(new Date()).format('DD.MM.YYYY'),
+            type: 'Ошибка',
+            description: 'Ошибка при загрузке'
+          })
+        })
       })
     },
     syncCaseData() {
@@ -592,7 +640,8 @@ export default {
 >>> .v-input__append-outer {
   margin-top: 2px;
 }
- .small-input >>>.v-input__slot {
+
+.small-input >>> .v-input__slot {
   max-height: 40px;
   min-height: 40px !important;
 }
@@ -628,7 +677,7 @@ export default {
   align-items: center;
 }
 
->>>.v-input--radio-group__input {
+>>> .v-input--radio-group__input {
   flex-direction: column !important;
 }
 </style>

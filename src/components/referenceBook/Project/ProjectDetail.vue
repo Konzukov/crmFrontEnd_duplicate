@@ -96,7 +96,12 @@
               Обособленные споры
             </v-card>
           </v-item>
-
+          <v-item v-slot="{ active, toggle }">
+            <v-card :to="{name: 'curt'}" class="text-center nav-btn"
+                    @click="toggle">
+              Карточка суда
+            </v-card>
+          </v-item>
         </div>
         <v-btn icon absolute class="collapse-calendar" @click="collapse = !collapse">
           <v-icon>mdi-arrow-collapse-vertical</v-icon>

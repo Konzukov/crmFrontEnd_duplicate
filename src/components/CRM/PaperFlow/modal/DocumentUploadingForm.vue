@@ -4,6 +4,38 @@
       <v-expansion-panel-header>
         <v-row justify="start" align="center">
           <v-col cols="auto">{{ uploadFile.name }}</v-col>
+          <v-col cols="auto">
+            <v-btn icon v-if="!uploadProcess.uploading">
+              <v-icon v-if="uploadProcess.uploaded" color="success">
+                mdi-check
+              </v-icon>
+              <v-tooltip bottom v-if="uploadProcess.errors.hasError">
+                <template v-slot:activator="{ on, attrs }">
+                  <v-icon color="error"
+                          v-bind="attrs"
+                          v-on="on"
+                  >
+                    mdi-alert-circle-outline
+                  </v-icon>
+                </template>
+                <span>{{ uploadProcess.errors.message }}</span>
+              </v-tooltip>
+            </v-btn>
+            <v-progress-circular
+                v-if="uploadProcess.uploading"
+                :rotate="-90"
+                :size="40"
+                :width="7"
+                :value="uploadProcess.progress"
+                color="primary"
+            >
+              {{ uploadProcess.progress }}
+            </v-progress-circular>
+          </v-col>
+          <v-spacer></v-spacer>
+          <v-col cols="auto" class="error--text error-message">
+            {{ errorMessage }}
+          </v-col>
         </v-row>
       </v-expansion-panel-header>
       <v-expansion-panel-content>
@@ -25,7 +57,8 @@
                                   item-text="name"
                                   item-value="id" v-model="form.correspondence_type"></v-autocomplete>
                 </v-col>
-                <v-col cols="auto" v-if="form.correspondence_type['name'] === 'Платежный документ' || form.correspondence_type['name']==='Счет на оплату'">
+                <v-col cols="auto"
+                       v-if="form.correspondence_type['name'] === 'Платежный документ' || form.correspondence_type['name']==='Счет на оплату'">
                   <v-text-field label="Сумма документа" dense outlined v-model="form.price"
                                 @keypress="isNumber($event)"></v-text-field>
                 </v-col>
@@ -129,6 +162,16 @@ export default {
       to: '',
       correspondence_type: ''
     },
+    uploadProcess: {
+      uploaded: false,
+      uploading: false,
+      progress: '0',
+      errors: {
+        message: '',
+        hasError: false
+      }
+    },
+    errorMessage: '',
   }),
   computed: {
     ...mapGetters({

@@ -78,13 +78,16 @@
                                 v-model="form.additional_info['communication'][i]['type']"></v-autocomplete>
               </v-col>
               <v-col md="6" lg="6" sm="12" xs="12">
-                <v-text-field dense outlined label="" v-model="form.additional_info['communication'][i]['value']"></v-text-field>
+                <v-text-field dense outlined label=""
+                              v-model="form.additional_info['communication'][i]['value']"></v-text-field>
               </v-col>
               <v-col md="1" lg="1" sm="1" xs="1">
                 <v-btn icon v-if="i === form.additional_info['communication'].length - 1"
                        color="primary"
                        @click='form.additional_info.communication.push({type: "ElectronicMail", value: null})'
-                ><v-icon>mdi-plus</v-icon></v-btn>
+                >
+                  <v-icon>mdi-plus</v-icon>
+                </v-btn>
               </v-col>
             </v-row>
           </template>
@@ -111,7 +114,6 @@
               ></v-text-field>
             </v-col>
           </v-row>
-          {{ form.additional_info }}
         </v-card-text>
         <v-card-actions>
           <v-row justify="space-around">
@@ -126,8 +128,6 @@
       </v-card>
     </v-container>
   </v-form>
-
-
 </template>
 
 <script>
@@ -137,6 +137,7 @@ import {isObject} from 'lodash'
 
 export default {
   name: "LegalEntityEditForm",
+  props: ['legalData'],
   data: () => ({
     errorMessage: {
       inn: ''
@@ -253,6 +254,13 @@ export default {
       }).catch(err => {
         console.log(err)
       })
+    }
+  },
+  watch: {
+    legalData(val) {
+      for (const [key, value] of Object.entries(val)) {
+        this.form[key] = value
+      }
     }
   }
 }

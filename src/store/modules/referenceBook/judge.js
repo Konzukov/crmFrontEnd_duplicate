@@ -38,7 +38,7 @@ export default {
                     data: formData
                 }).then(res => {
                     commit('addNewJudge', res.data.data.data)
-                    resolve(res)
+                    resolve(res.data.data.data)
                 }).catch(err => {
                     reject(err)
                 })

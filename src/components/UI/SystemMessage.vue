@@ -98,28 +98,46 @@ export default {
   methods: {
     async createMessage({response, state, send}) {
       let data;
+      let final = false
       if (state === 'error') {
         if (typeof response.response.data === "object") {
-          data = await response.response.data.text()
+          let resData = await response.response.data
+          if (typeof resData === 'object') {
+            if (resData.hasOwnProperty('errors')) {
+              final = true
+              data = await resData.errors
+            } else {
+              data = await resData.text()
+            }
+          }
         } else {
           data = response.response.data
         }
-        let parser = new DOMParser()
-        let htmlDoc = parser.parseFromString(data, 'text/html')
-        let container = htmlDoc.getElementById('summary')
-        let text = container.getElementsByTagName("pre")[0].innerHTML
-        let subject = container.getElementsByTagName('h1')[0].innerHTML
-        let redirect;
-        if (text === "Основной расчетный счет не выбран") {
-          redirect = 'project-detail'
-        } else if (text === 'Документ уже был оправлен ранее') {
-          redirect = 'force'
+        if (!final) {
+          let parser = new DOMParser()
+          let htmlDoc = parser.parseFromString(data, 'text/html')
+          let container = htmlDoc.getElementById('summary')
+          let text = container.getElementsByTagName("pre")[0].innerHTML
+          let subject = container.getElementsByTagName('h1')[0].innerHTML
+          let redirect;
+          if (text === "Основной расчетный счет не выбран") {
+            redirect = 'project-detail'
+          } else if (text === 'Документ уже был оправлен ранее') {
+            redirect = 'force'
+          }
+          this.systemMessage = {
+            subject: subject,
+            text: text,
+            redirect: redirect
+          }
+        } else {
+          this.systemMessage = {
+            subject: 'Ошибка при сохранении данных',
+            text: data,
+            redirect: ''
+          }
         }
-        this.systemMessage = {
-          subject: subject,
-          text: text,
-          redirect: redirect
-        }
+
       } else {
         data = response.data.data.data
         if (send) {

@@ -52,7 +52,9 @@
                 <template v-slot:item.actions="{ item }">
                   <v-btn icon small color="primary"
                          @click="editBankAccount(item)"
-                  ><v-icon>mdi-pencil</v-icon></v-btn>
+                  >
+                    <v-icon>mdi-pencil</v-icon>
+                  </v-btn>
                 </template>
               </v-data-table>
             </v-card-text>
@@ -82,8 +84,10 @@
 <script>
 
 import BankAccountCreateModal from "@/components/referenceBook/Bank/BankAccountCreateModal.vue";
+import {eventBus} from "@/bus";
 
-export default{
+
+export default {
   components: {BankAccountCreateModal},
   props: ['uploadFile'],
   name: "yamlFileProcessing",
@@ -108,45 +112,56 @@ export default{
     errorMessage: '',
   }),
   methods: {
-    editBankAccount(item){
-      if (item.hasOwnProperty('created')){
-        console.log(item)
+    editBankAccount(item) {
+      if (item.hasOwnProperty('created')) {
         this.$emit('addBankAccount', item)
       } else {
-
         this.$emit('editBankAccount', item)
       }
     },
     removeFile() {
-      // this.$emit('removeFile', this.uploadFile)
       this.$destroy();
-      // remove the element from the DOM
       this.$el.parentNode.removeChild(this.$el);
       this.uploadProcess.uploaded = true
     },
     processYaml() {
+      this.uploadProcess.uploading = true
       let formData = new FormData()
       formData.set('file', this.uploadFile)
       formData.set('processingType', 'yaml')
-      this.$store.dispatch('yamlProcessing', {formData, 'file': this.uploadFile}).then(res=>{
+      this.$store.dispatch('yamlProcessing', {formData, 'file': this.uploadFile}).then(res => {
+        this.uploadProcess.uploading = false
+        this.uploadProcess.uploaded = true
         this.processedBankAccount = [...res]
-      }).catch(err=>{
-        console.log(err)
+        for (let item of this.processedBankAccount){
+          console.log(item)
+        }
+      }).catch(err => {
+        console.log(err.response)
+        this.uploadProcess.errors.hasError = true
+        this.uploadProcess.errors.message = err.response.data.errors.error
+        this.uploadProcess.uploading = false
+        this.uploadProcess.uploaded = false
       })
     },
-    rowClass(item){
-      if(item.hasOwnProperty('created')){
+    rowClass(item) {
+      if (item.hasOwnProperty('created')) {
         return 'created-false'
       }
       console.log(item)
     }
-  }
+  },
+  mounted() {
+    eventBus.$on('updateProgress', ({progress, file}) => {
+      this.uploadProcess.progress = progress
+    })
+  },
 }
 </script>
 
 
 <style scoped>
->>>.created-false {
+>>> .created-false {
   background-color: #c1020226;
 }
 </style>

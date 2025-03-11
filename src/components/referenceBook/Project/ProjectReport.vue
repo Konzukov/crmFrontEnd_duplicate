@@ -478,7 +478,7 @@ export default {
       if (item.type === 'document') {
         return moment(new Date(item.receiving_date)).format('DD.MM.YYYY')
       } else if (item.type === 'post') {
-        return moment(new Date(item.receiving_date)).format('DD.MM.YYYY')
+        return moment(new Date(item.departure_date)).format('DD.MM.YYYY')
       } else if (item.type === 'event') {
         return moment(new Date(item.start)).format('DD.MM.YYYY')
       } else if (item.type === 'task') {

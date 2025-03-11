@@ -19,6 +19,9 @@ export async function compareFields(fields, data) {
         personDomicile = person['registration'].filter(obj => {
             if (obj.length === 1) return obj['address']
             else if (obj['active']) return obj['address']
+            else {
+                return person['registration'].at(-1)['address']
+            }
         })
         if (personDomicile.length === 0) {
             personDomicile = null

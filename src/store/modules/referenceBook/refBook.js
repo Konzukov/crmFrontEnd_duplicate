@@ -27,6 +27,7 @@ export default {
         employmentService: [],
         marriageService: [],
         curt: [],
+        judgeCurt: [],
         gibdd: [],
         osfr: [],
         ufsvn: [],
@@ -334,12 +335,15 @@ export default {
 
     },
     actions: {
-        allSystemUser({commit}) {
-            Axios({
-                method: "GET",
-                url: customConst.REFERENCE_BOOK_API + 'all-system-user/'
-            }).then(response => {
-                commit('syncAllSystemUser', response.data.data.data)
+        async allSystemUser({commit}) {
+            return await new Promise(async (resolve, reject) => {
+                Axios({
+                    method: "GET",
+                    url: customConst.REFERENCE_BOOK_API + 'all-system-user/'
+                }).then(async response => {
+                    await commit('syncAllSystemUser', response.data.data.data)
+                    resolve()
+                })
             })
         },
         getRelatedUser({commit}, participant) {

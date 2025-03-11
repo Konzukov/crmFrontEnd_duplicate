@@ -162,6 +162,11 @@ const routes = [
                                 path: 'dispute',
                                 name: 'separate-dispute',
                                 component: () => import('../components/referenceBook/Project/SeparateDispute')
+                            },
+                            {
+                                path: 'curt-card',
+                                name: 'curt',
+                                component: () => import('../components/referenceBook/Project/CurtCard.vue')
                             }
                         ]
                     },

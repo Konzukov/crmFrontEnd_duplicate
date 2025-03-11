@@ -57,9 +57,10 @@
             </v-row>
             <v-row class="ml-5 mr-5 mb-4">
               <v-expansion-panels flat focusable v-if="template.id === 3">
-                <yaml-file-processing  v-for="(item, i) in files"
-                                       :uploadFile.sync="item"
-                                       :key="i"
+                <yaml-file-processing v-for="(item, i) in files"
+                                      :ref="`yamlForm`"
+                                      :uploadFile.sync="item"
+                                      :key="i"
                 ></yaml-file-processing>
               </v-expansion-panels>
               <v-expansion-panels flat focusable v-else>
@@ -84,14 +85,17 @@
                 <v-btn @click="close" color="error">Закрыть</v-btn>
               </v-col>
               <v-col cols="auto">
-                <v-btn v-if="template.id ===3 " color="success" :disabled="files.length === 0" @click="processYaml">Обработать</v-btn>
-                <v-btn  v-else color="success" :disabled="files.length === 0" @click="saveAll">Сохранить все</v-btn>
+                <v-btn v-if="template.id ===3 " color="success" :disabled="files.length === 0" @click="processYaml">
+                  Обработать
+                </v-btn>
+                <v-btn v-else color="success" :disabled="files.length === 0" @click="saveAll">Сохранить все</v-btn>
               </v-col>
             </v-row>
           </v-card-actions>
         </v-card>
       </v-container>
     </v-dialog>
+    <LegalEntityCreateModal></LegalEntityCreateModal>
   </v-row>
 </template>
 
@@ -100,6 +104,7 @@ import createDocumentForm from "./createDocumentForm";
 import {eventBus} from "../../../../bus";
 import {DocumentNameTemplate} from "@/const/dataTypes";
 import YamlFileProcessing from "@/components/CRM/PaperFlow/modal/yamlFileProcessing.vue";
+import LegalEntityCreateModal from "@/components/referenceBook/LegalEntity/LegalEntityCreateModal.vue";
 
 export default {
   name: "createDocument",
@@ -131,8 +136,11 @@ export default {
     }
   },
   methods: {
-    processYaml(){
-
+    async processYaml() {
+      let yamlFormComponent = this.$refs['yamlForm']
+      await Promise.all(yamlFormComponent.map(async (_component) => {
+        await _component.processYaml(); // Ожидаем завершения processYaml
+      }));
     },
     open() {
       this.dialog = true
@@ -228,8 +236,6 @@ export default {
           this.close()
         }
       })
-
-
       // this.close()
       // eventBus.$emit('saveAllDoc')
     },
@@ -298,6 +304,7 @@ export default {
   components: {
     YamlFileProcessing,
     createDocumentForm,
+    LegalEntityCreateModal
   },
 }
 </script>

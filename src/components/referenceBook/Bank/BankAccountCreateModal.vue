@@ -1,6 +1,6 @@
 <template>
   <v-container fluid>
-    <v-dialog v-model="dialog" width="60vw" persistent>
+    <v-dialog v-model="dialog" width="70vw" persistent>
       <v-card>
         <v-card-text>
           <v-form lazy-validation class="pt-4">
@@ -24,8 +24,8 @@
               <v-col cols="4">
                 <v-text-field dense outlined label="Расчетный счет" v-model="form.account" counter="20" :rules="rules"
                               append-outer-icon="mdi-file-document"
-
-
+                              persistent-hint
+                              :hint="bank? bank.name: ''"
                 >
                   <template v-slot:append-outer>
                     <v-menu
@@ -85,18 +85,16 @@
           </v-row>
         </v-card-actions>
       </v-card>
-
     </v-dialog>
-    <BankCreate></BankCreate>
     <AccountStatementModal></AccountStatementModal>
   </v-container>
 </template>
 
 <script>
-import BankCreate from "./BankCreate";
 import {mapGetters} from 'vuex'
 import AccountStatementModal from "@/components/referenceBook/Bank/AccountStatementModal.vue";
 import moment from "moment";
+import {eventBus} from "@/bus";
 
 export default {
   props: ['bankData', 'project'],
@@ -110,6 +108,7 @@ export default {
 
     ],
     rules: [v => v.length === 20 || 'Номер счета должен состоять из 20 цифр'],
+    bank: null,
     form: {
       id: '',
       legal: '',
@@ -146,7 +145,8 @@ export default {
       this.$emit('addAccountStatement', {account: this.form.id, project: this.project})
     },
     addBank() {
-      this.$emit('addBank')
+      eventBus.$emit('createLegalEntity', this.bank)
+      // this.$emit('createLegalEntity', this.bank)
     },
     close() {
       Object.assign(this.$data, this.$options.data())
@@ -166,6 +166,10 @@ export default {
       this.dialog = true
     })
     this.$parent.$on('addBankAccount', (instance) => {
+      if (instance.hasOwnProperty('bank')){
+        this.bank = instance.bank
+        this.bank['type'] = 'bank'
+      }
       Object.keys(this.form).forEach(key=>{
         if (instance.hasOwnProperty(key)){
           if (key==='physical'){
@@ -186,8 +190,7 @@ export default {
   },
   components: {
     AccountStatementModal,
-    BankCreate
-  }
+    }
 }
 </script>
 

@@ -51,9 +51,10 @@
           </v-row>
           <v-row justify="start">
             <v-col cols="4" class="mr-3">
-              <v-autocomplete dense outlined label="Вид процедуры" :items="ProcedureType(contractor.type)" item-value="value"
-                        item-text="text"
-                        v-model="project.procedure">
+              <v-autocomplete dense outlined label="Вид процедуры" :items="ProcedureType(contractor.type)"
+                              item-value="value"
+                              item-text="text"
+                              v-model="project.procedure">
 
               </v-autocomplete>
             </v-col>
@@ -148,6 +149,7 @@
                 </template>
                 <v-row justify="center" class="ma-2">
                   <v-btn color="success" class="mr-2" @click="addJudicialAct">Добавить из базы</v-btn>
+                  <v-btn color="success" class="mr-2" @click="runSelenium">На сайте суда (Новый)</v-btn>
                   <v-btn color="primary" class="ml-2" @click="checkDocumentArbitr">На сайте суда</v-btn>
                 </v-row>
               </v-expansion-panel-content>
@@ -179,6 +181,7 @@
         </v-row>
       </v-card-actions>
     </v-card>
+    <JudgeCreateModal @judgeCreate="setJudge"></JudgeCreateModal>
     <ContractorCreateModal @contractorAdded="setContractor"></ContractorCreateModal>
     <DocInArbitr @saveDoc="saveDoc" ref="docInArbitr" @clearDocumentArbitr="clearDocumentArbitr"
                  :available-doc-list.sync="availableDoc"></DocInArbitr>
@@ -195,6 +198,8 @@ import DocInArbitr from "@/components/UI/DocInArbitr";
 import {VueEditor} from "vue2-editor";
 import {ProcedureType} from "@/const/dataTypes";
 import SystemMessage from "@/components/UI/SystemMessage.vue";
+import JudgeCreateModal from "@/components/referenceBook/Project/Judge/JudgeCreateModal.vue";
+import moment from "moment";
 
 export default {
   props: {
@@ -204,7 +209,10 @@ export default {
       default: true
     },
     callSave: Boolean,
-    collapsed: Boolean
+    collapsed: Boolean,
+    yaml: {
+      type: Object
+    }
   },
 
   name: "ProjectCreate",
@@ -249,6 +257,7 @@ export default {
       court: '',
       judge: '',
       comment: '',
+      court_document: []
     },
     cookie: null
   }),
@@ -273,6 +282,31 @@ export default {
     }
   },
   methods: {
+    runSelenium() {
+      this.$refs.docInArbitr.openModal()
+      this.$http({
+        method: "GET",
+        url: `http://80.254.125.196:9563/parse?case_number=${this.project.case_number}`,
+        // url: `http://127.0.0.1:8000/parse?case_number=${this.project.case_number}`,
+      }).then(res => {
+        this.availableDoc = res.data.data.filter(obj => {
+          if (obj.file) {
+            return obj
+          }
+        })
+        this.cookie = res.data.cookie
+      })
+    },
+    async setJudge(val) {
+      await this.$store.dispatch('getJudgeList')
+      let filteredJudge = this.judgesList.filter(obj => {
+        return obj.id === val.id
+      })[0]
+      if (filteredJudge) {
+        this.project.judge = filteredJudge.id
+      }
+      console.log(val)
+    },
     ProcedureType(val) {
       if (val === 'PhysicalPerson') return ProcedureType.Physical
       else if (val === 'LegalEntity') return ProcedureType.Legal
@@ -294,38 +328,39 @@ export default {
       if (this.$refs.projectCreate.validate()) {
         let formData = new FormData()
         Object.keys(this.project).forEach(key => {
-          if (key === 'physical_contractor') {
-            console.log(this.project[key])
-          } else if (key === 'legal_contractor') {
-            console.log(this.project[key])
+          if (key === 'court_document') {
+            formData.append(key, JSON.stringify(this.project[key]))
+          } else {
+            formData.append(key, this.project[key])
           }
-          formData.append(key, this.project[key])
+
         })
         if (!this.project.pk) {
           this.$store.dispatch('createProject', formData).then(response => {
             this.project.pk = response['pk']
             this.state = 'success'
-            this.$emit('showSystemMessage', {response: response, state: this.state, send: false  })
+            this.$emit('showSystemMessage', {response: response, state: this.state, send: false})
             this.$emit('close', response)
           }).catch(err => {
             this.errors = err.response.data.errors
+            this.state = 'error'
+            this.$emit('showSystemMessage', {response: err, state: this.state})
           })
         } else {
           this.$store.dispatch('editProject', {formData, pk: this.project.pk}).then(res => {
             this.state = 'success'
-            this.$emit('showSystemMessage', {response: res, state:  this.state, send: false  })
+            this.$emit('showSystemMessage', {response: res, state: this.state, send: false})
           }).catch(err => {
+            console.log(err)
             this.errors = err.response.data.errors
+            this.state = 'error'
+            this.$emit('showSystemMessage', {response: err, state: this.state})
           })
         }
         if (this.judicialActCount.length > 0) {
-          console.log('judicialActCount')
-          console.log(this.judicialActCount)
-
           const refs = this.judicialActCount.map(obj => {
             return obj.ref
           })
-          console.log(refs)
           for (let ref of refs) {
             let judicialActComponent = this.$refs[ref]
             if (judicialActComponent) {
@@ -355,12 +390,20 @@ export default {
             } else {
               this.project[key] = ''
             }
-
           } else {
-            this.project[key] = res[key]
+            if (key === 'court_document') {
+              try {
+                this.project.court_document = JSON.parse(res[key])
+              } catch (err) {
+                console.log(err)
+              }
+            } else {
+              this.project[key] = res[key]
+            }
+
           }
         })
-        if (this.project.legal_agent){
+        if (this.project.legal_agent) {
           this.agent = this.$store.getters.legalEntityData.filter(obj => {
             return obj.pk === this.project.legal_agent
           })[0]
@@ -387,7 +430,7 @@ export default {
         this.project.court = curt["pk"]
       }
     },
-    setAgent(item){
+    setAgent(item) {
       switch (item.type) {
         case "LegalEntity":
           this.project.legal_agent = item['pk']
@@ -461,6 +504,7 @@ export default {
       console.log(item)
     },
     saveDoc(doc) {
+      console.log(doc)
       let formData = new FormData()
       formData.append('url', doc.url)
       formData.append('receiving_date', doc.date)
@@ -479,6 +523,27 @@ export default {
     }
   },
   watch: {
+    yaml(val) {
+      console.log(val)
+      if (val) {
+        const project = val['court_case']
+        let judge = this.judgesList.filter(obj => {
+          return obj.full_name.replace(/\s/g, '') === project['judge_name'].replace(/\s/g, '')
+        })[0]
+        if (judge) {
+          this.project.judge = judge.id
+        } else {
+          this.$emit('createJudge', {court: project['court_name'], judge: project['judge_name']})
+        }
+        if (project.hasOwnProperty('next_hearing_date')) {
+          if (project['next_hearing_date']) {
+            this.project.report_date = moment(project['next_hearing_date'], 'DD.MM.YYYY').format('YYYY-MM-DDThh:mm')
+          }
+
+        }
+      }
+
+    },
     callSave(val) {
       if (val) {
         this.save()
@@ -500,7 +565,7 @@ export default {
   destroyed() {
 
   },
-  components: {SystemMessage, ContractorCreateModal, JudicialAct, DocInArbitr, VueEditor}
+  components: {SystemMessage, ContractorCreateModal, JudicialAct, DocInArbitr, VueEditor, JudgeCreateModal}
 }
 </script>
 

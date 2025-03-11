@@ -3,20 +3,27 @@
     <v-row justify="start">
       <v-col cols="6" :style="collapsed? 'height: 73vh': 'height: 45vh'">
         <v-card-text class="physical-person" v-if="contractor">
-          <PhysicalPersonCreate v-if="contractor.type==='PhysicalPerson'" :rectified-physical-person="contractor"
+          <PhysicalPersonCreate :yaml="yaml" v-if="contractor.type==='PhysicalPerson'" :rectified-physical-person="contractor"
                                 :callSave="callSave"
                                 :show-action-button="false"></PhysicalPersonCreate>
           <LegalEntityForm v-else :legalEntityData.sync="contractor"
                            :callSave="callSave"
                            :show-action-button="false"></LegalEntityForm>
-          <!--          <LegalEntityForm v-else :legalEntityData.sync="contractor"-->
-          <!--                             :callSave="callSave"-->
-          <!--                             :show-action-button="false"></LegalEntityForm>-->
         </v-card-text>
       </v-col>
+      <input class="d-none" ref="uploader" type="file" @change="handleFileUpload"/>
+      <v-tooltip bottom>
+        <template v-slot:activator="{ on, attrs }">
+          <v-btn large icon fixed class="yaml-data" color="primary" v-bind="attrs"
+                 v-on="on" @click="selectFile">
+            <v-icon>mdi-file-arrow-left-right</v-icon>
+          </v-btn>
+        </template>
+        <span style="font-size: 12px">Загрузить данные из yaml</span>
+      </v-tooltip>
       <v-col cols="6" :style="collapsed? 'height: 73vh': 'height: 45vh'">
         <v-card-text>
-          <ProjectCreate :rectified-project="projectDetail" :callSave="callSave" @changeContractor="changeContractor"
+          <ProjectCreate :rectified-project="projectDetail" :yaml="yaml" :callSave="callSave" @changeContractor="changeContractor"
                          :show-action-button="false"></ProjectCreate>
         </v-card-text>
       </v-col>
@@ -38,6 +45,7 @@
 import PhysicalPersonCreate from "@/components/referenceBook/PhysicalPerson/PhysicalPersonCreate";
 import ProjectCreate from "@/components/referenceBook/Project/ProjectCreate";
 import LegalEntityForm from "@/components/referenceBook/LegalEntity/LelagEntityForm.vue";
+import jsYaml from "js-yaml";
 
 
 export default {
@@ -47,6 +55,7 @@ export default {
     projectDetail: null,
     contractor: null,
     callSave: false,
+    yaml: null,
   }),
   methods: {
     save() {
@@ -68,11 +77,43 @@ export default {
         }
       }
 
+    },
+    selectFile() {
+      this.$refs.uploader.click()
+    },
+    handleFileUpload(e) {
+      const file = e.target.files[0];
+      if (file) {
+        this.readYamlFile(file);
+      }
+      e.target.value = ''
+    },
+    readYamlFile(file) {
+      const reader = new FileReader();
+
+      // Добавляем проверку начала чтения
+      reader.onloadstart = () => {
+        console.log('Начало чтения файла');
+      }
+
+      reader.onload = (event) => {
+        console.log('Файл успешно прочитан');
+        const yamlContent = event.target.result;
+        this.yaml = jsYaml.load(yamlContent)
+        console.log(this.yaml)
+      }
+
+      // Добавляем обработку ошибок
+      reader.onerror = (error) => {
+        console.error('Ошибка при чтении файла:', error);
+      }
+      reader.readAsText(file);
     }
   },
   async created() {
     this.projectPK = this.$route.params['pk']
     await this.$store.dispatch('getProjectDetail', this.$route.params['pk']).then(async (data) => {
+      console.log(data)
       this.projectDetail = data
       if (data.legal_contractor) {
         this.contractor = this.$store.getters.legalEntityData.filter(obj => {
@@ -96,6 +137,11 @@ export default {
 <style scoped>
 * {
   font: 62.5%/1.4 arial, sans-serif;
+}
+
+.yaml-data {
+  right: 48%;
+  top: 26%;
 }
 
 .questionnaire {

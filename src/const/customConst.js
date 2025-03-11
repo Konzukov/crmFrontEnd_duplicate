@@ -1,6 +1,6 @@
 // let  BASE_URL = 'http://192.168.2.13:8181'
 // let  BASE_URL = 'http://127.0.0.1:8181'
-// let  BASE_URL = 'http://tcrm.planer-studio.ru'
+// let  BASE_URL = 'http://tcrm.planer-1studio.ru'
 let  BASE_URL = 'http://crm.planer-studio.ru:9090'
 // 193.93.122.9
 const REFERENCE_BOOK_API = `${BASE_URL}/api/reference_book/`

@@ -1,10 +1,12 @@
 <template>
   <v-card flat width="100%" height="100%">
-    <v-card-title class="justify-center pb-2">
-      <template v-if="rectifiedPhysicalPerson">
-        Редактирование {{ rectifiedPhysicalPerson.fullName }}
-      </template>
-      <template v-else>Новое физ. лицо</template>
+    <v-card-title class="justify-center pb-4">
+      <v-row justify="center" class="pb-2">
+        <template v-if="rectifiedPhysicalPerson">
+          Редактирование {{ rectifiedPhysicalPerson.fullName }}
+        </template>
+        <template v-else>Новое физ. лицо</template>
+      </v-row>
     </v-card-title>
     <v-card-text class="create-form pl-4 pr-4 pb-4 mb-3">
       <v-form lazy-validation v-model="valid" class="mt-4" ref="physicalPersonCreateForm">
@@ -13,38 +15,35 @@
             <v-avatar class="photo" size="128" tile @click="loadImage"></v-avatar>
           </v-col>
           <v-col cols="8">
-            <v-row>
-              <v-col cols="12" class="pt-0 pb-0">
+            <v-row justify="start">
+              <v-col md="12" lg="12" sm="12" xs="12" class="pt-0 pb-0">
                 <v-text-field class="required" :rules="rules.required" outlined dense label="Фамилия"
                               v-model.trim="form.last_name"></v-text-field>
               </v-col>
-              <v-col cols="5" class="pt-0 pb-0">
+              <v-col md="6" lg="6" sm="12" xs="12" class="pt-0 pb-0">
                 <v-text-field class="required" :rules="rules.required" outlined dense label="Имя"
                               v-model.trim="form.first_name"></v-text-field>
               </v-col>
-              <v-col cols="5" class="pt-0 pb-0">
+              <v-col md="6" lg="6" sm="12" xs="12" class="pt-0 pb-0">
                 <v-text-field outlined dense label="Отчество"
                               v-model.trim="form.middle_name"></v-text-field>
               </v-col>
             </v-row>
           </v-col>
           <v-row justify="start" class="mt-2">
-            <v-col cols="auto">
-              <DatePicker v-model="form.birthday" value-type="format" format="DD.MM.YYYY" placeholder="Дата рождения" :clearable="false"></DatePicker>
-<!--              <v-text-field outlined dense label="Дата рождения" v-model="form.birthday"-->
-<!--              ></v-text-field>-->
+            <v-col md="4" lg="4" sm="12" xs="12">
+              <DatePicker v-model="form.birthday" value-type="format" format="DD.MM.YYYY" placeholder="Дата рождения"
+                          :clearable="false"></DatePicker>
+              <!--              <v-text-field outlined dense label="Дата рождения" v-model="form.birthday"-->
+              <!--              ></v-text-field>-->
             </v-col>
-            <v-col cols="auto">
+            <v-col md="3" lg="3" sm="12" xs="12">
               <v-autocomplete outlined dense label="Гражданство" :items="countryList" item-value="id" item-text="name"
                               v-model="form.citizenship"></v-autocomplete>
             </v-col>
-            <v-col cols="4">
+            <v-col md="5" lg="5" sm="12" xs="12">
               <v-textarea outlined dense label="Место рождения" rows="1"
                           v-model.trim="form.birthplace"></v-textarea>
-            </v-col>
-            <v-col cols="3">
-              <v-text-field outlined dense label="Электронная почта"
-                            v-model.trim="form.communication_email"></v-text-field>
             </v-col>
           </v-row>
 
@@ -156,10 +155,7 @@
 import PhysicalPersonPassport from "@/components/referenceBook/PhysicalPerson/PhysicalPersonPassport";
 import PhysicalPersonRegistration from "@/components/referenceBook/PhysicalPerson/PhysicalPersonRegistration";
 import {mapGetters} from 'vuex'
-import moment from "moment/moment";
-
-// import moment from "moment";
-// import Vue from 'vue'
+import moment from "moment";
 
 export default {
   props: {
@@ -168,7 +164,10 @@ export default {
       type: Boolean,
       default: true
     },
-    callSave: Boolean
+    callSave: Boolean,
+    yaml: {
+      type: Object
+    }
   },
   name: "PhysicalPersonCreate",
   data: () => ({
@@ -238,9 +237,9 @@ export default {
       this.registrationFormsData = []
       this.$store.dispatch('getPhysicalPersonDetail', this.rectifiedPhysicalPerson['pk']).then(data => {
         Object.keys(this.form).forEach(key => {
-          if (key === 'birthday'){
+          if (key === 'birthday') {
             this.form[key] = moment(data[key]).format('DD.MM.YYYY')
-          }else{
+          } else {
             this.form[key] = data[key]
           }
         })
@@ -295,27 +294,31 @@ export default {
       }
 
     },
+    prepareFormData() {
+      let formData = new FormData()
+      Object.entries(this.form).forEach(([key, value]) => {
+        console.log(key, value)
+        if (value) {
+          if (key === 'birthday') {
+            if (this.form[key] !== "Invalid date") {
+              formData.append(key, moment(this.form[key], 'DD.MM.YYYY').format('YYYY-MM-DD'))
+            }
+          } else {
+            formData.append(key, this.form[key])
+          }
+        } else {
+          if (key !== 'pk') {
+            formData.append(key, '')
+          }
+        }
+      })
+      return formData
+    },
     async save() {
       this.passportFormsData = []
       this.savingData = true
       if (this.$refs.physicalPersonCreateForm.validate()) {
-        let formData = new FormData()
-        Object.keys(this.form).forEach(key => {
-          if (this.form[key]) {
-            if (key === 'birthday'){
-              console.log(this.form[key])
-              if (this.form[key] !== "Invalid date"){
-                formData.append(key, moment(this.form[key], 'DD.MM.YYYY').format('YYYY-MM-DD'))
-              }
-            }else {
-              formData.append(key, this.form[key])
-            }
-          } else {
-            if (key !== 'pk') {
-              formData.append(key, '')
-            }
-          }
-        })
+        let formData = this.prepareFormData()
         //
         if (this.passportCount.length > 0) {
           console.log(this.passportCount.length)
@@ -389,67 +392,60 @@ export default {
             }, 1500)
           })
         } else {
+          for (let passportFormData of this.passportFormsData) {
+            if (passportFormData.get('pk')) {
+              await this.$store.dispatch('editPhysicalPersonPassport', {
+                formData: passportFormData,
+                pk: passportFormData.get('pk')
+              }).then(() => {
+                this.savingDone = true
+                setTimeout(() => {
+                  this.savingData = false
+                }, 1500)
+              })
+            } else {
+              passportFormData.append('physical_person', this.form.pk)
+              await this.$store.dispatch('createPhysicalPersonPassport', passportFormData).then(() => {
+                this.savingDone = true
+                setTimeout(() => {
+                  this.savingData = false
+                }, 1500)
+              }).catch(err => {
+                setTimeout(() => {
+                  this.savingData = false
+                }, 5500)
+              })
+            }
+          }
+          for (let registrationFormData of this.registrationFormsData) {
+            console.log(registrationFormData.get('pk'))
+            if (registrationFormData.get('pk')) {
+              console.log('registrationFormsData edit')
+              await this.$store.dispatch('editPhysicalPersonRegistration', {
+                formData: registrationFormData,
+                pk: registrationFormData.get('pk')
+              }).then(() => {
+                this.savingDone = true
+                setTimeout(() => {
+                  this.savingData = false
+                }, 1500)
+              }).catch(err => {
+                setTimeout(() => {
+                  this.savingData = false
+                }, 1500)
+              })
+            } else {
+              console.log('passport create')
+              registrationFormData.append('physical_person', this.form.pk)
+              await this.$store.dispatch('createPhysicalPersonRegistration', registrationFormData).then(() => {
+                this.savingDone = true
+                setTimeout(() => {
+                  this.savingData = false
+                }, 1500)
+              })
+            }
+          }
           this.$store.dispatch('editPhysicalPerson', {formData, pk: this.form.pk}).then(async (res) => {
-            for (let passportFormData of this.passportFormsData) {
-              if (passportFormData.get('pk')) {
-                for (let pair of passportFormData.entries()) {
-                  console.log(pair[0] + ', ' + pair[1]);
-                }
-                await this.$store.dispatch('editPhysicalPersonPassport', {
-                  formData: passportFormData,
-                  pk: passportFormData.get('pk')
-                }).then(() => {
-                  this.savingDone = true
-                  setTimeout(() => {
-                    this.savingData = false
-                  }, 1500)
-                })
-              } else {
-                console.log('passport create')
-                passportFormData.append('physical_person', this.form.pk)
-                for (let pair of passportFormData.entries()) {
-                  console.log(pair[0] + ', ' + pair[1]);
-                }
-                await this.$store.dispatch('createPhysicalPersonPassport', passportFormData).then(() => {
-                  this.savingDone = true
-                  setTimeout(() => {
-                    this.savingData = false
-                  }, 1500)
-                }).catch(err => {
-                  setTimeout(() => {
-                    this.savingData = false
-                  }, 5500)
-                })
-              }
-            }
-            for (let registrationFormData of this.registrationFormsData) {
-              console.log(registrationFormData.get('pk'))
-              if (registrationFormData.get('pk')) {
-                console.log('registrationFormsData edit')
-                await this.$store.dispatch('editPhysicalPersonRegistration', {
-                  formData: registrationFormData,
-                  pk: registrationFormData.get('pk')
-                }).then(() => {
-                  this.savingDone = true
-                  setTimeout(() => {
-                    this.savingData = false
-                  }, 1500)
-                }).catch(err => {
-                  setTimeout(() => {
-                    this.savingData = false
-                  }, 1500)
-                })
-              } else {
-                console.log('passport create')
-                registrationFormData.append('physical_person', this.form.pk)
-                await this.$store.dispatch('createPhysicalPersonRegistration', registrationFormData).then(() => {
-                  this.savingDone = true
-                  setTimeout(() => {
-                    this.savingData = false
-                  }, 1500)
-                })
-              }
-            }
             this.savingDone = true
             setTimeout(() => {
               this.savingData = false
@@ -458,13 +454,30 @@ export default {
         }
         setTimeout(() => {
           this.updateData()
-        }, 1000)
+        }, 500)
       }
-
     }
   },
   watch: {
-
+    yaml(val) {
+      if (val) {
+        const person = val['citizen']
+        if (person.hasOwnProperty('date_of_birth')) {
+          this.form.birthday = moment(person['date_of_birth'], 'DD.MM.YYYY').format('DD.MM.YYYY')
+        }
+        this.form.birthplace = person?.['place_of_birth']
+        this.form.inn = person?.inn
+        this.form.snils = person?.snils
+        if (person.hasOwnProperty('registration_address')) {
+          const registrationComponentLength = this.registrationCount.length
+          this.registrationCount.push({
+            index: registrationComponentLength + 1,
+            ref: `registrationComponent${registrationComponentLength}`,
+            data: {address: person['registration_address']}
+          })
+        }
+      }
+    },
     rectifiedPhysicalPerson(val) {
       if (val) this.updateData()
     },
@@ -486,12 +499,14 @@ export default {
 
 <style scoped>
 
->>>.mx-input:hover, >>>.mx-input:focus {
+>>> .mx-input:hover, >>> .mx-input:focus {
   border-color: #000000;
 }
->>>.mx-input:focus {
+
+>>> .mx-input:focus {
   border: 2px solid black;
 }
+
 .v-card__title, .v-card__text {
   margin: 0;
   padding: 0;

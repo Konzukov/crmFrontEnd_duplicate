@@ -8,20 +8,20 @@
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-card-title>
-
+      <LegalEntityEditForm :legal-data="legalData"></LegalEntityEditForm>
       <v-card-text>
-        <legal-entity-create @closeModal="updateAndClose" :legalData.sync="legalData"></legal-entity-create>
       </v-card-text>
     </v-card>
   </v-dialog>
 </template>
 
 <script>
-import LegalEntityCreate from "@/components/referenceBook/LegalEntity/LegalEntityCreate.vue";
+import {eventBus} from "@/bus";
+import LegalEntityEditForm from "@/components/referenceBook/LegalEntityNew/LegalEntityEditForm.vue";
 
 export default {
   name: "LegalEntityCreateModal",
-  components: {LegalEntityCreate},
+  components: {LegalEntityEditForm},
   props: ['subsystem'],
   data() {
     return {
@@ -37,18 +37,24 @@ export default {
     }
   },
   created() {
+    eventBus.$on('createLegalEntity', (item) => {
+      if (item) {
+        setTimeout(() => {
+          this.legalData = {}
+          Object.keys(item).forEach(key => {
+            this.legalData[key] = item[key]
+          })
+        }, 200)
+      }
+      this.dialog = true
+    })
     this.$parent.$on('legalEntityModal', (item) => {
-      console.log(item)
       this.$store.dispatch('getLegalEntityDetailInfo', item.pk).then((item) => {
         setTimeout(() => {
           this.legalData = Object.assign({}, item)
         }, 100)
-
         this.dialog = !this.dialog
       })
-    })
-    this.$parent.$on('createLegalEntity', ()=>{
-      this.dialog = true
     })
   }
 }
