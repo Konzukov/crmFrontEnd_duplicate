@@ -84,6 +84,11 @@ const routes = [
                 props: true,
                 children: [
                     {
+                        path: 'physical-person-v2',
+                        name: 'physicalPersonV2',
+                         component: () => import('@/views/PhysicalPersonV2/PhysicalPerson.vue')
+                    },
+                    {
                         path: 'physical-person',
                         name: 'physical-person',
                         component: PhysicalPerson
@@ -321,7 +326,7 @@ const routes = [
                     },
                     {
                         path: 'file-view/:pk',
-                        name: 'file-view',
+                        name: 'file-view-detail',
                         component: FileView
                     },
                     {

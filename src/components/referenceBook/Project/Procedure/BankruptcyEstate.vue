@@ -33,7 +33,7 @@ import {eventBus} from "@/bus";
 
 export default {
   props: ['project', 'collapsed'],
-  name: "InvolvedPersons",
+  name: "BankruptcyEstate",
   data: () => ({
     selectedEstate: null,
     headers: [

@@ -37,6 +37,8 @@ let LegalEntityType = [
     {divider: true},
     {header: 'Банк'},
     {value: "BANK", text: 'Банк'},
+    {value: "DIB", text: 'Биржи и депозитарии'},
+    {value: "BKI", text: 'Бюро кредитных историй (БКИ)'},
     {divider: true},
     {header: 'Гос учреждения'},
     {value: "FSSP", text: 'Федеральная служба судебных приставов'},

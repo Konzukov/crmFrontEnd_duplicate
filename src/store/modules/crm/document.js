@@ -433,9 +433,11 @@ export default {
                 axios({
                     method: "POST",
                     url: customConst.PAPERFLOW_API + 'document-send-queue/send/',
+                    // url: 'http://192.168.1.108:9893/api/paper-flow/' + 'document-send-queue/send/',
                     data: formData,
                     responseType: responseType,
                 }).then(res => {
+                    console.log(sendMethod)
                     if (sendMethod !== "Email") {
                         saveAs(res.data, 'otpravka.zip')
                     }
@@ -487,7 +489,28 @@ export default {
                     reject(err)
                 })
             })
+        },
+        getEmailConf({commit}){
+          return new Promise((resolve, reject) => {
+              axios({
+                  method: "GET",
+                  url: customConst.PAPERFLOW_API + 'get-email-conf'
+              }).then(res=>{
+                  resolve(res.data.data.data)
+              }).catch(err=>{
+                  reject(err)
+              })
+          })
+        },
+        getCert({commit}){
+            return new Promise((resolve, reject) => {
+                axios({
+                    method: "GET",
+                     url: customConst.PAPERFLOW_API + "processing-yaml",
+                })
+            })
         }
+
     },
     getters: {
         processedDocumentListData(state) {

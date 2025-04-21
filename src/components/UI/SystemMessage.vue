@@ -100,6 +100,7 @@ export default {
       let data;
       let final = false
       if (state === 'error') {
+        console.log(response.response)
         if (typeof response.response.data === "object") {
           let resData = await response.response.data
           if (typeof resData === 'object') {
@@ -164,6 +165,8 @@ export default {
       this.dialog = true
     })
     this.$parent.$on('showSystemMessage', async ({response, state, send}) => {
+      console.log('showSystemMessage')
+      console.log({response, state, send})
       await this.createMessage({response, state, send})
       this.dialog = true
     })

@@ -778,10 +778,39 @@
                                       @change="checkForm"
                                       dense outlined v-model="dataFile" :label="field.name"></v-file-input>
                       </template>
+                      <template v-else-if="field['is_textarea']">
+                        <VueEditor v-model="templateFields[field.value]"></VueEditor>
+                      </template>
+                      <template v-else-if="field['value']==='DEBT_OFF'">
+                        <v-radio-group v-model="templateFields[field.value]">
+                          <v-radio :value="true" label="Списание"></v-radio>
+                          <v-radio :value="false" label="Не списание"></v-radio>
+                        </v-radio-group>
+                      </template>
+                      <template v-else-if="field['value']==='FREE_PART_COMPLETION'">
+                        <v-textarea dense outlined :label="field.name"
+                                    v-model="templateFields[field.value]"></v-textarea>
+                        <v-btn text @click="showEditor = true">Открыть окно редактора</v-btn>
+                        <v-dialog v-model="showEditor" width="70vh">
+                          <v-card height="80vh">
+                            <v-toolbar dense>
+                              <v-toolbar-title>Свободная часть (Ходатайство о завершении процедуры)</v-toolbar-title>
+                              <v-spacer></v-spacer>
+                              <v-btn color="primary" icon small @click="showEditor = false">
+                                <v-icon>mdi-close</v-icon>
+                              </v-btn>
+                            </v-toolbar>
+                            <v-card-text style="height: 70%">
+                              <VueEditor v-model="templateFields[field.value]" class="comment"></VueEditor>
+                            </v-card-text>
+                          </v-card>
+                        </v-dialog>
+                      </template>
                       <v-text-field v-else-if="!field['auto_generated']" :rules="field.required? rules.required: []"
                                     @change="checkForm"
                                     dense outlined v-model="templateFields[field.value]"
                                     :label="field.name"></v-text-field>
+
                     </v-list>
                   </v-expansion-panel-content>
                 </v-expansion-panel>
@@ -1156,10 +1185,24 @@
     <CreatePostMail></CreatePostMail>
     <ContractorCreateModal></ContractorCreateModal>
     <LegalEntityCreateModal @contractorAdded="updateItem" @contractorUpdate="update"></LegalEntityCreateModal>
-    <v-dialog v-model="confirmSave" width="500">
-      <v-card height="30vh">
-        <v-card-title>Подтверждение сохранения документа</v-card-title>
-        <v-card-text>
+    <v-dialog v-model="confirmSave" width="35vw">
+      <v-card class="confirm-window_container">
+        <v-card-title class="mb-4">
+          <v-row justify="center">Подтверждение сохранения документа</v-row>
+        </v-card-title>
+        <v-card-text class="mt-4 confirm-window" v-if="docErrors">
+          <v-row justify="center">
+            <h3 class="mb-4">
+              {{ this.docErrors.subject }}
+            </h3>
+          </v-row>
+          <v-row>{{ this.docErrors.text }}</v-row>
+          <v-row><strong>{{ this.docErrors.actions }}</strong></v-row>
+          <v-row>
+            <v-checkbox v-model="confirmData" label="Подтверждаю корректность данных"></v-checkbox>
+          </v-row>
+        </v-card-text>
+        <v-card-text class="mt-4" v-else>
           <p>
             Сохранить документ {{ template.name }}_{{ fileName }}_{{ templateFields['DOC_NUMBER'] }}
             в базу с иходящим номером {{ templateFields['DOC_NUMBER'] }}.
@@ -1167,15 +1210,21 @@
           </p>
         </v-card-text>
         <v-card-actions>
-          <v-row justify="center">
+          <v-row justify="space-around" class="mb-0">
             <v-col cols="auto">
-              <v-btn color="error" @click="confirmSave=!confirmSave">Отмена</v-btn>
+              <v-btn small color="error" @click="confirmSave=!confirmSave">Отмена</v-btn>
             </v-col>
             <v-col cols="auto">
-              <v-btn color="success" @click="saveDoc(false)">Сохранить</v-btn>
+              <v-btn small color="success" :disabled="!confirmData" @click="download()">
+                Скачать файл
+              </v-btn>
             </v-col>
             <v-col cols="auto">
-              <v-btn color="success" :disabled="this.docType === 'docx'" @click="saveDoc(true)">Подготовить к отправке
+              <v-btn small color="success" :disabled="!confirmData" @click="saveDoc(false)">Сохранить</v-btn>
+            </v-col>
+            <v-col cols="12" class="d-flex justify-center">
+              <v-btn small color="success" :disabled="this.docType === 'docx' || !confirmData" @click="saveDoc(true)">
+                Подготовить к отправке
               </v-btn>
             </v-col>
           </v-row>
@@ -1197,7 +1246,7 @@ import LegalEntityCreateModal from "@/components/referenceBook/LegalEntity/Legal
 import SystemMessage from "@/components/UI/SystemMessage.vue";
 import {isArray} from "lodash";
 import {ProcedureType} from "@/const/dataTypes";
-
+import {VueEditor} from "vue2-editor";
 
 let vueStore = {
   valid: false
@@ -1212,6 +1261,10 @@ export default {
     }
   },
   data: () => ({
+    duplicatError: false,
+    showEditor: false,
+    docErrors: null,
+    confirmData: true,
     panel: [0, 1, 2],
     project: null,
     creditOrganization: null,
@@ -1555,6 +1608,8 @@ export default {
       return formData
     },
     generateDocument() {
+      this.docErrors = null
+      this.confirmData = true
       this.overlay = true
       this.loading = true
       let formData = this.setFormData()
@@ -1585,12 +1640,50 @@ export default {
         if (!this.template.name.includes('ЕФРСБ')) {
           this.confirmSave = true
         }
-
       }).catch(async (err) => {
+        if (err.response.status === 409) {
+          this.duplicatError = true
+          const errorText = await err.response.data.text();
+          const errorData = JSON.parse(errorText);
+          this.docErrors = errorData.errors.data
+          this.confirmSave = true
+          this.confirmData = false
+          this.overlay = false
+          this.loading = false
+        } else {
+          this.overlay = false
+          this.loading = false
+          this.duplicatError = false
+          this.state = 'error'
+          this.$emit('showSystemMessage', {response: err, state: this.state})
+        }
+      })
+    },
+    async download() {
+      let formData = this.setFormData()
+      await this.$http({
+        method: "POST",
+        url: customConst.GENERATOR + 'document-template/download-file/',
+        data: formData,
+        responseType: 'blob'
+      }).then(async res => {
+        let fileName;
+        if (this.template.name.startsWith('Счет') || this.template.name.startsWith('Акт')) {
+          fileName = `${this.fileName}_${this.template.name.replaceAll(' ', '_')}_${this.templateFields['NUMBER']}`
+        } else {
+          if (this.templateFields['OUT_NUMBER']) {
+            // fileName = `${this.fileName}_${this.template.name.replaceAll(' ', '_')}_${this.templateFields['OUT_NUMBER']}`
+            fileName = `${this.projectData.code}-${this.templateFields['OUT_NUMBER']}`
+          } else {
+            fileName = `${this.projectData.code}_${this.templateFields['NUMBER']}`
+          }
+          if (this.template.name === 'ходатайтсво об ознакомлении с материалами дела') {
+            fileName += '_1л'
+          }
+        }
+        await saveAs(res.data, fileName)
         this.overlay = false
         this.loading = false
-        this.state = 'error'
-        this.$emit('showSystemMessage', {response: err, state: this.state})
       })
     },
     async saveDoc(readyToSend = false, postOrder = false) {
@@ -1598,6 +1691,7 @@ export default {
       this.loading = true
       let formData = this.setFormData()
       formData.append('project', this.project)
+      formData.append('confirmSave', this.confirmData)
       formData.append('docType', this.docType)
       formData.append('docSend', readyToSend.toString())
       return new Promise((resolve, reject) => {
@@ -1605,8 +1699,11 @@ export default {
           method: "POST",
           url: customConst.GENERATOR + 'document-template/save-doc/',
           data: formData,
-        }).then((res) => {
+        }).then(async (res) => {
           this.loading = false
+          if (this.duplicatError) {
+            await this.download()
+          }
           setTimeout(() => {
             this.error = false
             this.overlay = false
@@ -1620,18 +1717,18 @@ export default {
             } else {
               this.$emit('showSystemMessage', {response: res, state: this.state, send: readyToSend})
             }
+            this.duplicatError = false
             resolve()
-
           }, 1000)
+        }).then(() => {
+          this.templateFields['OUT_NUMBER'] = Number(this.templateFields['OUT_NUMBER']) + 1
         }).catch(err => {
           this.overlay = false
           this.loading = false
           this.state = 'error'
-
           this.$emit('showSystemMessage', {
             response: err,
             state: this.state,
-
           })
         })
       })
@@ -1794,14 +1891,27 @@ export default {
     SystemMessage,
     CreatePostMail,
     ContractorCreateModal,
-    LegalEntityCreateModal
+    LegalEntityCreateModal,
+    VueEditor,
   }
-
-
 };
 </script>
 
 <style scoped>
+.confirm-window_container {
+  min-height: 35vh;
+  max-height: 55vh;
+}
+
+.confirm-window {
+  min-height: 40%;
+  max-height: 60%;
+  overflow: auto !important;
+}
+
+.confirm-window .row {
+  margin: 0;
+}
 
 >>> .v-list {
   padding: 0 !important;

@@ -10,9 +10,7 @@
           <h3>Поменять способ отправки для <strong>{{ physical.fullName }}</strong></h3>
         </template>
         <v-divider></v-divider>
-        <v-list-item-group
-
-        >
+        <v-list-item-group>
           <v-list-item v-for="(item, i) in communicationMethodList" :key="i">
             <v-list-item-action>
               <v-checkbox v-model="communicationMethod" :value="item.value"></v-checkbox>

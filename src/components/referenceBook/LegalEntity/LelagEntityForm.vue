@@ -210,8 +210,8 @@ export default {
       Object.assign(this.$data, this.$options.data())
     },
     update(id) {
-      this.$store.dispatch('getLegalEntityDetailInfo', id).then(item => {
-        console.log(item)
+      if (id){
+        this.$store.dispatch('getLegalEntityDetailInfo', id).then(item => {
         for (let [key, value] of Object.entries(item)) {
           if (key === 'fullName') {
             this.form.full_name = value
@@ -225,12 +225,13 @@ export default {
                 update_date: []
               }
             }
-
           } else {
             this.form[key] = value
           }
         }
       })
+      }
+
     },
     addCommunication() {
       eventBus.$emit('addCommunication', {legal: this.form.id})
@@ -381,6 +382,11 @@ export default {
       if (val) {
         this.createLegalEntity()
       }
+    },
+    legalEntityData(val){
+      if (val){
+        this.update(val.id)
+      }
     }
   },
   computed: {
@@ -390,7 +396,6 @@ export default {
   },
   created() {
     if (this.legalEntityData) {
-      console.log(this.legalEntityData)
       this.update(this.legalEntityData.id)
     }
     this.$parent.$on('legalEntityEdit', item => {

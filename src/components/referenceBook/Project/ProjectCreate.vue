@@ -302,10 +302,17 @@ export default {
       let filteredJudge = this.judgesList.filter(obj => {
         return obj.id === val.id
       })[0]
+      let filteredCurt = this.courtList.filter(obj => {
+        console.log(val)
+        return obj.id === val.court
+      })[0]
       if (filteredJudge) {
         this.project.judge = filteredJudge.id
       }
-      console.log(val)
+      if (filteredCurt) {
+        this.project.court = filteredCurt.id
+      }
+
     },
     ProcedureType(val) {
       if (val === 'PhysicalPerson') return ProcedureType.Physical
@@ -533,7 +540,11 @@ export default {
         if (judge) {
           this.project.judge = judge.id
         } else {
-          this.$emit('createJudge', {court: project['court_name'], judge: project['judge_name']})
+          this.$emit('createJudge', {
+            court: project['court_name'],
+            judge: project['judge_name'],
+            cab: project['judge_cabinet']
+          })
         }
         if (project.hasOwnProperty('next_hearing_date')) {
           if (project['next_hearing_date']) {

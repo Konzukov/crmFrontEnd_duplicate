@@ -169,6 +169,18 @@ export default {
     communicationMethod: CommunicationMethodType
   }),
   methods: {
+    loadData(item) {
+      this.$store.dispatch('getLegalEntityDetailInfo', item.pk).then((data) => {
+        Object.entries(data).forEach(([key, val], )=>{
+          if (key  === 'communication'){
+            console.log(key, val)
+
+          }else {
+            this.form[key] = val
+          }
+        })
+      })
+    },
     prepareFormData() {
       const formData = new FormData();
 
@@ -257,11 +269,29 @@ export default {
     }
   },
   watch: {
-    legalData(val) {
-      for (const [key, value] of Object.entries(val)) {
-        this.form[key] = value
-      }
-    }
+    legalData: {
+      handler(val) {
+        this.loadData(val)
+        // for (const [key, value] of Object.entries(val)) {
+        //   if (key !== 'communication'){
+        //     this.$set(this.form, key, value)
+        //   }
+        // }
+      },
+      deep: true,
+      immediate: true
+    },
+  },
+  mounted() {
+    this.$parent.$on('loadData', item => {
+      console.log(item)
+    })
+  },
+  created() {
+    console.log('LegalEntityFormNew')
+    this.$parent.$on('loadData', item => {
+      console.log(item)
+    })
   }
 }
 </script>

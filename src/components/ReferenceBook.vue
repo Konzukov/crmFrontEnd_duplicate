@@ -1,15 +1,18 @@
 <template>
   <v-container fluid>
     <v-tabs
-            height="30px"
-            background-color="primary"
-            class="mb-3"
-            dark>
+        height="30px"
+        background-color="primary"
+        class="mb-3"
+        dark>
+<!--      <v-tab :to="{name: 'physicalPersonV2'}">-->
+<!--        <span>Физ.лица (2)</span>-->
+<!--      </v-tab>-->
       <v-tab v-for="(subsystem, id) in subsystems" :key="id" :to="{name: subsystem.api_list_url}">
         <v-icon class="mr-2">{{ subsystem.icon }}</v-icon>
         <span>{{ subsystem.name }}</span>
       </v-tab>
-      <v-tab :to="{name: 'preProject'}" >
+      <v-tab :to="{name: 'preProject'}">
         <span>До Проект</span>
       </v-tab>
       <v-tab :to="{name: 'AccountOpening'}">

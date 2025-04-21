@@ -15,10 +15,14 @@
                     <span v-if="item.type === 'event'">Событие</span>
                     <span v-else-if="item.type === 'task'">Задача</span>
                     <span v-else-if="item.type === 'document'">Документ</span>
-                    <span v-else-if="item.type === 'post'">Почта</span>
+                    <span v-else-if="item.type === 'post'">
+                      <template v-if="item.post_type === 'EPOST'">Почта</template>
+                      <template v-else-if="item.post_type === 'EMAIL'">Электронная почта</template>
+                      <template v-if="item.post_type === 'EDO'">ЭДО</template>
+                    </span>
                   </v-row>
                 </v-col>
-                <v-col md="9">
+                <v-col md="7">
                   <v-row justify="start" class="item-from">
                     <span v-if="item.type === 'event'">{{ item.author | getName }}</span>
                     <span v-else-if="item.type === 'task'">{{ item.author | getName }}</span>
@@ -49,7 +53,11 @@
                       {{ item.user | getName }} | {{ item | filterDate }} | {{ item | fileName }}
                     </span>
                   </v-row>
-
+                </v-col>
+                <v-col md="2" class="item-from">
+                   <v-row justify="end">
+                     <template v-if="item.post_type === 'EMAIL'">{{item.rpo}}</template>
+                   </v-row>
                 </v-col>
                 <v-col md="1">
                   <v-row class="flex-column justify-space-between">

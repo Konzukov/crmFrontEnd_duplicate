@@ -75,7 +75,7 @@
           </v-form>
         </v-card-text>
         <v-card-actions>
-          <v-row justify="center">
+          <v-row justify="center"  class="mb-0">
             <v-col cols="auto">
               <v-btn color="error" @click="close">Отмена</v-btn>
             </v-col>
@@ -87,6 +87,7 @@
       </v-card>
     </v-dialog>
     <AccountStatementModal></AccountStatementModal>
+    <SystemMessage :state.sync="state"></SystemMessage>
   </v-container>
 </template>
 
@@ -95,6 +96,7 @@ import {mapGetters} from 'vuex'
 import AccountStatementModal from "@/components/referenceBook/Bank/AccountStatementModal.vue";
 import moment from "moment";
 import {eventBus} from "@/bus";
+import SystemMessage from "@/components/UI/SystemMessage.vue";
 
 export default {
   props: ['bankData', 'project'],
@@ -105,6 +107,7 @@ export default {
       {text: 'Не указан', value: 'EMP'},
       {text: 'Основной счет', value: 'MA'},
       {text: 'Специальный счет', value: 'SA'},
+      {text: 'Предпринимательский счет', value: 'EA'},
 
     ],
     rules: [v => v.length === 20 || 'Номер счета должен состоять из 20 цифр'],
@@ -119,6 +122,7 @@ export default {
       opening_date: '',
       closing_date: '',
     },
+    state: '',
     account_statement: []
   }),
   computed: {
@@ -135,9 +139,19 @@ export default {
         }
       })
       if (this.form.id) {
-        this.$store.dispatch('editBankAccount', {formData, id: this.form.id})
+        this.$store.dispatch('editBankAccount', {formData, id: this.form.id}).then((item)=>{
+          this.$emit('updateAccount', item)
+          this.close()
+        }).catch(err=>{
+          this.$emit('showSystemMessage', {response: err, state: this.state})
+        })
       } else {
-        this.$store.dispatch('createBankAccount', formData)
+        this.$store.dispatch('createBankAccount', formData).then((item)=>{
+          this.$emit('updateAccount', item)
+          this.close()
+        }).catch(err=>{
+          this.$emit('showSystemMessage', {response: err, state: this.state})
+        })
       }
 
     },
@@ -166,12 +180,15 @@ export default {
       this.dialog = true
     })
     this.$parent.$on('addBankAccount', (instance) => {
+      console.log(instance)
       if (instance.hasOwnProperty('bank')){
         this.bank = instance.bank
         this.bank['type'] = 'bank'
       }
       Object.keys(this.form).forEach(key=>{
+        console.log(key)
         if (instance.hasOwnProperty(key)){
+          console.log(key, instance[key])
           if (key==='physical'){
             this.form[key] = instance[key].id
           }else {
@@ -189,11 +206,14 @@ export default {
 
   },
   components: {
+    SystemMessage,
     AccountStatementModal,
     }
 }
 </script>
 
 <style scoped>
-
+>>>.v-card {
+  height: fit-content;
+}
 </style>

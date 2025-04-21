@@ -1,9 +1,19 @@
 <template>
   <v-container fluid>
-
     <v-expansion-panels focusable>
-      <InvolvedPersons :collapsed="collapsed"></InvolvedPersons>
-      <Complaint :collapsed="collapsed"></Complaint>
+      <v-expansion-panel>
+        <v-expansion-panel-header class="pr-5 pl-5">
+          2. Сведения о лицах, привлеченных финансовым управляющим для
+          обеспечения своей деятельности
+          <v-spacer></v-spacer>
+          <v-btn class="mr-6" icon small
+                 color="success" @click.native.stop="addInvolvedPerson">
+            <v-icon>mdi-plus</v-icon>
+          </v-btn>
+        </v-expansion-panel-header>
+        <InvolvedPersons :collapsed="collapsed" :project="project"></InvolvedPersons>
+      </v-expansion-panel>
+      <Complaint :collapsed="collapsed" :project="project"></Complaint>
       <template v-if="procedureType === 'SDP'">
         <v-expansion-panel> <!-- Счета-->
           <v-expansion-panel-header class="pr-5 pl-5">4.1. Сведения о счетах должника в банках и иных кредитных
@@ -583,7 +593,7 @@
           </v-row>
         </v-expansion-panel-content>
       </v-expansion-panel>
-      <ReceivedFunds :collapsed="collapsed"></ReceivedFunds>
+<!--      <ReceivedFunds :collapsed="collapsed"></ReceivedFunds>-->
       <v-expansion-panel>
         <v-expansion-panel-header class="pr-5 pl-5">Исполнительные производства
         </v-expansion-panel-header>
@@ -661,6 +671,8 @@
                                    @updateEstateSaleProgress="updateEstateSale"></EstateSaleProgressCreateModal>
     <DocumentGeneratorModal :project="project"></DocumentGeneratorModal>
     <CreditorMeetingCreateModal :project="project"></CreditorMeetingCreateModal>
+    <InvolvedPersonModal :project="project" @updateInvolvedPerson="updateInvolvedPerson"></InvolvedPersonModal>
+    <ComplaintsCreateModal :project="project" @updateComplaint="updateComplaint"></ComplaintsCreateModal>
     <BasicCreditorClaimCreateModal @updateBasicCreditorClaim="updateBasicCreditorClaim"></BasicCreditorClaimCreateModal>
   </v-container>
 </template>
@@ -697,6 +709,9 @@ import CreditorMeeting from "@/components/referenceBook/Project/Procedure/Credit
 import CreditorMeetingCreateModal
   from "@/components/referenceBook/Project/CreditorMeeting/CreditorMeetingCreateModal.vue";
 import BasicCreditorClaimCreateModal from "@/components/referenceBook/Project/Creditor/BasicCreditorClaimCreate.vue";
+import InvolvedPersonModal from "@/components/referenceBook/Project/InvolvedPerson/InvolvedPersonModal.vue";
+import ComplaintsCreateModal from "@/components/referenceBook/Project/ComplaintsCreateModal.vue";
+
 
 export default {
   props: ['project', 'collapsed', 'act', 'freePart'],
@@ -800,6 +815,12 @@ export default {
     updateEstateSale() {
       eventBus.$emit('updateEstateSaleProgress')
     },
+    updateInvolvedPerson(){
+      this.$emit('updateInvolvedPerson')
+    },
+    updateComplaint(){
+      this.$store.dispatch('getComplaintList', this.project)
+    },
     addCreditorClaim() {
       this.selectedCreditorClaim = {}
     },
@@ -823,6 +844,9 @@ export default {
         }
       }
     },
+    addInvolvedPerson(){
+      this.$emit('addInvolvedPerson' )
+    },
     hasStatement(item) {
       if (item.document) {
         return 'has-statement'
@@ -835,7 +859,6 @@ export default {
         this.selectedAccount = {}
       }, 100)
       this.$store.dispatch('getBankAccountList', this.$route.params['pk']).then(data => {
-        console.log(data)
         this.bankAccountList.push(...data)
       })
     },
@@ -900,7 +923,7 @@ export default {
     addBasicCreditorClaim() {
       this.$emit('createBasicCreditorClaim', this.$route.params['pk'])
     },
-    editBasicCreditorClaim(event, {item}){
+    editBasicCreditorClaim(event, {item}) {
       this.$emit('editBasicCreditorClaim', item)
     },
     editBargaining(item) {
@@ -1009,6 +1032,8 @@ export default {
     })
   },
   components: {
+    ComplaintsCreateModal,
+    InvolvedPersonModal,
     BasicCreditorClaimCreateModal,
     CreditorMeetingCreateModal,
     CreditorMeeting,

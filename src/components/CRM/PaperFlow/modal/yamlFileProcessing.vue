@@ -76,7 +76,7 @@
         </v-container>
       </v-expansion-panel-content>
     </v-expansion-panel>
-    <BankAccountCreateModal></BankAccountCreateModal>
+    <BankAccountCreateModal @updateAccount="updateAccountList"></BankAccountCreateModal>
   </v-container>
 </template>
 
@@ -112,6 +112,14 @@ export default {
     errorMessage: '',
   }),
   methods: {
+    updateAccountList(item) {
+      this.processedBankAccount = this.processedBankAccount.map(obj => {
+        if (obj.account === item.account) {
+          return item;
+        }
+        return obj;
+      });
+    },
     editBankAccount(item) {
       if (item.hasOwnProperty('created')) {
         this.$emit('addBankAccount', item)
@@ -133,7 +141,7 @@ export default {
         this.uploadProcess.uploading = false
         this.uploadProcess.uploaded = true
         this.processedBankAccount = [...res]
-        for (let item of this.processedBankAccount){
+        for (let item of this.processedBankAccount) {
           console.log(item)
         }
       }).catch(err => {

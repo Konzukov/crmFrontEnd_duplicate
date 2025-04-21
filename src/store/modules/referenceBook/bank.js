@@ -171,8 +171,7 @@ export default {
                     url: customConst.REFERENCE_BOOK_API + `bank-account/${id}/`,
                     data: formData
                 }).then(res => {
-                    commit('addBank', res.data.data.data)
-                    resolve()
+                    resolve(res.data.data.data)
                 }).catch(err => {
                     reject(err)
                 })

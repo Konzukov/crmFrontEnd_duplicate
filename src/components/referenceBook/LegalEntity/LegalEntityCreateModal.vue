@@ -1,15 +1,15 @@
 <template>
-  <v-dialog v-model="dialog" persistent max-width="700">
-    <v-card>
+  <v-dialog v-model="dialog" persistent max-width="700" scrollable>
+    <v-card height="85vh">
       <v-card-title>
         <h4>Добавление организации</h4>
         <v-spacer></v-spacer>
-        <v-btn icon @click="dialog = false">
+        <v-btn icon @click="close()">
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-card-title>
-      <LegalEntityEditForm :legal-data="legalData"></LegalEntityEditForm>
       <v-card-text>
+        <LegalEntityForm :legal-entity-data.sync="legalData"></LegalEntityForm>
       </v-card-text>
     </v-card>
   </v-dialog>
@@ -17,22 +17,28 @@
 
 <script>
 import {eventBus} from "@/bus";
-import LegalEntityEditForm from "@/components/referenceBook/LegalEntityNew/LegalEntityEditForm.vue";
+import LegalEntityForm from "@/components/referenceBook/LegalEntity/LelagEntityForm.vue";
 
 export default {
   name: "LegalEntityCreateModal",
-  components: {LegalEntityEditForm},
+  components: {LegalEntityForm},
   props: ['subsystem'],
   data() {
     return {
       dialog: false,
-      legalData: null,
+      legalData: {},
+      show: false
     }
   },
   methods: {
     updateAndClose(item) {
       this.$emit('contractorAdded', item)
       this.$emit('contractorUpdate', item)
+      this.dialog = false
+    },
+    close() {
+      this.legalData = null
+      Object.assign(this.$data, this.$options.data())
       this.dialog = false
     }
   },
@@ -49,12 +55,11 @@ export default {
       this.dialog = true
     })
     this.$parent.$on('legalEntityModal', (item) => {
-      this.$store.dispatch('getLegalEntityDetailInfo', item.pk).then((item) => {
-        setTimeout(() => {
-          this.legalData = Object.assign({}, item)
-        }, 100)
+      this.legalData = null
+      setTimeout(()=>{
+        this.legalData = Object.assign({}, item)
         this.dialog = !this.dialog
-      })
+      }, 300)
     })
   }
 }

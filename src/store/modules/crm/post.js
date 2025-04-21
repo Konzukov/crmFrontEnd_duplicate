@@ -203,13 +203,14 @@ export default {
                     reject(err)
                 })
             })
-        }
+        },
+
 
     },
     getters: {
         postAccountData(state){
             console.log(state.postAccount)
-          return state.postAccount.filter(obj=> obj['post_type'] === 'ElectronicMail')
+          return state.postAccount.filter(obj=> obj['post_type'] === 'ElectronicMail' || obj['post_type'] === 'PaperMail')
         },
         allPostListData(state) {
             return state.post

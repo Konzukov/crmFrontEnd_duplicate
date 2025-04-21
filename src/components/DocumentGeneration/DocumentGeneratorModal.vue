@@ -122,7 +122,7 @@
     </v-dialog>
     <v-dialog v-model="confirmSave" width="500">
       <v-card height="30vh" v-if="template">
-        <v-card-title>Подтверждение сохранения документа</v-card-title>
+        <v-card-title>Подтверждение сохранения документа!!!</v-card-title>
         <v-card-text>
           <p>
             Сохранить документ {{ template.name }}_{{ fileName }}_{{ templateFields['DOC_NUMBER'] }}

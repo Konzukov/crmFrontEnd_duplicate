@@ -10,7 +10,9 @@ Vue.use(VueCookies)
 export default {
     state: {
         creditorMeeting: [],
-        basicCreditorClaim: []
+        basicCreditorClaim: [],
+        involvedPerson: [],
+        complaints: [],
     },
     mutations: {
         syncCreditorMeeting(state, data) {
@@ -25,9 +27,37 @@ export default {
                 state.creditorMeeting.splice(index, 1, data);
             }
         },
-        syncBasicCreditorClaim(state, data){
-            state.basicCreditorClaim=[...data]
-        }
+        syncBasicCreditorClaim(state, data) {
+            state.basicCreditorClaim = [...data]
+        },
+        syncInvolvedPerson(state, data) {
+            state.involvedPerson = [...data]
+        },
+        syncAddInvolvedPerson(state, data) {
+            state.involvedPerson.push(data)
+        },
+        syncEditInvolvedPerson(state, data) {
+            state.involvedPerson = state.involvedPerson.map(item => {
+                if (item.id === data.id) {
+                    return data
+                }
+                return item
+            })
+        },
+        syncComplaints(state, data){
+            state.complaints = [...data]
+        },
+        syncAddComplaints(state, data) {
+            state.complaints.push(data)
+        },
+        syncEditComplaints(state, data) {
+            state.complaints = state.complaints.map(item => {
+                if (item.id === data.id) {
+                    return data
+                }
+                return item
+            })
+        },
     },
     actions: {
         savePersonalInfo(commit, formData) {
@@ -228,15 +258,108 @@ export default {
                     reject(err)
                 })
             })
-        }
+        },
+        getInvolvedPersonList({commit}, project) {
+            return new Promise((resolve, reject) => {
+                axios({
+                    method: "GET",
+                    url: customConst.REFERENCE_BOOK_API + `involved-person/${project}/list`,
+                    params: {
+                        project: project
+                    }
+                }).then(res => {
+                    commit('syncInvolvedPerson', res.data.data.data)
+                    resolve(res.data.data.data)
+                }).catch(err => {
+                    reject(err)
+                })
+            })
+        },
+        createInvolvedPerson({commit}, data) {
+            return new Promise((resolve, reject) => {
+                axios({
+                    method: "POST",
+                    url: customConst.REFERENCE_BOOK_API + 'involved-person/',
+                    data: data,
+                }).then(res => {
+                    commit('syncAddInvolvedPerson', res.data.data.data)
+                    resolve(res)
+                }).catch(err => {
+                    reject(err)
+                })
+            })
+        },
+        editInvolvedPerson({commit}, {data, id}) {
+            return new Promise((resolve, reject) => {
+                axios({
+                    method: "PUT",
+                    url: customConst.REFERENCE_BOOK_API + `involved-person/${id}/`,
+                    data: data,
+                }).then(res => {
+                    commit('syncEditInvolvedPerson', res.data.data.data)
+                    resolve(res)
+                }).catch(err => {
+                    reject(err)
+                })
+            })
+        },
+        getComplaintList({commit}, project) {
+            return new Promise((resolve, reject) => {
+                axios({
+                    method: "GET",
+                    url: customConst.REFERENCE_BOOK_API + `complaints/${project}/list`,
+                    params: {
+                        project: project
+                    }
+                }).then(res => {
+                    commit('syncComplaints', res.data.data.data)
+                    resolve(res.data.data.data)
+                }).catch(err => {
+                    reject(err)
+                })
+            })
+        },
+        createComplaint({commit}, data) {
+            return new Promise((resolve, reject) => {
+                axios({
+                    method: "POST",
+                    url: customConst.REFERENCE_BOOK_API + 'complaints/',
+                    data: data,
+                }).then(res => {
+                    commit('syncAddComplaints', res.data.data.data)
+                    resolve(res)
+                }).catch(err => {
+                    reject(err)
+                })
+            })
+        },
+        editComplaint({commit}, {data, id}) {
+            return new Promise((resolve, reject) => {
+                axios({
+                    method: "PUT",
+                    url: customConst.REFERENCE_BOOK_API + `complaints/${id}/`,
+                    data: data,
+                }).then(res => {
+                    commit('syncEditComplaints', res.data.data.data)
+                    resolve(res)
+                }).catch(err => {
+                    reject(err)
+                })
+            })
+        },
     },
     getters: {
         creditorMeetingData(state) {
             return state.creditorMeeting
         },
-        basicCreditorClaimData(state){
+        basicCreditorClaimData(state) {
             return state.basicCreditorClaim
+        },
+        involvedPersonData(state) {
+            return state.involvedPerson
+        },
+        complaintsData(state){
+            return state.complaints
         }
     }
-
 }

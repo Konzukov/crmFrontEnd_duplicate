@@ -78,7 +78,7 @@ export default {
     }
   },
   created() {
-    this.$parent.$on('createJudge', ({court, judge}) => {
+    this.$parent.$on('createJudge', ({court, judge, cab}) => {
       if (!this.courtList || this.courtList.length === 0) {
         this.fetchCurtList()
       }
@@ -90,6 +90,7 @@ export default {
       }
 
       this.form.full_name = judge
+      this.form.office_room = cab
       this.show = true
       console.log(this.curt, this.judge)
     })

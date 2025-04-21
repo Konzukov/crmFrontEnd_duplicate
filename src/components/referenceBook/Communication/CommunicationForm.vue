@@ -1,7 +1,7 @@
 <template>
   <v-dialog v-model="show" width="50vw">
 
-    <v-card height="50vh">
+    <v-card height="40vh">
       <v-card-title>
         <v-row justify="center">
           {{ !form.id ? 'Добавления способа коммуникации' : 'Редактирование способа коммуникации' }}
@@ -21,6 +21,9 @@
               <v-textarea dense outlined label="Почтовый адрес" rows="2" v-model="form.value"></v-textarea>
             </template>
           </v-col>
+        </v-row>
+        <v-row justify="start">
+          <v-checkbox v-model="form.is_main" dense label="Является основным"></v-checkbox>
         </v-row>
       </v-card-text>
       <v-card-actions class="flex justify-end">
@@ -59,7 +62,7 @@ export default {
       value: null,
       legal: null,
       physical: null,
-
+      is_main: false
     }
   }),
   methods: {
@@ -80,18 +83,24 @@ export default {
       const formData = this.getFormData()
       if (!this.form.id) {
         this.$store.dispatch('addCommunication', formData).then(res => {
-          this.$emit('update')
+          this.$emit('update', res)
           this.close()
         })
       } else {
         this.$store.dispatch('editCommunication', {formData: formData, id: this.form.id}).then(res => {
-          this.$emit('update')
+          this.$emit('update', res)
           this.close()
         })
       }
     },
   },
   created() {
+    this.$parent.$on('editCommunication', (item) => {
+      Object.entries(item).forEach(([key, val]) => {
+        this.form[key] = val
+      })
+      this.show = true
+    })
     eventBus.$on('editCommunication', (item) => {
       Object.entries(item).forEach(([key, val]) => {
         this.form[key] = val

@@ -1,19 +1,56 @@
 <template>
-  <v-expansion-panel>
-    <v-expansion-panel-header class="pr-5 pl-5">
-      2. Сведения о лицах, привлеченных финансовым управляющим для
-      обеспечения своей деятельности
-    </v-expansion-panel-header>
-    <v-expansion-panel-content class="procedure_content" :style="collapsed? 'height: 63vh': 'height: 41vh'">
-    </v-expansion-panel-content>
-  </v-expansion-panel>
+  <v-expansion-panel-content class="procedure_content" :style="collapsed? 'height: 63vh': 'height: 41vh'">
+    <v-data-table :headers="headers" :items="involvedPerson" :items-per-page="50"
+                  dense
+                  height="50%">
+      <template v-slot:item.actions="{ item }">
+        <v-btn icon small color="primary" @click="editInvolvedPerson(item)">
+          <v-icon>mdi-pencil</v-icon>
+        </v-btn>
+      </template>
+    </v-data-table>
+  </v-expansion-panel-content>
 </template>
 
 
 <script>
+
+
+import {mapGetters} from "vuex";
+import {eventBus} from "@/bus";
+
 export default {
+  components: {},
   props: ['project', 'collapsed', 'act'],
-  name: "InvolvedPersons"
+  name: "InvolvedPersons",
+  data: () => ({
+    headers: [
+      {text: 'Услуга', value: "work_type"},
+      {text: 'Наименование юридического лица или фамилия, имя', value: "contractor"},
+      {text: 'Договор', value: "contract"},
+      {text: 'Размер вознаграждения', value: "amount"},
+      {text: 'Дата судебного акта', value: "judicial_act_date"},
+      {text: 'Сведения о наличии аккредитации лица', value: "sro"},
+      {text: 'Действия', value: "actions"},
+    ],
+  }),
+  computed: {
+    ...mapGetters({
+      involvedPerson: 'involvedPersonData'
+    })
+  },
+  methods: {
+    update() {
+      this.$store.dispatch('getInvolvedPersonList', this.$route.params['pk'])
+    },
+    editInvolvedPerson(item) {
+      eventBus.$emit('editInvolvedPerson', item)
+    }
+  },
+  created() {
+    this.update()
+  },
+
 }
 </script>
 

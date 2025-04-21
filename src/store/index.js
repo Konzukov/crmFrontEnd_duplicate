@@ -33,11 +33,15 @@ import regularInvoice from "./modules/money/regularInvoice";
 import documentStorage from "@/store/modules/documentStorage/documentStorage.js";
 import postOrder from "@/store/modules/crm/postOrder";
 import notify from "@/store/modules/notify/notify";
+import physicalPersonNew from "@/store/modules/referenceBook/physicalPerson/physicalPerson"
 
 Vue.use(Vuex)
 
 export default new Vuex.Store({
     modules: {
+        //new
+        physicalPersonNew,
+        //end new
         auth,
         participant,
         contract,
