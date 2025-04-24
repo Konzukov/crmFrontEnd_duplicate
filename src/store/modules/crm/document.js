@@ -19,7 +19,8 @@ export default {
         uploadingTemplates: '',
         docType: [],
         correspondenceType: [],
-        docSendQueue: []
+        docSendQueue: [],
+        certList: [],
     },
     mutations: {
         addDocument(state, newDoc) {
@@ -111,6 +112,9 @@ export default {
             if (index !== -1) {
                 state.docSendQueue.splice(index, 1);
             }
+        },
+        syncCert(state, certList){
+            state.certList = [...certList]
         }
     },
     actions: {
@@ -490,23 +494,29 @@ export default {
                 })
             })
         },
-        getEmailConf({commit}){
-          return new Promise((resolve, reject) => {
-              axios({
-                  method: "GET",
-                  url: customConst.PAPERFLOW_API + 'get-email-conf'
-              }).then(res=>{
-                  resolve(res.data.data.data)
-              }).catch(err=>{
-                  reject(err)
-              })
-          })
-        },
-        getCert({commit}){
+        getEmailConf({commit}) {
             return new Promise((resolve, reject) => {
                 axios({
                     method: "GET",
-                     url: customConst.PAPERFLOW_API + "processing-yaml",
+                    url: customConst.PAPERFLOW_API + 'get-email-conf'
+                }).then(res => {
+                    resolve(res.data.data.data)
+                }).catch(err => {
+                    reject(err)
+                })
+            })
+        },
+        getCert({commit}) {
+            return new Promise((resolve, reject) => {
+                axios({
+                    method: "GET",
+                    url: customConst.PAPERFLOW_API + "get-cert",
+                    // url: 'http://192.168.1.108:9893/api/paper-flow/get-cert',
+                }).then(res=>{
+                    commit('syncCert', res.data.data.data)
+                    resolve()
+                }).catch(err=>{
+                    reject(err)
                 })
             })
         }
@@ -539,6 +549,9 @@ export default {
         },
         docQueueData(state) {
             return state.docSendQueue
+        },
+        certListData(state){
+            return state.certList
         }
     }
 }

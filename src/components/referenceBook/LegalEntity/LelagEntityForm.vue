@@ -95,7 +95,7 @@
                   </v-btn>
                 </v-row>
                 <v-row align="center">
-                  <v-btn icon small color="error" disabled>
+                  <v-btn icon small color="error" @click="deleteCommunication(item)">
                     <v-icon>mdi-delete</v-icon>
                   </v-btn>
                 </v-row>
@@ -148,6 +148,7 @@
     </v-container>
     <CommunicationForm @update="update(form.id)"></CommunicationForm>
     <SystemMessage :state.sync="state"/>
+    <ConfirmDialog @confirm="confirmDeleteCommunication"></ConfirmDialog>
   </v-form>
 </template>
 
@@ -158,9 +159,10 @@ import {isObject} from 'lodash'
 import CommunicationForm from "@/components/referenceBook/Communication/CommunicationForm.vue";
 import {eventBus} from "@/bus";
 import SystemMessage from "@/components/UI/SystemMessage.vue";
+import ConfirmDialog from "@/components/UI/ConfirmDialog.vue";
 
 export default {
-  components: {SystemMessage, CommunicationForm},
+  components: {ConfirmDialog, SystemMessage, CommunicationForm},
   // props: ['legalEntityData', 'callSave', 'showActionButton'],
   props: {
     legalEntityData: {
@@ -238,6 +240,14 @@ export default {
     },
     editCommunication(item) {
       eventBus.$emit('editCommunication', item)
+    },
+    confirmDeleteCommunication(item){
+      this.$store.dispatch('deleteCommunication', {id: item.id}).then(()=>{
+        this.update(this.form.id)
+      })
+    },
+    deleteCommunication(item){
+      eventBus.$emit('deleteCommunication', item)
     },
     prepareFormData() {
       const formData = new FormData();

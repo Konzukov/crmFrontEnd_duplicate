@@ -296,7 +296,7 @@
                   </v-col>
                 </v-row>
               </template>
-              <v-row justify="start" >
+              <v-row justify="start">
                 <v-col cols="auto">
                   <v-text-field outlined label="РПО" dense v-model="postForm['rpo']" :disabled="action ==='edit'">
                     <template v-slot:append-outer v-if="action==='create'">
@@ -314,7 +314,7 @@
                   <v-text-field outlined dense type="number" label="Цена" :disabled="action ==='edit'"
                                 v-model.number="postForm['price']"></v-text-field>
                 </v-col>
-                                <v-col cols="auto">
+                <v-col cols="auto">
                   <v-text-field outlined dense type="number" label="Расчетная стоимость"
                                 v-model.number="postForm['calculated_price']"></v-text-field>
                 </v-col>
@@ -403,7 +403,7 @@
     <ProjectCreateModal></ProjectCreateModal>
     <editDocument></editDocument>
     <TaskCreate></TaskCreate>
-    <createDocument></createDocument>
+    <createDocument @updatePost="updateDoc"></createDocument>
     <ChooseDocument @chooseDocs="chooseDocs"></ChooseDocument>
   </v-container>
 </template>
@@ -490,8 +490,9 @@ export default {
       "createPost",
       "getCorrespondenceType"
     ]),
-    viewDocument(item) {
-
+    updateDoc(post) {
+      console.log(post)
+      this.loadPostData(post)
     },
     async chooseDocs(data) {
       for (let doc of data.chooseDocs) {
@@ -604,7 +605,6 @@ export default {
         }
         await this.$store.dispatch('createPost', formData).then((data) => {
           this.loadPostData(data.pk)
-          this.drawer = false
           this.$emit('postCreated', data)
           this.action = 'edit'
           this.snackbar.text = "Успешно";
@@ -619,14 +619,6 @@ export default {
     },
     addDocument() {
       this.$emit("newPostDocument", {postPk: this.postForm["pk"], project: this.postForm['project']});
-      // this.snackbar.show = true;
-      // this.snackbar.text = "Сохранение изменений";
-      // new Promise(async (resolve) => {
-      //   await this.save();
-      //   resolve();
-      // }).then(() => {
-      //   this.$emit("newPostDocument", this.postForm["pk"]);
-      // });
     },
     addProjectDocument() {
       let id = this.postForm.project.map(obj => {
@@ -678,7 +670,7 @@ export default {
       this.loadPostData(pk)
     });
     this.$parent.$on('createSingleOutPost', (item) => {
-      if (item){
+      if (item) {
         this.postForm.post_type = this.postType[2].value
         this.postForm.rpo = item.rpo
         this.postForm.post_account = item.post_account.id

@@ -57,6 +57,9 @@
                 <v-col md="2" class="item-from">
                    <v-row justify="end">
                      <template v-if="item.post_type === 'EMAIL'">{{item.rpo}}</template>
+                     <template v-else-if="item.post_type === 'EPOST'">
+                       <a :href="`https://www.pochta.ru/tracking?barcode=${item.rpo}`" target="_blank">{{item.rpo}}</a>
+                     </template>
                    </v-row>
                 </v-col>
                 <v-col md="1">

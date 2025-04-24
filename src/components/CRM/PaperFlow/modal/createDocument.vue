@@ -155,6 +155,9 @@ export default {
       this.loadingData = false
     },
     close() {
+      if (this.postPk) {
+        this.$emit('updatePost', this.postPk)
+      }
       Object.assign(this.$data, this.$options.data())
     },
     async saveDoc({formData, file}) {
@@ -234,6 +237,7 @@ export default {
         }
         if (!this.hasError) {
           this.close()
+
         }
       })
       // this.close()

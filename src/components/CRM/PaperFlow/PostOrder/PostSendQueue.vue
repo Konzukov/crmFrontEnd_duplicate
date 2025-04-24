@@ -141,23 +141,49 @@
       </v-card>
     </v-dialog>
     <v-dialog v-model="prepareModal" width="50vw">
-      <v-card height="60vh">
+      <v-card height="50vh">
         <v-toolbar dense class="mb-3">
           <v-toolbar-title>Подготовка к отправке</v-toolbar-title>
         </v-toolbar>
-        <v-card-text style="height: 80%;">
+        <v-card-text style="height: 70%;">
           <v-form v-if="selectedDocument.length > 0">
-            <v-row>
-              <v-checkbox label="Добавить судебный акт к документам" v-model="enableAct"></v-checkbox>
+            <v-row justify="start"
+                   align="center" class="mb-0 mt-1">
+              <v-col cols="12" class="pa-0">
+                <v-checkbox label="Добавить судебный акт к документам" v-model="enableAct"></v-checkbox>
+              </v-col>
             </v-row>
             <v-row v-if="selectedDocument[0].document.fromWho.comm['communication_type'] === 'Email'" justify="start"
-                   align="center">
-              <v-col cols="8">
+                   align="center" class="mt-0">
+              <v-col cols="12" class="pa-0">
                 <v-checkbox v-model="enableCert"
-                            label="Подписать документы с помощью ЭЦП (будет добавлен p7s)"></v-checkbox>
+                            label="Подписать с помощью ЭЦП (будет добавлен p7s)"></v-checkbox>
               </v-col>
-              <v-col cols="4">
-                <v-btn small color="primary" :disabled="!enableCert" @click="choiceCert">Выбрать сертификат</v-btn>
+            </v-row>
+            <v-row justify="start" v-if="enableCert">
+              <v-col cols="12">
+                <v-select :items="certList" return-object item-value="index" v-model="cert" outlined
+                          label="Выбрать сертификат">
+                  <template v-slot:selection="data">
+                    <v-list-item-content>
+                      <v-list-item-title>{{ data.item.name }}</v-list-item-title>
+                      <v-list-item-subtitle style="font-size: 10px; color: #00a6ee">
+                        {{ data.item.publisher | publisher }} |
+                        Действителен до: {{ data.item.validTo }}
+                      </v-list-item-subtitle>
+                    </v-list-item-content>
+                  </template>
+                  <template v-slot:item="data">
+                    <v-list-item-content>
+                      <v-list-item-title>{{ data.item.name }}</v-list-item-title>
+                      <v-list-item-subtitle style="font-size: 12px; color: #00a6ee">
+                        {{ data.item.publisher | publisher }} |
+                        Действителен до: {{ data.item.validTo }}
+                      </v-list-item-subtitle>
+                    </v-list-item-content>
+                  </template>
+                </v-select>
+                <!--                <v-btn small color="primary" :disabled="!enableCert" @click="choiceCert">Выбрать сертификат</v-btn>-->
               </v-col>
             </v-row>
             <v-row v-if="selectedDocument[0].document.fromWho.comm['communication_type'] === 'Email'" justify="start"
@@ -169,12 +195,6 @@
                         v-model="emailSetting"
               >
               </v-select>
-            </v-row>
-            <v-row v-if="cert">
-              <v-col cols="12" justify="start">Выбран сертификат: {{ cert.name }}</v-col>
-              <v-col cols="12" justify="start">
-                Издатель: {{ cert.publisher }}
-              </v-col>
             </v-row>
             <v-row v-if="selectedDocument[0].document.fromWho.comm['communication_type'] !== 'Email'">
               <v-radio-group
@@ -270,12 +290,6 @@ export default {
     },
     fontColor(item) {
       return item['comm']['value'] ? 'font-size: 12px; color: #00a6ee' : 'font-size: 12px; color: #cb1313'
-      // if (item.type === "LegalEntity") {
-      //   return item.contact_email ? 'font-size: 12px; color: #00a6ee' : 'font-size: 12px; color: #cb1313'
-      // } else {
-      //   console.log(item['comm']['value'])
-      //   return item['comm']['value'] ? 'font-size: 12px; color: #00a6ee' : 'font-size: 12px; color: #cb1313'
-      // }
     },
     setCert(item) {
       this.cert = item
@@ -289,6 +303,10 @@ export default {
       }).then(() => {
         this.$store.dispatch('getEmailConf').then(res => {
           this.emailConf = [...res]
+          if (this.certList.length === 0) {
+            this.$store.dispatch('getCert')
+          }
+
         })
       })
     },
@@ -298,7 +316,6 @@ export default {
       } else {
         this.$emit('changeCommunication', item)
       }
-
     },
     prepareToSend() {
       this.prepareModal = true
@@ -315,13 +332,12 @@ export default {
       }
       if (sendMethodValue === 'Email') {
         formData.append('emailConf', this.emailSetting)
+        if (this.enableCert) {
+          formData.append('cert', this.cert.index)
+          formData.append('enableCert', this.enableCert)
+        }
       }
       formData.append('sendMethod', sendMethodValue)
-      if (this.enableCert) {
-        formData.append('cert', this.cert.index)
-        formData.append('enableCert', this.enableCert)
-      }
-
       formData.append('pageCount', this.pageCount)
       formData.append('enableAct', this.enableAct)
       this.selectedDocument.forEach(obj => {
@@ -339,23 +355,27 @@ export default {
       })
     },
     disableListItem(item) {
-      if (item.document.fromWho['comm'] === 'Email') {
-        if (item.document.fromWho.type === 'LegalEntity' && !item.document.fromWho.contact_email) {
+      if (item.document.fromWho['comm'] === 'Email' || item.document.fromWho['comm']["communication_type"] === 'Email') {
+        if (item.document.fromWho.type === 'LegalEntity' && !item.document.fromWho['comm']['value']) {
           return true
         } else if (item.document.fromWho.type === 'PhysicalPerson' && !item.document.fromWho['communication_email']) {
           return true
         }
       }
-      // return item.document.fromWho['communication'] !== 'ElectronicMail' || item.document.fromWho['communication'] !== 'Email';
       if (this.selectedDocument.length > 0) {
         let firstItem = this.selectedDocument[0]
-        if (firstItem.document.fromWho['comm'] !== item.document.fromWho['comm']) {
-          return true
+        if (item.document.fromWho.type === 'LegalEntity') {
+          if (firstItem.document.fromWho['comm']["communication_type"] !== item.document.fromWho['comm']["communication_type"]) {
+            return true
+          }
+        } else {
+          if (firstItem.document.fromWho['comm'] !== item.document.fromWho['comm']) {
+            return true
+          }
         }
       } else {
         return false
       }
-
     },
     showConfirm(item) {
       this.deletedItem = item
@@ -402,10 +422,19 @@ export default {
         }
       })
       return sorted
+    },
+    certList() {
+      return this.$store.getters.certListData
     }
-
   },
   filters: {
+    publisher(publisher) {
+      const cnMatch = publisher.match(/CN=([^,]+)/);
+      if (!cnMatch) return '';
+      return cnMatch[1]
+          .replace(/^"(.*)"$/, '$1')
+          .replace(/""/g, '"');
+    },
     postNumber(item) {
       let codeStr = ''
       for (let project of item.document.project) {
@@ -440,7 +469,6 @@ export default {
       }
     }
   },
-
   created() {
     this.update()
 

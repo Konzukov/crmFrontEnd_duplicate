@@ -58,7 +58,6 @@ export default {
         // url: 'http://80.254.125.196:9893/api/paper-flow/get-cert',
         url: customConst.PAPERFLOW_API + "get-cert",
       }).then(res => {
-        console.log(res)
         this.certsList = [...res.data.data.data]
       }).catch(err => {
         console.log(err)

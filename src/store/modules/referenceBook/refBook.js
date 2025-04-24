@@ -805,7 +805,19 @@ export default {
                     reject(err)
                 })
             })
-        }
+        },
+        deleteCommunication({commit}, {id}) {
+            return new Promise((resolve, reject) => {
+                Axios({
+                    method: "DELETE",
+                    url: customConst.REFERENCE_BOOK_API + `communication/${id}/`,
+                }).then(res => {
+                    resolve(res)
+                }).catch(err => {
+                    reject(err)
+                })
+            })
+        },
     },
     getters: {
         relatedUserData(state) {
