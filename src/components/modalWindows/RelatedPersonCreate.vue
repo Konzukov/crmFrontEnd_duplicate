@@ -207,7 +207,7 @@
                 this.show = !this.show
 
             })
-            this.$store.dispatch('getPhysicalPerson')
+            this.$store.dispatch('fetchPhysicalPersons')
             this.$store.dispatch('getLegalEntity')
         }
 

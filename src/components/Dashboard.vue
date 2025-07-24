@@ -78,10 +78,9 @@
       </v-list>
     </v-navigation-drawer>
     <v-app-bar app dense height="35px">
-      <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
       <v-row justify="end">
-        <v-col md="3">{{ new Date().toLocaleDateString() }}</v-col>
-        <v-col md="3" offset-md="2" id="user-info">
+        <v-col md="3" >{{ new Date().toLocaleDateString() }}</v-col>
+        <v-col md="3" id="user-info">
           <v-menu
               open-on-hover
               top
@@ -109,7 +108,7 @@
       </v-row>
     </v-app-bar>
     <!-- Sizes your content based upon application components -->
-    <v-main class="main-content" style="padding: 37px 0 12px 48px;">
+    <v-main class="main-content" style="padding: 38px 0 12px 48px;">
       <!-- Provides the application the proper gutter -->
       <!-- If using vue-router -->
       <router-view></router-view>
@@ -316,8 +315,8 @@ export default {
         }
       })
     })
-
     await this.getDashboardTaskList()
+    await this.$store.dispatch('getLegalEntity')
     await this.$store.dispatch('getUserTaskList', {'user': -1, 'project': -1, 'tags': '-1'})
     // this.$store.dispatch('getUserEventList')
     this.selectedDate.push(this.today)
@@ -328,6 +327,9 @@ export default {
 </script>
 
 <style scoped>
+#user-info {
+  text-align: right;
+}
 .money-icon {
   max-height: 30px;
   height: 24px;

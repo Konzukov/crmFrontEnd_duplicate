@@ -175,7 +175,7 @@
             this.$parent.$on('editStaff', (staff, organization) => {
                 this.$store.dispatch('getDepartment', organization).then(() => {
                     this.$store.dispatch('getPositionByDepartment', staff.department)
-                    this.$store.dispatch('getPhysicalPerson')
+                    this.$store.dispatch('fetchPhysicalPersons')
                 })
                 this.staffPk = staff.pk
                 this.formData.organization = organization

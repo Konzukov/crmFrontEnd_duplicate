@@ -3,6 +3,7 @@ import Vue from 'vue'
 import VueCookies from 'vue-cookies'
 import customConst from "../../../const/customConst";
 import auth from "@/store/modules/auth";
+import axios from "axios";
 
 Vue.use(VueCookies)
 
@@ -16,6 +17,7 @@ export default {
         allSystemUsers: [],
         servicesList: '',
         legalEntity: [],
+        arbitrationManager: [],
         legalEntityDetail: '',
         organizationStaff: '',
         position: [],
@@ -332,6 +334,9 @@ export default {
         syncBailiffs(state, bailiffsList) {
             state.bailiffs = bailiffsList
         },
+        SET_ARBITRATION_MANAGER(state, arbitrationManager) {
+            state.arbitrationManager = [...arbitrationManager]
+        }
 
     },
     actions: {
@@ -353,131 +358,6 @@ export default {
             }).then(response => {
                 console.log(response.data.data.data)
                 commit('syncSystemUser', response.data.data.data)
-            })
-        },
-        createPhysicalPerson({commit}, physicalPersonData) {
-            return new Promise((resolve, reject) => {
-                Axios({
-                    method: 'post',
-                    url: customConst.REFERENCE_BOOK_API + 'physical-person-create',
-                    data: physicalPersonData
-                }).then((response) => {
-                        console.log(response.data.data.attributes)
-                        commit('addPhysicalPerson', response.data.data.attributes)
-                        resolve(response.data.data.attributes)
-                    }
-                ).catch(err => {
-                    reject(err)
-                })
-            })
-        },
-        async createPhysicalPersonPassport({commit}, formData) {
-            return await new Promise((resolve, reject) => {
-                Axios({
-                    method: "POST",
-                    url: customConst.REFERENCE_BOOK_API + 'physical-person-passport/',
-                    data: formData
-                }).then(res => {
-                    console.log(res.data.data.data)
-                    resolve(res.data.data.data)
-                }).catch(err => {
-                    console.log(err)
-                    reject()
-                })
-            })
-        },
-        async editPhysicalPersonPassport({commit}, {formData, pk}) {
-            return new Promise((resolve, reject) => {
-                Axios({
-                    method: "PUT",
-                    url: customConst.REFERENCE_BOOK_API + `physical-person-passport/${pk}/`,
-                    data: formData
-                }).then(res => {
-                    resolve(res.data.data.data)
-                }).catch(err => {
-                    console.log(err)
-                    reject()
-                })
-            })
-        },
-        async createPhysicalPersonRegistration({commit}, formData) {
-            return await new Promise((resolve, reject) => {
-                Axios({
-                    method: "POST",
-                    url: customConst.REFERENCE_BOOK_API + 'physical-person-registration/',
-                    data: formData
-                }).then(res => {
-                    resolve(res.data.data.data)
-                }).catch(err => {
-                    console.log(err)
-                    reject()
-                })
-            })
-        },
-        async editPhysicalPersonRegistration({commit}, {formData, pk}) {
-            return new Promise((resolve, reject) => {
-                Axios({
-                    method: "PUT",
-                    url: customConst.REFERENCE_BOOK_API + `physical-person-registration/${pk}/`,
-                    data: formData
-                }).then(res => {
-                    resolve(res.data.data.data)
-                }).catch(err => {
-                    console.log(err)
-                    reject()
-                })
-            })
-        },
-        getPhysicalPerson({commit}) {
-            return new Promise((resolve, reject) => {
-                Axios({
-                    method: 'get',
-                    url: customConst.REFERENCE_BOOK_API + 'physical-person/',
-                }).then(response => {
-                    commit('syncPhysicalPerson', response.data.data.data)
-                    resolve()
-                }).catch(error => {
-                    console.log(error.error.response)
-                    reject()
-                })
-            })
-        },
-        deletePhysicalPerson({commit}, pk) {
-            Axios({
-                method: 'DELETE',
-                url: customConst.REFERENCE_BOOK_API + 'physical-person-detail/' + pk,
-            }).then(() => {
-                commit('delPhysicalPerson', pk)
-            }).catch(error => {
-                console.log(error)
-            })
-        },
-        getPhysicalPersonDetail({commit}, pk) {
-            return new Promise((resolve, reject) => {
-                Axios({
-                    method: "GET",
-                    url: customConst.REFERENCE_BOOK_API + 'physical-person/' + pk,
-                }).then((res) => {
-                    commit('detailPhysicalPerson', res.data.data.data)
-                    resolve(res.data.data.data)
-                }).catch(err => {
-                    reject(err)
-                })
-            })
-        },
-        editPhysicalPerson({commit}, {formData, pk}) {
-            return new Promise((resolve, reject) => {
-                Axios({
-                    method: 'put',
-                    url: customConst.REFERENCE_BOOK_API + 'physical-person-detail/' + pk,
-                    data: formData
-                }).then(res => {
-                    commit('updatePhysicalPerson', res.data.data.data)
-                    resolve()
-                }).catch(error => {
-                    console.log(error)
-                    reject()
-                })
             })
         },
         getLegalEntity({commit}) {
@@ -502,18 +382,17 @@ export default {
                 }).then((response) => {
                     resolve(response.data.data.data)
                     commit('legalEntityDetailInfo', response.data.data.data)
-
                 })
             })
-
         },
         createLegalEntity({commit}, legalEntityData) {
             return new Promise((resolve, reject) => {
-                Axios({
-                    method: 'post',
-                    url: customConst.REFERENCE_BOOK_API + 'legal-entity-create',
-                    data: legalEntityData
-                }).then(response => {
+                Axios.post(customConst.REFERENCE_BOOK_API + 'legal-entity-create',
+                    legalEntityData, {
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                    }).then(response => {
                     commit('addLegalEntity', response.data.data.data)
                     resolve(response)
                 }).catch(err => reject(err))
@@ -521,13 +400,15 @@ export default {
 
         },
         editLegalEntity({commit}, data) {
-            console.log('actions', data)
             return new Promise((resolve, reject) => {
-                Axios({
-                    method: 'put',
-                    url: customConst.REFERENCE_BOOK_API + 'legal-entity-update/' + data.legalEntityDetail.pk,
-                    data: data.data
-                }).then((response) => {
+                Axios.put(
+                    customConst.REFERENCE_BOOK_API + 'legal-entity-update/' + data.pk,
+                    data,
+                    {
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                    }).then((response) => {
                     commit('updateLegalEntity', response.data.data.data)
                     resolve(response)
                 }).catch(err => {
@@ -546,7 +427,6 @@ export default {
                 console.log(error)
             })
         },
-
         async createLegalEntityNew({commit}, formData) {
             return await new Promise(async (resolve, reject) => {
                 await Axios({
@@ -560,7 +440,6 @@ export default {
                 })
             })
         },
-
         createRelatedPerson({commit}, formData) {
             return new Promise((resolve, reject) => {
                 Axios({
@@ -818,6 +697,16 @@ export default {
                 })
             })
         },
+        async fetchArbitrationManagerRegister({commit}) {
+            return await new Promise((resolve, reject) => {
+                axios.get(customConst.REFERENCE_BOOK_API + 'arbitration-manager').then(res => {
+                    commit('SET_ARBITRATION_MANAGER', res.data.data.data)
+                    resolve(res.data.data.data)
+                }).catch(err => {
+                    reject(err)
+                })
+            })
+        }
     },
     getters: {
         relatedUserData(state) {
@@ -826,21 +715,15 @@ export default {
         allSystemUsersData(state) {
             return state.allSystemUsers
         },
-        physicalPersonData(state) {
-            return state.physicalPerson
-        },
-        physicalPersonDetailData(state) {
-            return state.physicalPersonDetail
+        physicalPersonData(state, getters) {
+            return getters.physicalPersonListDataV2
         },
         legalEntityData(state) {
             return state.legalEntity
         },
-        allRefData(state) {
-            return [...state.legalEntity, ...state.physicalPerson]
-            // if (state.legalEntity && state.physicalPerson) {
-            //     return state.legalEntity.concat(state.physicalPerson)
-            // }
-
+        allRefData(state, getters) {
+            let person = getters.physicalPersonListDataV2
+            return [...state.legalEntity, ...person]
         },
         positionData(state) {
             return state.position
@@ -857,13 +740,13 @@ export default {
         servicesListData(state) {
             return state.servicesList
         },
-        contractorListData(state) {
-            let contractor = []
-            if (state.legalEntity && state.physicalPerson) {
-                contractor = state.legalEntity.concat(state.physicalPerson)
-            }
-            return contractor
-        },
+        // contractorListData(state) {
+        //     let contractor = []
+        //     if (state.legalEntity && state.physicalPerson) {
+        //         contractor = state.legalEntity.concat(state.physicalPerson)
+        //     }
+        //     return contractor
+        // },
         currentUserData(state) {
             const curUser = state.allSystemUsers.filter(user => {
                 if (user['uuid'] === auth.state.user['uuid']) {
@@ -929,5 +812,8 @@ export default {
         pfrListData(state) {
             return state.pfr
         },
+        arbitrationManagerData(state) {
+            return state.arbitrationManager
+        }
     }
 }

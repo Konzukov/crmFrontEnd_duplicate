@@ -484,7 +484,7 @@ export default {
       "allSystemUser",
       "getParticipator",
       "getLegalEntity",
-      "getPhysicalPerson",
+      "fetchPhysicalPersons",
       "getProjectList",
       "editPost",
       "createPost",
@@ -661,7 +661,7 @@ export default {
     this.getProjectList()
     this.getParticipator()
     this.getLegalEntity()
-    this.getPhysicalPerson()
+    this.fetchPhysicalPersons()
     this.getCorrespondenceType();
     this.$parent.$on("editPost", (pk) => {
       this.drawer = true;

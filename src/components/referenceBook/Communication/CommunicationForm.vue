@@ -15,10 +15,10 @@
           </v-col>
           <v-col md="8" lg="8" sm="12" xs="12">
             <template v-if="form.communication_type === 'Email'">
-              <v-text-field dense outlined label="Email" v-model="form.value"></v-text-field>
+              <v-text-field dense outlined :rules="emailRules" label="Email" v-model="form.value"></v-text-field>
             </template>
             <template v-else>
-              <v-textarea dense outlined label="Почтовый адрес" rows="2" v-model="form.value"></v-textarea>
+              <v-textarea dense outlined :rules="addressRules" label="Почтовый адрес" rows="2" v-model="form.value"></v-textarea>
             </template>
           </v-col>
         </v-row>
@@ -57,11 +57,19 @@ export default {
   data: () => ({
     show: false,
     communicationMethod: CommunicationMethodType,
+    emailRules: [
+      v => !!v || 'Email обязателен',
+      v => /.+@.+\..+/.test(v) || 'Email должен быть действительным'
+    ],
+    addressRules: [
+      v => !!v || 'Адрес обязателен',
+      v => /^\d{6}.*/.test(v) || 'Адрес должен начинаться с почтового индекса (6 цифр)'
+    ],
     form: {
       communication_type: null,
       value: null,
       legal: null,
-      physical: null,
+      person: null,
       is_main: false
     }
   }),

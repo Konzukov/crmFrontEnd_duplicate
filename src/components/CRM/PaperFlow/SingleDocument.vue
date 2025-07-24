@@ -163,7 +163,7 @@ export default {
       this.overlay = true
       this.$store.dispatch('getParticipator').then(() => {
         this.$store.dispatch('getLegalEntity').then(() => {
-          this.$store.dispatch('getPhysicalPerson').then(() => {
+          this.$store.dispatch('fetchPhysicalPersons').then(() => {
             this.$store.dispatch('getProjectList').then(() => {
               this.$store.dispatch('allSystemUser').then(() => {
                 this.$store.dispatch('getProjectList').then(() => {
@@ -286,8 +286,8 @@ export default {
     },
     contractorList: {
       get() {
-        if (this.$store.getters.contractorListData) {
-          return this.$store.getters.contractorListData
+        if (this.$store.getters.allRefData) {
+          return this.$store.getters.allRefData
         }
         return new Array()
       }

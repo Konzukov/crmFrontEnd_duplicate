@@ -9,7 +9,7 @@
       <v-card-text class="">
         <v-tabs
             v-model="formType"
-            fixed-tabs
+              fixed-tabs
             background-color="indigo"
             dark
         >
@@ -21,10 +21,11 @@
           </v-tab>
           <v-tabs-items v-model="formType">
             <v-tab-item >
-              <PhysicalPersonCreate @closeModal="updateAndClose"></PhysicalPersonCreate>
+              <PhysicalPersonDetail @closeModal="updateAndClose"               :showActionButton="true"
+              class="v-card--flat"></PhysicalPersonDetail>
             </v-tab-item>
             <v-tab-item>
-              <LegalEntityCreate @closeModal="updateAndClose"></LegalEntityCreate>
+              <LelagEntityForm @closeModal="updateAndClose"></LelagEntityForm>
             </v-tab-item>
           </v-tabs-items>
         </v-tabs>
@@ -34,8 +35,8 @@
 </template>
 
 <script>
-import PhysicalPersonCreate from "@/components/referenceBook/PhysicalPerson/PhysicalPersonCreate";
-import LegalEntityCreate from "@/components/referenceBook/LegalEntity/LegalEntityCreate";
+import PhysicalPersonDetail from "@/components/referenceBook/PhysicalPersonV2/PhysicalPersonDetail.vue";
+import LelagEntityForm from "@/components/referenceBook/LegalEntity/LelagEntityForm.vue";
 
 
 
@@ -57,8 +58,8 @@ export default {
     })
   },
   components:{
-    PhysicalPersonCreate,
-    LegalEntityCreate
+    PhysicalPersonDetail,
+    LelagEntityForm
   }
 }
 </script>

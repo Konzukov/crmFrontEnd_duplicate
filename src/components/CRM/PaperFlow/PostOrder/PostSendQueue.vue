@@ -19,38 +19,31 @@
               {{ item | postNumber }}
             </v-col>
             <v-col cols="1">
-              <template v-if="item.document.fromWho['comm'] ==='ElectronicMail'">
-                <v-tooltip bottom>
-                  <template v-slot:activator="{ on, attrs }">
-                    <v-icon v-bind="attrs" v-on="on">mdi-email-outline
-                    </v-icon>
-                  </template>
-                  <span>Электронное письмо</span>
-                </v-tooltip>
-              </template>
-              <template v-if="item.document.fromWho['comm']['communication_type'] ==='ElectronicMail'">
-                <v-tooltip bottom>
-                  <template v-slot:activator="{ on, attrs }">
-                    <v-icon v-bind="attrs" v-on="on">mdi-email-outline</v-icon>
-                  </template>
-                  <span>Бумажное письмо</span>
-                </v-tooltip>
-              </template>
-              <template v-else-if="item.document.fromWho['comm']['communication_type'] ==='PaperMail'">
-                <v-tooltip bottom>
-                  <template v-slot:activator="{ on, attrs }">
-                    <v-icon v-bind="attrs" v-on="on">mdi-email-open-outline</v-icon>
-                  </template>
-                  <span>Бумажное письмо</span>
-                </v-tooltip>
-              </template>
-              <template v-else-if="item.document.fromWho['comm']['communication_type'] ==='Email'">
-                <v-tooltip bottom>
-                  <template v-slot:activator="{ on, attrs }">
-                    <v-icon v-bind="attrs" v-on="on">mdi-gmail</v-icon>
-                  </template>
-                  <span>Электронная почта</span>
-                </v-tooltip>
+              <template v-if="item.document.fromWho['main_communication']">
+                <template v-if="item.document.fromWho['main_communication']['communication_type'] ==='ElectronicMail'">
+                  <v-tooltip bottom>
+                    <template v-slot:activator="{ on, attrs }">
+                      <v-icon v-bind="attrs" v-on="on">mdi-email-outline</v-icon>
+                    </template>
+                    <span>Бумажное письмо</span>
+                  </v-tooltip>
+                </template>
+                <template v-else-if="item.document.fromWho['main_communication']['communication_type'] ==='PaperMail'">
+                  <v-tooltip bottom>
+                    <template v-slot:activator="{ on, attrs }">
+                      <v-icon v-bind="attrs" v-on="on">mdi-email-open-outline</v-icon>
+                    </template>
+                    <span>Бумажное письмо</span>
+                  </v-tooltip>
+                </template>
+                <template v-else-if="item.document.fromWho['main_communication']['communication_type'] ==='Email'">
+                  <v-tooltip bottom>
+                    <template v-slot:activator="{ on, attrs }">
+                      <v-icon v-bind="attrs" v-on="on">mdi-gmail</v-icon>
+                    </template>
+                    <span>Электронная почта</span>
+                  </v-tooltip>
+                </template>
               </template>
             </v-col>
             <v-col cols="3">
@@ -64,21 +57,18 @@
             <v-col cols="3">
               <v-row justify="start">
                 <v-col cols="12" class="pb-0">{{ item.document.fromWho.fullName }}</v-col>
-                <template v-if="item.document.fromWho['comm'] ==='ElectronicMail'">
-                  <v-col cols="12" style="font-size: 12px; color: #00a6ee">
-                    {{ item.document.fromWho.legal_address }}
-                  </v-col>
-                </template>
-                <template v-else>
-                  <v-col cols="12" :style="fontColor(item.document.fromWho)">
-                    {{ item.document.fromWho['comm']['value'] }}
-                  </v-col>
-                </template>
+                <v-col cols="12" style="font-size: 12px; color: #00a6ee"
+                       v-if="item.document.fromWho['main_communication']">
+                  {{ item.document.fromWho['main_communication']['value'] }}
+                </v-col>
               </v-row>
             </v-col>
             <v-col cols="2">
               <v-row justify="start">
-                <v-col cols="12">{{ item.document.correspondence_type.name }}</v-col>
+                <v-col cols="12" v-if="item.document.correspondence_type">
+                  {{ item.document.correspondence_type.name }}
+                </v-col>
+                <v-col cols="12" v-else style="color: #ee0000">Не указан тип корреспонденции</v-col>
                 <v-col cols="12" class="pb-0" style="font-size: 10px;">Подготовил: {{ item.document.author.fullName }}
                 </v-col>
               </v-row>
@@ -153,7 +143,8 @@
                 <v-checkbox label="Добавить судебный акт к документам" v-model="enableAct"></v-checkbox>
               </v-col>
             </v-row>
-            <v-row v-if="selectedDocument[0].document.fromWho.comm['communication_type'] === 'Email'" justify="start"
+            <v-row v-if="selectedDocument[0].document.fromWho['main_communication']['communication_type'] === 'Email'"
+                   justify="start"
                    align="center" class="mt-0">
               <v-col cols="12" class="pa-0">
                 <v-checkbox v-model="enableCert"
@@ -186,7 +177,8 @@
                 <!--                <v-btn small color="primary" :disabled="!enableCert" @click="choiceCert">Выбрать сертификат</v-btn>-->
               </v-col>
             </v-row>
-            <v-row v-if="selectedDocument[0].document.fromWho.comm['communication_type'] === 'Email'" justify="start"
+            <v-row v-if="selectedDocument[0].document.fromWho['main_communication']['communication_type'] === 'Email'"
+                   justify="start"
                    align="center">
               <v-select dense outlined label="Укажите почту для отправки" :items="emailConf"
                         item-value="id" item-text="username"
@@ -196,7 +188,7 @@
               >
               </v-select>
             </v-row>
-            <v-row v-if="selectedDocument[0].document.fromWho.comm['communication_type'] !== 'Email'">
+            <v-row v-if="selectedDocument[0].document.fromWho['main_communication']['communication_type'] !== 'Email'">
               <v-radio-group
                   v-model="pageCount"
                   row
@@ -220,8 +212,9 @@
             </v-col>
             <v-col cols="5">
               <template v-if="selectedDocument.length > 0">
-                <v-btn v-if="selectedDocument[0].document.fromWho.comm['communication_type'] === 'Email'"
-                       color="success" @click="send" :disabled="(enableCert && cert===null) || !emailSetting">Отправить
+                <v-btn
+                    v-if="selectedDocument[0].document.fromWho['main_communication']['communication_type'] === 'Email'"
+                    color="success" @click="send" :disabled="(enableCert && cert===null) || !emailSetting">Отправить
                 </v-btn>
                 <v-btn v-else
                        color="success" @click="send">Отправить
@@ -289,7 +282,7 @@ export default {
       this.$emit('selectCert')
     },
     fontColor(item) {
-      return item['comm']['value'] ? 'font-size: 12px; color: #00a6ee' : 'font-size: 12px; color: #cb1313'
+      return item['main_communication']?.value ? 'font-size: 12px; color: #00a6ee' : 'font-size: 12px; color: #cb1313'
     },
     setCert(item) {
       this.cert = item
@@ -311,18 +304,40 @@ export default {
       })
     },
     changeCommunication(item) {
-      if (item.type === 'LegalEntity') {
-        this.$emit('selectCommunication', item)
-      } else {
-        this.$emit('changeCommunication', item)
-      }
+      this.$emit('selectCommunication', item)
     },
     prepareToSend() {
       this.prepareModal = true
     },
+    getCommAddress(fromWho) {
+      if (fromWho.type === 'LegalEntity') {
+        if (typeof fromWho['main_communication'] === 'object') {
+          return fromWho['main_communication'].value || fromWho.legal_address;
+        }
+        return fromWho.legal_address;
+      } else {
+        return fromWho.communication_email || fromWho.email || fromWho.legal_address;
+      }
+    },
+    getCommIcon(comm) {
+      if (typeof comm === 'object') {
+        comm = comm.communication_type;
+      }
+
+      switch (comm) {
+        case 'Email':
+          return 'mdi-gmail';
+        case 'ElectronicMail':
+          return 'mdi-email-outline';
+        case 'PaperMail':
+          return 'mdi-email-open-outline';
+        default:
+          return 'mdi-email-outline';
+      }
+    },
     send() {
       let formData = new FormData()
-      const sendMethod = this.selectedDocument[0].document.fromWho['comm']
+      const sendMethod = this.selectedDocument[0].document.fromWho['main_communication']
       let sendMethodValue = null
       if (isObject(sendMethod)) {
         sendMethodValue = sendMethod['communication_type']
@@ -355,27 +370,31 @@ export default {
       })
     },
     disableListItem(item) {
-      if (item.document.fromWho['comm'] === 'Email' || item.document.fromWho['comm']["communication_type"] === 'Email') {
-        if (item.document.fromWho.type === 'LegalEntity' && !item.document.fromWho['comm']['value']) {
-          return true
-        } else if (item.document.fromWho.type === 'PhysicalPerson' && !item.document.fromWho['communication_email']) {
-          return true
-        }
+      if (!item.document?.fromWho) return true;
+
+      const fromWho = item.document.fromWho;
+      const comm = fromWho.main_communication;
+
+      // 1. Проверка наличия основного способа коммуникации
+      if (!comm) return true;
+
+      // 2. Проверка наличия значения для отправки
+      if (!comm.value) return true;
+
+      // 3. Специальная проверка для Email
+      if (comm.communication_type === 'Email' &&
+          !comm.value.includes('@')) {
+        return true;
       }
-      if (this.selectedDocument.length > 0) {
-        let firstItem = this.selectedDocument[0]
-        if (item.document.fromWho.type === 'LegalEntity') {
-          if (firstItem.document.fromWho['comm']["communication_type"] !== item.document.fromWho['comm']["communication_type"]) {
-            return true
-          }
-        } else {
-          if (firstItem.document.fromWho['comm'] !== item.document.fromWho['comm']) {
-            return true
-          }
-        }
-      } else {
-        return false
-      }
+
+      // Если нет выбранных документов - элемент доступен
+      if (this.selectedDocument.length === 0) return false;
+
+      // Получаем способ отправки первого выбранного элемента
+      const firstComm = this.selectedDocument[0].document.fromWho.main_communication;
+
+      // Блокируем только если способы отправки РАЗНЫЕ
+      return comm.communication_type !== firstComm.communication_type;
     },
     showConfirm(item) {
       this.deletedItem = item
@@ -414,7 +433,8 @@ export default {
             return a.document.correspondence_type.name.localeCompare(b.document.correspondence_type.name)
           case 'recipient':
             if (a.document.fromWho && b.document.fromWho) {
-              return a.document.fromWho.name.localeCompare(b.document.fromWho.name)
+              console.log(a.document.fromWho, b.document.fromWho)
+              return a.document.fromWho.fullName.localeCompare(b.document.fromWho.fullName)
             }
             return a.document.fromWho ? -1 : 1
           default:

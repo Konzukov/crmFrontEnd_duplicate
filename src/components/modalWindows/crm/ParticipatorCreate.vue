@@ -105,7 +105,7 @@
             },
             getList() {
                 if (this.participator.type === 'Физ. лицо') {
-                    this.$store.dispatch('getPhysicalPerson').then(() => {
+                    this.$store.dispatch('fetchPhysicalPersons').then(() => {
                         this.pickList = this.$store.getters.physicalPersonData
                     })
                     this.pickList = this.$store.getters.physicalPersonData
@@ -122,7 +122,7 @@
         },
         computed: {},
         created() {
-            this.$store.dispatch('getPhysicalPerson')
+            this.$store.dispatch('fetchPhysicalPersons')
             this.$store.dispatch('getLegalEntity')
             this.$parent.$on('addParticipator', () => {
                 this.dialog = true

@@ -31,11 +31,15 @@ export default {
       await this.$store.dispatch('checkAuth').then(response => {
         console.log(response)
       }).catch(() => {
-        this.$router.push('/login')
+        if (this.$route.path !== '/login') {
+          this.$router.push('/login')
+        }
       })
     } else {
       console.log('Not Auth')
-      this.$router.push('/login')
+      if (this.$route.path !== '/login') {
+        this.$router.push('/login')
+      }
     }
 
   }
@@ -45,14 +49,19 @@ export default {
 <style>
 html {
   overflow-x: hidden !important;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: subpixel-antialiased;
+  zoom: 1;
 }
 
 * {
-  font-family: "Roboto Condensed";
+  font-family: "Roboto Condensed", serif;
 }
-.v-label{
+
+.v-label {
   font-size: 14px !important;
 }
+
 .v-text-field--filled.v-input--dense.v-text-field--single-line > .v-input__control > .v-input__slot, .v-text-field--filled.v-input--dense.v-text-field--outlined > .v-input__control > .v-input__slot, .v-text-field--filled.v-input--dense.v-text-field--outlined.v-text-field--filled > .v-input__control > .v-input__slot, .v-text-field--full-width.v-input--dense.v-text-field--single-line > .v-input__control > .v-input__slot, .v-text-field--full-width.v-input--dense.v-text-field--outlined > .v-input__control > .v-input__slot, .v-text-field--full-width.v-input--dense.v-text-field--outlined.v-text-field--filled > .v-input__control > .v-input__slot, .v-text-field--outlined.v-input--dense.v-text-field--single-line > .v-input__control > .v-input__slot, .v-text-field--outlined.v-input--dense.v-text-field--outlined > .v-input__control > .v-input__slot, .v-text-field--outlined.v-input--dense.v-text-field--outlined.v-text-field--filled > .v-input__control > .v-input__slot {
   font-size: 14px !important;
   min-height: 35px !important;

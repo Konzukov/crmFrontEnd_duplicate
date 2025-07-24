@@ -177,7 +177,7 @@ export default {
     ...mapGetters({
       docType: "docTypeData",
       correspondenceType: "correspondenceTypeData",
-      contractorList: "contractorListData",
+      contractorList: "allRefData",
       participatorList: "participatorList",
       projectList: "projectListData"
     }),

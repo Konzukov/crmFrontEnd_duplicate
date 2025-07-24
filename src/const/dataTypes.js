@@ -1,15 +1,15 @@
-let ProcedureType = {
-    "Physical": [
-        {value: "RCP", text: "Реструктуризация имущества гражданина"},
-        {value: "SDP", text: "Реализация имущества должника"},
-    ],
-    "Legal": [
-        {value: "OBS", text: "Наблюдение"},
-        {value: "ECL", text: "Внешнее управление"},
-        {value: "FCR", text: "Финансовое оздоровление"},
-        {value: "BPS", text: "Конкурсное производство"}
-    ]
-}
+    let ProcedureType = {
+        "Physical": [
+            {value: "RCP", text: "Реструктуризация имущества гражданина"},
+            {value: "SDP", text: "Реализация имущества должника"},
+        ],
+        "Legal": [
+            {value: "OBS", text: "Наблюдение"},
+            {value: "ECL", text: "Внешнее управление"},
+            {value: "FCR", text: "Финансовое оздоровление"},
+            {value: "BPS", text: "Конкурсное производство"}
+        ]
+    }
 
 let ThirdStageType = [
     {value: 'empty', text: 'Не указано'},
@@ -48,6 +48,7 @@ let LegalEntityType = [
     {value: "MVD", text: 'Министерство внутренних дел'},
     {value: "ADDRD", text: 'Адресный стол'},
     {value: "TECHN", text: 'Технадзор'},
+    {value: "FSIN", text: 'Федеральная служба исполнения наказаний'},
     {value: "OSFR", text: 'Пенсионный и социальный фонды'},
     {value: "GIT", text: 'Государственная инспекция по труду'},
     {value: "BTI", text: 'Бюро технической инвентаризации'},
@@ -72,9 +73,9 @@ let LegalEntityType = [
 ]
 
 let CommunicationMethodType = [
-    {value: "ElectronicMail", text: "Электронные письма"},
+    {value: "ElectronicMail", text: "Электронные письма (ЭЗП)"},
     {value: "PaperMail", text: "Бумажная почта"},
-    {value: "Email", text: "Электронная почта"},
+    {value: "Email", text: "Электронная почта (Email)"},
 ]
 
 export {ThirdStageType}

@@ -128,7 +128,7 @@ export default {
     PhysicalPersonList
   },
   created() {
-    this.$store.dispatch('getPhysicalPerson').then(() => {
+    this.$store.dispatch('fetchPhysicalPersons').then(() => {
       this.$store.dispatch('getContractList')
     })
   },

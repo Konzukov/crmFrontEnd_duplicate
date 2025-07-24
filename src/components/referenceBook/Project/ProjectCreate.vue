@@ -1,6 +1,6 @@
 <template>
   <v-container fluid>
-    <v-card flat height="100%" style="position: absolute">
+    <v-card flat height="90%" style="position: absolute">
       <v-card-title class="justify-center">
         <template v-if="rectifiedProject">Редактирование проекта {{ rectifiedProject.name }}</template>
         <template v-else>Новый проект</template>
@@ -18,13 +18,20 @@
             <v-col cols="6">
               <v-autocomplete class="required" dense outlined label="Сторона" @change="setContractor"
                               v-model="contractor"
-                              :items="allRefList" item-text="fullName"
+                              :items="allRefList"
+                              item-text="fullName"
                               :rules="required"
                               return-object
                               append-outer-icon="mdi-plus"
                               @click:append-outer="addContractor"
                               item-value="uuid"></v-autocomplete>
             </v-col>
+          </v-row>
+          <v-row justify="start" v-if="checkStatus(contractor)">
+            <v-checkbox v-model="project.is_individual_entrepreneur"
+                        label="Процедура в отношении индивидуального предпринимателя"
+            >
+            </v-checkbox>
           </v-row>
           <v-row justify="start">
             <v-col cols="4" class="mr-3">
@@ -154,7 +161,8 @@
                 </v-row>
               </v-expansion-panel-content>
             </v-expansion-panel>
-            <v-expansion-panel v-if="currentUser[0]['user']['is_superuser']">
+
+            <v-expansion-panel v-if="currentUser && currentUser[0]['user']['is_superuser']">
               <v-expansion-panel-header class="pr-5 pl-5">Комментарий</v-expansion-panel-header>
               <v-expansion-panel-content>
 
@@ -247,6 +255,7 @@ export default {
       publication_issue_number: '',
       publication_date_efrsb: '',
       publication_number_efrsb: '',
+      is_individual_entrepreneur: false,
       report_date: '',
       participant: '',
       legal_contractor: '',
@@ -282,11 +291,14 @@ export default {
     }
   },
   methods: {
-    runSelenium() {
+    async runSelenium() {
       this.$refs.docInArbitr.openModal()
+      const baseUrl = await this.determineServerUrl();
+      console.log(baseUrl)
+      const url = `${baseUrl}/parse?case_number=${this.project.case_number}`;
       this.$http({
         method: "GET",
-        url: `http://80.254.125.196:9563/parse?case_number=${this.project.case_number}`,
+        url: url,
         // url: `http://127.0.0.1:8000/parse?case_number=${this.project.case_number}`,
       }).then(res => {
         this.availableDoc = res.data.data.filter(obj => {
@@ -296,6 +308,49 @@ export default {
         })
         this.cookie = res.data.cookie
       })
+    },
+    async determineServerUrl() {
+      const devServer = "http://127.0.0.1:8000";
+      // const localServer = 'http://192.168.1.112:8000';
+      const remoteServer = 'http://80.254.125.196:9563';
+
+      try {
+        // Проверка доступности локального сервера
+        const isAvailable = await this.checkServerAvailability(devServer);
+        return isAvailable ? devServer : remoteServer;
+      } catch (error) {
+        return remoteServer; // Возвращаем удаленный сервер при ошибке
+      }
+    },
+    async checkServerAvailability(url) {
+      const controller = new AbortController();
+      const timeout = 500; // Таймаут 500 мс
+
+      const timeoutId = setTimeout(
+          () => controller.abort(),
+          timeout
+      );
+
+      try {
+        await fetch(`${url}/ping`, {
+          method: 'GET',
+          mode: 'no-cors',
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        return true;
+      } catch (error) {
+        clearTimeout(timeoutId);
+        return false;
+      }
+    },
+    checkStatus(contractor) {
+      if (contractor.type === "PhysicalPerson") {
+        let existingIndex = contractor.special_statuses.findIndex(item =>
+            item.status_type === 'individual_entrepreneur')
+        return existingIndex !== -1;
+      }
+      return false
     },
     async setJudge(val) {
       await this.$store.dispatch('getJudgeList')
@@ -320,66 +375,74 @@ export default {
       else return ProcedureType.Physical
     },
     async loadData() {
-      await this.$store.dispatch('getParticipator')
-      await this.$store.dispatch('getLegalEntity')
-      await this.$store.dispatch('getPhysicalPerson')
-      await this.$store.dispatch('getJudgeList')
-      await this.$store.dispatch('getCourtList')
-      await this.$store.dispatch('allSystemUser')
+
+      if (!this.$store.getters.participatorList || this.$store.getters.participatorList.length === 0) {
+        await this.$store.dispatch('getParticipator')
+      }
+      if (!this.$store.getters.legalEntityDetailData || this.$store.getters.legalEntityDetailData.length === 0) {
+        await this.$store.dispatch('getLegalEntity')
+      }
+      if (!this.$store.getters.physicalPersonListDataV2 || this.$store.getters.physicalPersonListDataV2.length === 0) {
+        await this.$store.dispatch('fetchPhysicalPersons')
+      }
+      if (!this.$store.getters.courtListData || this.$store.getters.courtListData.length === 0) {
+        await this.$store.dispatch('getCourtList')
+      }
+      if (!this.$store.getters.judgeListData || this.$store.getters.judgeListData.length === 0) {
+        await this.$store.dispatch('getJudgeList')
+      }
+      if (!this.$store.getters.allSystemUsersData || this.$store.getters.allSystemUsersData.length === 0) {
+        await this.$store.dispatch('allSystemUser')
+      }
+
     },
     close() {
       Object.assign(this.$data, this.$options.data())
       this.$emit('close')
     },
     save() {
-      if (this.$refs.projectCreate.validate()) {
-        let formData = new FormData()
-        Object.keys(this.project).forEach(key => {
-          if (key === 'court_document') {
-            formData.append(key, JSON.stringify(this.project[key]))
-          } else {
-            formData.append(key, this.project[key])
-          }
-
-        })
-        if (!this.project.pk) {
-          this.$store.dispatch('createProject', formData).then(response => {
-            this.project.pk = response['pk']
-            this.state = 'success'
-            this.$emit('showSystemMessage', {response: response, state: this.state, send: false})
-            this.$emit('close', response)
-          }).catch(err => {
-            this.errors = err.response.data.errors
-            this.state = 'error'
-            this.$emit('showSystemMessage', {response: err, state: this.state})
-          })
-        } else {
-          this.$store.dispatch('editProject', {formData, pk: this.project.pk}).then(res => {
-            this.state = 'success'
-            this.$emit('showSystemMessage', {response: res, state: this.state, send: false})
-          }).catch(err => {
-            console.log(err)
-            this.errors = err.response.data.errors
-            this.state = 'error'
-            this.$emit('showSystemMessage', {response: err, state: this.state})
-          })
-        }
-        if (this.judicialActCount.length > 0) {
-          const refs = this.judicialActCount.map(obj => {
-            return obj.ref
-          })
-          for (let ref of refs) {
-            let judicialActComponent = this.$refs[ref]
-            if (judicialActComponent) {
-              judicialActComponent[0].save()
+      console.log(this.project)
+      return new Promise((resolve, reject) => {
+        if (this.$refs.projectCreate.validate()) {
+          let formData = new FormData()
+          Object.keys(this.project).forEach(key => {
+            if (key === 'court_document') {
+              formData.append(key, JSON.stringify(this.project[key]))
+            } else {
+              console.log(key, this.project[key])
+              formData.append(key, this.project[key])
             }
-          }
+
+          })
+          const saveAction = this.project.pk
+              ? this.$store.dispatch('editProject', {formData, pk: this.project.pk})
+              : this.$store.dispatch('createProject', formData);
+
+          saveAction
+              .then(response => {
+                this.saveJudicialActs().then(() => resolve(response));
+              })
+              .catch(error => {
+                this.errors = error.response?.data?.errors || {};
+                reject(error);
+              });
+        } else {
+          reject(new Error('Форма не валидна'));
         }
-      }
+      })
+    },
+    async saveJudicialActs() {
+      if (this.judicialActCount.length === 0) return Promise.resolve();
+      const promises = this.judicialActCount.map(item => {
+        const component = this.$refs[item.ref];
+        return component ? component[0].save() : Promise.resolve();
+      });
+      return Promise.all(promises);
     },
     updateData() {
+      console.log('updateData', this.project)
       this.$store.dispatch('getProjectDetail', this.project.pk).then(res => {
-        console.log(res['pk'])
+        let data = res
         this.$store.dispatch('getProjectAct', res['pk']).then(res => {
           let act = res.data.data.data
           if (act.length > 0) {
@@ -420,13 +483,9 @@ export default {
           })[0]
         }
         if (this.project.legal_contractor) {
-          this.contractor = this.$store.getters.legalEntityData.filter(obj => {
-            return obj.pk === this.project.legal_contractor
-          })[0]
+          this.contractor = data.legal_contractor
         } else if (this.project.physical_contractor) {
-          this.contractor = this.$store.getters.physicalPersonData.filter(obj => {
-            return obj.pk === this.project.physical_contractor
-          })[0]
+          this.contractor = data.physical_contractor
         }
       })
     },
@@ -448,6 +507,7 @@ export default {
       }
     },
     setContractor(item) {
+      console.log(item)
       this.contractor = item
       switch (item.type) {
         case "LegalEntity":
@@ -519,7 +579,7 @@ export default {
       formData.append('project', this.project.pk)
       this.$http({
         method: "POST",
-        url: customConst.PAPERFLOW_API + 'create-document-act',
+          url: customConst.PAPERFLOW_API + 'create-document-act',
         data: formData
       }).then(res => {
         this.$refs.docInArbitr.close()
@@ -531,33 +591,77 @@ export default {
   },
   watch: {
     yaml(val) {
-      console.log(val)
       if (val) {
-        const project = val['court_case']
-        let judge = this.judgesList.filter(obj => {
-          return obj.full_name.replace(/\s/g, '') === project['judge_name'].replace(/\s/g, '')
-        })[0]
-        if (judge) {
-          this.project.judge = judge.id
-        } else {
-          this.$emit('createJudge', {
-            court: project['court_name'],
-            judge: project['judge_name'],
-            cab: project['judge_cabinet']
-          })
-        }
-        if (project.hasOwnProperty('next_hearing_date')) {
-          if (project['next_hearing_date']) {
-            this.project.report_date = moment(project['next_hearing_date'], 'DD.MM.YYYY').format('YYYY-MM-DDThh:mm')
-          }
+        const project = val['court_case'];
 
+        // Основные поля проекта
+        this.project.case_number = project['case_number'] || '';
+        if (project['bankruptcy_procedure']) {
+          // Определяем тип процедуры в зависимости от типа контрагента
+          const procedureType = this.contractor.type === 'PhysicalPerson'
+              ? ProcedureType.Physical
+              : ProcedureType.Legal;
+
+          // Приводим к нижнему регистру для сравнения
+          const yamlProcedure = project['bankruptcy_procedure'].toLowerCase().replace('гражданина', "должника");
+          console.log(yamlProcedure)
+          // Ищем совпадение в тексте процедур
+          const matchedProcedure = procedureType.find(pt => {
+                console.log(pt.text.toLowerCase())
+                return pt.text.toLowerCase().includes(yamlProcedure)
+              }
+          );
+          console.log(matchedProcedure)
+          if (matchedProcedure) {
+            this.project.procedure = matchedProcedure.value;
+
+            // Обработка дат
+            if (project['next_hearing_date']) {
+              this.project.report_date = moment(project['next_hearing_date'], 'DD.MM.YYYY').format('YYYY-MM-DDTHH:mm');
+            }
+          }
+        }
+
+        // Поиск судьи
+        if (project['judge_name']) {
+          const judgeName = project['judge_name'].replace(/\s/g, '');
+          const judge = this.judgesList.find(
+              j => j.full_name.replace(/\s/g, '') === judgeName
+          );
+
+          if (judge) {
+            this.project.judge = judge.id;
+          } else {
+            this.$emit('createJudge', {
+              court: project['court_name'],
+              judge: project['judge_name'],
+              cab: project['judge_cabinet']
+            });
+          }
+        }
+
+        // Поиск суда по коду дела
+        if (project['case_number']) {
+          const curtCode = project['case_number'].split("-")[0];
+          const curt = this.courtList.find(c => c.code === curtCode);
+          if (curt) this.project.court = curt.pk;
         }
       }
-
     },
-    callSave(val) {
-      if (val) {
-        this.save()
+    callSave: {
+      immediate: true,
+      handler(val) {
+        if (val) {
+          this.save()
+        }
+      }
+    },
+    rectifiedProject: {
+      immediate: true,
+      handler(val) {
+        if (val) {
+          this.project.pk = val.pk;
+        }
       }
     },
     contractor(val) {
@@ -573,10 +677,9 @@ export default {
       this.project.participant = this.participatorList[0]['pk']
     }
   },
-  destroyed() {
-
-  },
-  components: {SystemMessage, ContractorCreateModal, JudicialAct, DocInArbitr, VueEditor, JudgeCreateModal}
+  components: {
+    SystemMessage, ContractorCreateModal, JudicialAct, DocInArbitr, VueEditor, JudgeCreateModal
+  }
 }
 </script>
 

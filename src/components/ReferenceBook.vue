@@ -23,35 +23,6 @@
       <!--            </v-tab>-->
     </v-tabs>
     <router-view></router-view>
-    <v-speed-dial
-        v-if="$route.name === 'physical-person' || $route.name === 'legal-entity' "
-        bottom
-        right
-        absolute
-        v-model="fab"
-    >
-      <template v-slot:activator>
-        <v-btn
-            v-model="fab"
-            dark
-            fab
-            large
-            absolute
-            color="blue darken-2"
-        >
-          <v-icon v-if="fab">mdi-close</v-icon>
-          <v-icon v-else>mdi-plus</v-icon>
-        </v-btn>
-      </template>
-      <v-btn
-          dark
-          fab
-          v-for="subsystem in subsystems" :key="subsystem.name"
-          @click="showModal(subsystem.name)"
-      >
-        <v-icon>{{ subsystem.icon }}</v-icon>
-      </v-btn>
-    </v-speed-dial>
     <physicalPersonCreate :subsystem="getCurrentSubsystem('Физические лица')"></physicalPersonCreate>
     <LegalEntityCreate :subsystem="getCurrentSubsystem('Организации')"></LegalEntityCreate>
   </v-container>

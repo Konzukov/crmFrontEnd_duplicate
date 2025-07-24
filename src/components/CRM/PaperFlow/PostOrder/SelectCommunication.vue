@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="dialog" width="50wv">
+  <v-dialog v-model="dialog" width="50vw">
     <v-card height="60vh">
       <v-toolbar dense>
         <v-toolbar-title>Выберите способ коммуникации для</v-toolbar-title>
@@ -8,7 +8,7 @@
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-toolbar>
-      <v-card-text style="height: 80%">
+      <v-card-text style="height: 80%; overflow-y: scroll">
         <v-list two-line flat>
           <v-list-item-group v-model="selectedCommunication" color="success">
             <v-list-item v-for="item in communications" :key="item.id" :value="item">
@@ -51,30 +51,49 @@ export default {
   data: () => ({
     dialog: false,
     legal: null,
-    physical: null,
+    person: null,
     communications: [],
     selectedCommunication: null,
   }),
   methods: {
     update(item) {
-      console.log(item)
-      const attributes = item.data.data.attributes
-      const id = item.data.data.id
+      console.log(item);
+      const attributes = item.data.data.attributes;
+      const id = item.data.data.id;
+
+      // Проверяем тип ID - может быть число или строка
+      const communicationId = Number.isInteger(id) ? id : parseInt(id, 10);
+
       if (item.status === 201) {
+        // Добавляем новую запись
         this.communications.push({
-          id: id,
+          id: communicationId,
           communication_type: attributes['communication_type'],
           is_main: attributes['is_main'],
           value: attributes['value'],
-        })
+        });
       }
-      const communication = this.communications.filter(obj => obj.id === Number(id))[0]
+
+      // Находим существующую или добавленную запись
+      const communication = this.communications.find(obj => obj.id === communicationId);
+
       if (communication) {
+        // Обновляем атрибуты
         Object.entries(attributes).forEach(([key, value]) => {
-          communication[key] = value
-        })
-        if (communication['is_main']) {
-          this.selectedCommunication = communication
+          communication[key] = value;
+        });
+
+        // Если запись помечена как основная
+        if (attributes.is_main) {
+          // Сбрасываем флаг is_main у всех других записей
+          this.communications.forEach(comm => {
+            if (comm.id !== communicationId) {
+              comm.is_main = false;
+            }
+          });
+
+          // Устанавливаем текущую запись как выбранную
+          this.selectedCommunication = communication;
         }
       }
     },
@@ -92,9 +111,13 @@ export default {
         }
       })
       if (this.legal) {
+        console.log("formData.append('legal', this.legal.id)")
+        console.log(this.legal)
         formData.append('legal', this.legal.id)
       } else {
-        formData.append('physical', this.physical.id)
+        console.log("formData.append('physical', this.physical.id)")
+        console.log(this.person)
+        formData.append('person', this.person.id)
       }
       this.$store.dispatch('editCommunication', {
         formData: formData,
@@ -108,7 +131,9 @@ export default {
       eventBus.$emit('editCommunication', item)
     },
     addCommunication() {
-      eventBus.$emit('addCommunication', {legal: this.legal.id})
+      console.log("this.legal.id", this.legal?.id)
+      console.log("this.person.id", this.person?.id)
+      eventBus.$emit('addCommunication', {legal: this.legal?.id || null, person: this.person?.id || null})
     },
     getCommunicationMethod(type) {
       return this.communicationMethods[type] || type;
@@ -128,9 +153,13 @@ export default {
     this.$parent.$on('selectCommunication', (item) => {
       console.log(item)
       if (item.type === "LegalEntity") {
+        console.log('LegalEntity')
         this.legal = item
+        this.person = null
       } else {
-        this.physical = item
+        console.log("PhysicalPerson")
+        this.person = item
+        this.legal = null
       }
       this.communications = item.communication || [];
       // Устанавливаем основной способ коммуникации как выбранный по умолчанию

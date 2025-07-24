@@ -8,14 +8,35 @@
         <span>Ожидайте формирование и скачивание архива... {{ downloadProgress }}</span>
       </v-progress-circular>
     </v-overlay>
-    <v-card height="103px" class="case-header">
-      <v-card-title>{{ projectDetail.case_number }}</v-card-title>
-      <v-card-subtitle>Рассматривается в первой инстанции</v-card-subtitle>
-      <span class="primary--text item-additional-info pl-4 mb-2" style="font-size: 12px">
-        {{ projectDetail.code }} : {{ projectDetail | getContractor }} :  {{ projectDetail | getBirthday }} : процедура идет {{
-          projectDetail | dayCount
-        }} дней
-      </span>
+    <v-card height="130px" class="case-header">
+      <v-row align="center" class="ma-0">
+        <v-col cols="7">
+          <v-card-title>{{ projectDetail.case_number }}</v-card-title>
+          <v-card-subtitle>Рассматривается в первой инстанции</v-card-subtitle>
+          <span class="primary--text item-additional-info" style="font-size: 12px">
+            {{ projectDetail.code }} : {{ projectDetail | getContractor }} :
+            {{ projectDetail | getBirthday }} : процедура идет {{ projectDetail | dayCount }} дней
+          </span>
+        </v-col>
+        <v-col cols="5" v-if="sameCaseProjects.length > 1" class="text-right">
+          <div class="project-switcher">
+            <div class="project-links flex justify-end">
+              <v-row v-for="(project, index) in sameCaseProjects"
+                     :key="project.pk">
+                <v-btn
+                    text
+                    small
+                    :color="index === currentProjectIndex ? 'primary' : 'grey'"
+                    @click="switchToIndex(index)"
+                    class="px-1"
+                >
+                  {{ project.procedure | getProcedureShort}}
+                </v-btn>
+              </v-row>
+            </div>
+          </div>
+        </v-col>
+      </v-row>
     </v-card>
     <v-card height="200px" :style="collapse? 'display: none': 'display: block'">
       <v-tabs
@@ -156,21 +177,6 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <!--    <v-speed-dial v-model="fab" bottom left>-->
-    <!--      <template v-slot:activator>-->
-    <!--        <v-btn v-model="fab" color="blue darken-2" dark fab>-->
-    <!--          <v-icon v-if="fab">-->
-    <!--            mdi-close-->
-    <!--          </v-icon>-->
-    <!--          <v-icon v-else>-->
-    <!--            mdi-cloud-download-outline-->
-    <!--          </v-icon>-->
-    <!--        </v-btn>-->
-    <!--      </template>-->
-    <!--      <v-btn fab dark small color="red" @click="downloadArchive(projectPK)">-->
-    <!--        <v-icon>mdi-folder-download</v-icon>-->
-    <!--      </v-btn>-->
-    <!--    </v-speed-dial>-->
   </v-container>
 </template>
 
@@ -181,6 +187,7 @@ import ProjectDetailParts from "@/components/referenceBook/Project/ProjectDetail
 import ProjectDetailJudge from "@/components/referenceBook/Project/ProjectDetail/ProjectDetailJudge";
 // import {saveAs} from 'file-saver'
 import moment from "moment";
+import {ProcedureType} from "@/const/dataTypes";
 
 
 export default {
@@ -197,8 +204,29 @@ export default {
     projectFreePart: null,
     archiveLoader: false,
     downloadProgress: 0,
+    sameCaseProjects: [],       // Проекты с одинаковым номером дела
+    currentProjectIndex: 0,
   }),
   methods: {
+    async load() {
+      this.projectPK = this.$route.params['pk']
+      await this.$store.dispatch('getProjectDetail', this.$route.params['pk']).then(async (data) => {
+        if (data.case_number) {
+          await this.loadSameCaseProjects(data.case_number);
+        }
+        this.projectFreePart = data?.['procedure_free_part']
+        if (this.$route.name !== 'project-report') {
+          try {
+            // Используем replace вместо push
+            await this.$router.replace({name: 'project-report'})
+          } catch (error) {
+            if (error.name !== 'NavigationDuplicated') {
+              console.error("Navigation error:", error)
+            }
+          }
+        }
+      })
+    },
     copyUrl() {
       navigator.clipboard.writeText(this.downloadUrl).then(() => {
         this.copyUrlText = true
@@ -223,6 +251,39 @@ export default {
         console.log(err)
       })
     },
+    async loadSameCaseProjects(caseNumber) {
+      if (!caseNumber) return;
+      try {
+        const response = await this.$store.dispatch('getProjectsByCaseNumber', caseNumber);
+        this.sameCaseProjects = response.data.data.data;
+        this.currentProjectIndex = this.sameCaseProjects.findIndex(
+            p => p.pk === this.projectPK
+        );
+      } catch (error) {
+        console.error('Ошибка загрузки проектов:', error);
+      }
+    },
+    switchProject(direction) {
+      if (direction === 'prev' && this.currentProjectIndex > 0) {
+        this.currentProjectIndex--;
+      } else if (direction === 'next' && this.currentProjectIndex < this.sameCaseProjects.length - 1) {
+        this.currentProjectIndex++;
+      }
+
+      this.switchToIndex(this.currentProjectIndex);
+    },
+    switchToIndex(index) {
+      if (index >= 0 && index < this.sameCaseProjects.length && index !== this.currentProjectIndex) {
+        const project = this.sameCaseProjects[index];
+        // Добавляем /report к пути
+        this.$router.push({
+          name: 'project-detail',
+          params: {pk: project.pk},
+          path: `/${project.pk}/report`  // Добавляем путь /report
+        });
+        this.load()
+      }
+    },
     uploadToCloud(projectPK) {
       this.$http({
         method: 'GET',
@@ -231,12 +292,40 @@ export default {
     }
   },
   computed: {
+    currentProcedureName() {
+      const proc = [...ProcedureType.Legal, ...ProcedureType.Physical]
+          .find(p => p.value === this.projectDetail.procedure);
+      return proc ? proc.text : '';
+    },
     ...
         mapGetters({
           projectDetail: 'projectDetailData'
         })
   },
+  watch: {
+    '$route.params.pk': {
+      handler(newPk) {
+        if (newPk && newPk !== this.projectPK) {
+          this.projectPK = newPk;
+          this.$store.dispatch('getProjectDetail', newPk).then(data => {
+            this.projectFreePart = data?.['procedure_free_part'];
+            if (this.sameCaseProjects.length) {
+              this.currentProjectIndex = this.sameCaseProjects.findIndex(
+                  p => p.pk === newPk
+              );
+            }
+          });
+        }
+      },
+      immediate: true
+    }
+  },
   filters: {
+    getProcedureShort(procedure) {
+      const proc = ProcedureType.Legal.concat(ProcedureType.Physical)
+          .find(p => p.value === procedure);
+      return proc ? proc.short || proc.text : '';
+    },
     getContractor(item) {
       if (item.legal_contractor) {
         console.log(item.legal_contractor)
@@ -247,7 +336,7 @@ export default {
     },
     getBirthday(item) {
       if (item.physical_contractor) {
-        return moment(item.physical_contractor.birthday).format('DD.MM.YYYY')
+        return item.physical_contractor.birthday
       } else {
         return '----'
       }
@@ -261,11 +350,7 @@ export default {
     }
   },
   async mounted() {
-    this.projectPK = this.$route.params['pk']
-    await this.$store.dispatch('getProjectDetail', this.$route.params['pk']).then(async (data) => {
-      this.projectFreePart = data?.['procedure_free_part']
-      await this.$router.push({name: 'project-report'})
-    })
+    this.load()
   },
   components: {
     ProjectDetailParts,
@@ -275,6 +360,26 @@ export default {
 </script>
 
 <style scoped>
+.project-switcher {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.project-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 200px;
+  margin: 0 5px;
+}
+
+.project-links .v-btn {
+  min-width: 40px;
+  margin: 2px;
+  font-size: 0.75rem;
+}
+
 .link-actions input[type="text"] {
   width: 100%;
   padding: 8px;

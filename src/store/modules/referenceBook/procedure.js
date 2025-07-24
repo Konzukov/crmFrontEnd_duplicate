@@ -44,7 +44,7 @@ export default {
                 return item
             })
         },
-        syncComplaints(state, data){
+        syncComplaints(state, data) {
             state.complaints = [...data]
         },
         syncAddComplaints(state, data) {
@@ -358,7 +358,7 @@ export default {
         involvedPersonData(state) {
             return state.involvedPerson
         },
-        complaintsData(state){
+        complaintsData(state) {
             return state.complaints
         }
     }

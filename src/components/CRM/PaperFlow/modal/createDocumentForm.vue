@@ -206,7 +206,7 @@ export default {
       form: {
         file: '',
         receiving_date: '',
-        from_physical: '',
+        from_physical_person: '',
         out_number: null,
         from_legal: '',
         route: true,
@@ -320,11 +320,11 @@ export default {
     },
     setFrom(item) {
       if (item['type'] === 'PhysicalPerson') {
-        this.form.from_physical = item
+        this.form.from_physical_person = item
         this.form.from_legal = ''
       } else {
         this.form.from_legal = item
-        this.form.from_physical = ''
+        this.form.from_physical_person = ''
       }
     },
     addContractor() {
@@ -413,8 +413,8 @@ export default {
     },
     contractorList: {
       get() {
-        if (this.$store.getters.contractorListData) {
-          return this.$store.getters.contractorListData
+        if (this.$store.getters.allRefData) {
+          return this.$store.getters.allRefData
         }
         return new Array()
       }

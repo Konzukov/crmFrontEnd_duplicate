@@ -65,7 +65,7 @@ export default {
   }),
   computed: {
     ...mapGetters({
-      contractorList: 'contractorListData',
+      contractorList: 'allRefData',
       docTypes: 'documentStorageType'
     }),
     projectList() {
@@ -93,7 +93,7 @@ export default {
     ...mapActions({
       getProjectList: "getProjectList",
       getLegalContractor: "getLegalEntity",
-      getPhysicalContractor: "getPhysicalPerson",
+      getPhysicalContractor: "fetchPhysicalPersons",
       getDocumentType: 'getDocumentType'
     }),
     async open() {

@@ -55,12 +55,12 @@
                   </v-row>
                 </v-col>
                 <v-col md="2" class="item-from">
-                   <v-row justify="end">
-                     <template v-if="item.post_type === 'EMAIL'">{{item.rpo}}</template>
-                     <template v-else-if="item.post_type === 'EPOST'">
-                       <a :href="`https://www.pochta.ru/tracking?barcode=${item.rpo}`" target="_blank">{{item.rpo}}</a>
-                     </template>
-                   </v-row>
+                  <v-row justify="end">
+                    <template v-if="item.post_type === 'EMAIL'">{{ item.rpo }}</template>
+                    <template v-else-if="item.post_type === 'EPOST'">
+                      <a :href="`https://www.pochta.ru/tracking?barcode=${item.rpo}`" target="_blank">{{ item.rpo }}</a>
+                    </template>
+                  </v-row>
                 </v-col>
                 <v-col md="1">
                   <v-row class="flex-column justify-space-between">
@@ -90,7 +90,8 @@
                             Показать документ
                           </v-list-item-title>
                         </v-list-item>
-                        <v-list-item v-if="item.type === 'document'" link @click="addToSendQueue(item)">
+                        <v-list-item v-if="item.type === 'document' || item.type === 'post'" link
+                                     @click="addToSendQueue(item)">
                           <v-list-item-title>
                             Отправить документ
                           </v-list-item-title>
@@ -138,7 +139,7 @@
                 flat
                 class="overflow-x-hidden">
           <DocumentPreView :document-list="selectedDocumentList"></DocumentPreView>
-<!--          <DocumentViewer :documentUrl="documentUrl" @closeView="closeView" v-if="detailView"></DocumentViewer>-->
+          <!--          <DocumentViewer :documentUrl="documentUrl" @closeView="closeView" v-if="detailView"></DocumentViewer>-->
           <TaskDetail v-if="showDetail" :task="selectedTask"
                       @hideDetail="hideDetail()"
                       @editTask="editTask"
@@ -165,6 +166,17 @@
       </v-col>
     </v-row>
     <v-container class="d-none">
+<!--      <v-dialog v-model="selectToSend">-->
+<!--        <v-card>-->
+<!--          <v-card-text>-->
+<!--            <v-list>-->
+<!--              <v-list-item v-for="(doc, i) in selectDocToSend" :key="i">-->
+<!--                {{ doc }} {{ i }}-->
+<!--              </v-list-item>-->
+<!--            </v-list>-->
+<!--          </v-card-text>-->
+<!--        </v-card>-->
+<!--      </v-dialog>-->
       <ErrorHandling></ErrorHandling>
       <editDocument></editDocument>
       <ChangeFile @finished="getData"></ChangeFile>
@@ -189,6 +201,7 @@ import TaskCreateComponent from "@/components/CRM/Task/TaskCreateComponent";
 import EventCreateComponent from "@/components/CRM/Event/EventCreateComponent";
 import SystemMessage from "@/components/UI/SystemMessage.vue";
 import DocumentPreView from "@/components/CRM/PaperFlow/DocumentPreView/DocumentPreView.vue";
+
 export default {
   props: ['project', 'collapsed'],
   name: "ProjectReport",
@@ -200,6 +213,8 @@ export default {
     },
     page: 1,
     pageCount: 0,
+    selectToSend: false,
+    selectDocToSend: [],
     pageSize: 8,
     historyList: [],
     detailView: false,
@@ -246,8 +261,16 @@ export default {
     },
     addToSendQueue(item, force = false) {
       let formData = new FormData()
-      this.sendQueueItem = item
-      formData.append('doc', item.id)
+      if (item.type === 'post' && item.post_documents.length > 0) {
+        if (item.post_documents.length === 1) {
+          this.sendQueueItem = item.post_documents[0]
+        } else {
+          this.selectToSend = true
+        }
+      } else {
+        this.sendQueueItem = item
+      }
+      formData.append('doc', this.sendQueueItem.id)
       formData.append('force', force.toString())
       this.$store.dispatch('addToSendQueue', formData).then(res => {
         this.sendQueueItem = null
@@ -257,6 +280,7 @@ export default {
         this.state = 'error'
         this.$emit('showSystemMessage', {response: err, state: this.state, send: false})
       })
+
     },
     downloadItem(item) {
       switch (item.type) {
@@ -380,7 +404,7 @@ export default {
         console.log(item)
         this.selectedDocumentList = [...item['post_documents']]
 
-      }else{
+      } else {
         this.documentUrl = item.url
       }
     },
@@ -459,7 +483,7 @@ export default {
           }
           return data
         }
-        return new Array()
+        return []
       }
     },
     unprocessedReportData: {
@@ -467,7 +491,7 @@ export default {
         if (this.$store.getters.unprocessedProjectReportListData) {
           return this.$store.getters.unprocessedProjectReportListData
         }
-        return new Array()
+        return []
       }
     },
     pages() {

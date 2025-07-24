@@ -34,6 +34,7 @@
     "vue-functional-calendar": "^2.9.98",
     "vue-pdf-app": "^2.1.0",
     "vue-router": "^3.5.1",
+    "vue-uuid": "^3.0.0",
     "vue-vnc": "^0.0.4",
     "vue2-datepicker": "^3.11.1",
     "vue2-editor": "^2.10.3",

@@ -71,68 +71,120 @@
               </v-textarea>
             </v-col>
           </v-row>
-          <hr>
-          <v-row justify="center"><h4 style="background-color: #FFFFFF">Способы коммуникации</h4></v-row>
-          <template v-if="form.communication.length > 0">
-            <v-row justify="start" v-for="(item, i) in form.communication" :key="i">
-              <v-col md="4" lg="4" sm="12" xs="12">
-                <v-autocomplete disabled outlined dense label="Способ коммуникации" :items="communicationMethod"
-                                v-model="item.communication_type"
-                ></v-autocomplete>
-              </v-col>
-              <v-col md="7" lg="7" sm="11" xs="11">
-                <template v-if="form.communication_type === 'Email'">
-                  <v-text-field disabled dense outlined label="Email" v-model="item.value"></v-text-field>
+
+          <v-expansion-panels flat multiple>
+            <v-expansion-panel>
+              <v-expansion-panel-header>Способы коммуникации</v-expansion-panel-header>
+              <v-expansion-panel-content>
+                <template v-if="form.communication.length > 0">
+                  <v-row justify="start" v-for="(item, i) in form.communication" :key="i">
+                    <v-col md="4" lg="4" sm="12" xs="12">
+                      <v-autocomplete disabled outlined dense label="Способ коммуникации" :items="communicationMethod"
+                                      v-model="item.communication_type"
+                      ></v-autocomplete>
+                    </v-col>
+                    <v-col md="7" lg="7" sm="11" xs="11">
+                      <template v-if="form.communication_type === 'Email'">
+                        <v-text-field disabled dense outlined label="Email" v-model="item.value"></v-text-field>
+                      </template>
+                      <template v-else>
+                        <v-textarea disabled dense outlined label="Почтовый адрес" rows="2"
+                                    v-model="item.value"></v-textarea>
+                      </template>
+                    </v-col>
+                    <v-col md="1" lg="1" sm="1" xs="1" class="mt-3">
+                      <v-row align="center">
+                        <v-btn icon small color="primary" @click="editCommunication(item)">
+                          <v-icon>mdi-pencil</v-icon>
+                        </v-btn>
+                      </v-row>
+                      <v-row align="center">
+                        <v-btn icon small color="error" @click="deleteCommunication(item)">
+                          <v-icon>mdi-delete</v-icon>
+                        </v-btn>
+                      </v-row>
+                    </v-col>
+                  </v-row>
                 </template>
-                <template v-else>
-                  <v-textarea disabled dense outlined label="Почтовый адрес" rows="2" v-model="item.value"></v-textarea>
-                </template>
-              </v-col>
-              <v-col md="1" lg="1" sm="1" xs="1" class="mt-3">
-                <v-row align="center">
-                  <v-btn icon small color="primary" @click="editCommunication(item)">
-                    <v-icon>mdi-pencil</v-icon>
+                <v-row justify="end" class="mb-2">
+                  <v-btn :disabled="!form.id" color="primary" @click="addCommunication">
+                    Добавить
                   </v-btn>
                 </v-row>
-                <v-row align="center">
-                  <v-btn icon small color="error" @click="deleteCommunication(item)">
-                    <v-icon>mdi-delete</v-icon>
-                  </v-btn>
+              </v-expansion-panel-content>
+            </v-expansion-panel>
+            <v-expansion-panel>
+              <v-expansion-panel-header>Должностное лицо</v-expansion-panel-header>
+              <v-expansion-panel-content>
+                <v-row justify="start" class="mb-2">
+                  <v-col lg="5" md="5" sm="12" xs="12">
+                    <v-text-field outlined dense label="Руководитель"
+                                  v-model="form.additional_info['supervisor']"></v-text-field>
+                  </v-col>
+                  <v-col lg="7" md="7" sm="12" xs="12">
+                    <v-text-field outlined dense label="Должность"
+                                  v-model="form.additional_info['supervisorTitle']"></v-text-field>
+                  </v-col>
                 </v-row>
-              </v-col>
-            </v-row>
-          </template>
-          <v-row justify="end" class="mb-2">
-            <v-btn :disabled="!form.id" color="primary" @click="addCommunication">
-              Добавить
-            </v-btn>
-          </v-row>
-          <hr>
-          <v-row justify="center"><h4 style="background-color: #FFFFFF">Должностное лицо</h4></v-row>
-          <v-row justify="start" class="mb-2">
-            <v-col lg="5" md="5" sm="12" xs="12">
-              <v-text-field outlined dense label="Руководитель"
-                            v-model="form.additional_info['supervisor']"></v-text-field>
-            </v-col>
-            <v-col lg="7" md="7" sm="12" xs="12">
-              <v-text-field outlined dense label="Должность"
-                            v-model="form.additional_info['supervisorTitle']"></v-text-field>
-            </v-col>
-          </v-row>
-          <hr>
-          <v-row justify="center"><h4 style="background-color: #FFFFFF">Основной вид деятельности</h4></v-row>
-          <v-row justify="start">
-            <v-col lg="2" md="2" sm="4" xs="4">
-              <v-text-field outlined dense label="Код ОКВЭД"
-                            v-model="form.okved_code"
-              ></v-text-field>
-            </v-col>
-            <v-col lg="10" md="10" sm="8" xs="8">
-              <v-text-field outlined dense label="Наименование ОКВЭД"
-                            v-model="form.okved_name"
-              ></v-text-field>
-            </v-col>
-          </v-row>
+              </v-expansion-panel-content>
+            </v-expansion-panel>
+            <v-expansion-panel>
+              <v-expansion-panel-header>Основной вид деятельности</v-expansion-panel-header>
+              <v-expansion-panel-content>
+                <v-row justify="start">
+                  <v-col lg="2" md="2" sm="4" xs="4">
+                    <v-text-field outlined dense label="Код ОКВЭД"
+                                  v-model="form.okved_code"
+                    ></v-text-field>
+                  </v-col>
+                  <v-col lg="10" md="10" sm="8" xs="8">
+                    <v-text-field outlined dense label="Наименование ОКВЭД"
+                                  v-model="form.okved_name"
+                    ></v-text-field>
+                  </v-col>
+                </v-row>
+              </v-expansion-panel-content>
+            </v-expansion-panel>
+            <v-expansion-panel>
+              <v-expansion-panel-header>Дополнительные сведенья</v-expansion-panel-header>
+              <v-expansion-panel-content>
+                <v-card
+                    v-for="(info, index) in filteredAdditionalInfo"
+                    :key="index"
+                    style="height: max-content"
+                >
+                  <v-card-text>
+                    <v-row justify="start" class="mb-2">
+                      <v-col class="pt-0" lg="7" md="7" sm="12" xs="12">
+                        <v-autocomplete dense outlined label="Доп. данные"
+                                        :items="additionalField"
+                                        item-value="val"
+                                        item-text="text"
+                                        v-model="info.type"
+                        ></v-autocomplete>
+                      </v-col>
+                      <v-col class="pt-0" lg="5" md="5" sm="12" xs="12">
+                        <template v-if="info.type==='SRO_REG_DATE'">
+                          <DatePicker v-model="info.value" value-type="format" format="DD.MM.YYYY"></DatePicker>
+                        </template>
+                        <v-text-field v-else outlined dense label="Значение"
+                                      v-model="info.value"></v-text-field>
+                      </v-col>
+                    </v-row>
+                  </v-card-text>
+                </v-card>
+                <v-btn
+                    small
+                    color="primary"
+                    @click="addAdditionalInfo"
+                    class="mt-2"
+                >
+                  <v-icon left>mdi-plus</v-icon>
+                  Добавить сведенья
+                </v-btn>
+              </v-expansion-panel-content>
+            </v-expansion-panel>
+          </v-expansion-panels>
         </v-card-text>
         <v-card-actions v-if="showActionButton">
           <v-row justify="space-around">
@@ -154,16 +206,14 @@
 
 <script>
 import {CommunicationMethodType, LegalEntityType} from '@/const/dataTypes'
-
-import {isObject} from 'lodash'
 import CommunicationForm from "@/components/referenceBook/Communication/CommunicationForm.vue";
 import {eventBus} from "@/bus";
 import SystemMessage from "@/components/UI/SystemMessage.vue";
 import ConfirmDialog from "@/components/UI/ConfirmDialog.vue";
+import moment from "moment";
 
 export default {
   components: {ConfirmDialog, SystemMessage, CommunicationForm},
-  // props: ['legalEntityData', 'callSave', 'showActionButton'],
   props: {
     legalEntityData: {
       type: Object
@@ -180,10 +230,16 @@ export default {
   name: "LegalEntityForm",
   data: () => ({
     state: null,
+    additionalField: [
+      {val: 'SRO_NUM', text: 'Номер саморегулируемой организации'},
+      {val: 'SRO_REG_DATE', text: 'Дата регистрации саморегулируемой организации'},
+    ],
     errorMessage: {
       inn: ''
     },
     action: 'create',
+    additionalInfoList: [],
+    nextId: 1,
     form: {
       id: null,
       pk: null,
@@ -201,39 +257,79 @@ export default {
       additional_info: {
         supervisor: null,
         supervisorTitle: null,
-        update_date: []
+        update_date: [],
       }
     },
     legalType: LegalEntityType,
     communicationMethod: CommunicationMethodType
   }),
   methods: {
+    addAdditionalInfo() {
+      this.additionalInfoList.push({
+        id: this.nextId++,
+        type: '',
+        value: ''
+      });
+    },
     closeEdit() {
       Object.assign(this.$data, this.$options.data())
     },
     update(id) {
-      if (id){
-        this.$store.dispatch('getLegalEntityDetailInfo', id).then(item => {
-        for (let [key, value] of Object.entries(item)) {
-          if (key === 'fullName') {
-            this.form.full_name = value
-          } else if (key === 'additional_info') {
-            if (value) {
-              this.form.additional_info = JSON.parse(value)
-            } else {
-              this.form.additional_info = {
-                supervisor: null,
-                supervisorTitle: null,
-                update_date: []
-              }
-            }
-          } else {
-            this.form[key] = value
-          }
-        }
-      })
-      }
+      this.additionalInfoList = [];
+      this.nextId = 1;
 
+      if (!id) return;
+
+      this.$store.dispatch('getLegalEntityDetailInfo', id)
+          .then(item => {
+            // Простое копирование данных
+            this.form = {...this.form, ...item};
+
+            // Обработка additional_info
+            this.processAdditionalInfo(item.additional_info);
+          })
+          .catch(error => {
+            console.error("Ошибка загрузки данных:", error);
+            this.state = 'error';
+            eventBus.$emit('showSystemMessage', {
+              response: 'Ошибка загрузки данных юридического лица',
+              state: this.state
+            });
+          });
+    },
+    processAdditionalInfo(additionalInfo) {
+      try {
+        // Конвертация строки в объект
+        const info = typeof additionalInfo === 'string'
+            ? JSON.parse(additionalInfo)
+            : additionalInfo || {};
+
+        // Сохраняем системные поля
+        this.form.additional_info = {
+          supervisor: info.supervisor || null,
+          supervisorTitle: info.supervisorTitle || null,
+          update_date: info.update_date || []
+        };
+
+        // Обрабатываем дополнительные поля
+        const systemFields = ['supervisor', 'supervisorTitle', 'update_date'];
+        Object.entries(info).forEach(([key, value]) => {
+          if (!systemFields.includes(key)) {
+            this.additionalInfoList.push({
+              id: this.nextId++,
+              type: key,
+              value: value
+            });
+          }
+        });
+      } catch (e) {
+        console.error("Ошибка обработки additional_info:", e);
+        this.form.additional_info = {
+          supervisor: null,
+          supervisorTitle: null,
+          update_date: []
+        };
+      }
     },
     addCommunication() {
       eventBus.$emit('addCommunication', {legal: this.form.id})
@@ -241,30 +337,27 @@ export default {
     editCommunication(item) {
       eventBus.$emit('editCommunication', item)
     },
-    confirmDeleteCommunication(item){
-      this.$store.dispatch('deleteCommunication', {id: item.id}).then(()=>{
+    confirmDeleteCommunication(item) {
+      this.$store.dispatch('deleteCommunication', {id: item.id}).then(() => {
         this.update(this.form.id)
       })
     },
-    deleteCommunication(item){
+    deleteCommunication(item) {
       eventBus.$emit('deleteCommunication', item)
     },
-    prepareFormData() {
-      const formData = new FormData();
+    formatDateForStorage(dateString) {
+      if (!dateString) return '';
 
-      // Добавляем все поля из form
-      Object.entries(this.form).forEach(([key, value]) => {
-        if (key !== 'communication') {
-          if (value !== null && value !== undefined) {
-            if (isObject(value)) {
-              formData.append(key, JSON.stringify(value));
-            } else {
-              formData.append(key, value.toString());
-            }
-          }
+      // Пробуем разные форматы
+      const formats = ['DD.MM.YYYY', 'YYYY-MM-DD', 'YYYY/MM/DD'];
+      for (const format of formats) {
+        const date = moment(dateString, format);
+        if (date.isValid()) {
+          return date.format('YYYY-MM-DD');
         }
-      });
-      return formData;
+      }
+
+      return dateString; // Возвращаем как есть, если не распознано
     },
     copyAddress() {
       this.form.postal_address = this.form.legal_address
@@ -273,7 +366,6 @@ export default {
       str = str.toLowerCase()
       return str.charAt(0).toUpperCase() + str.slice(1);
     },
-
     async loadEGRULData() {
       this.errorMessage.inn = ''
       const url = "https://egrul.itsoft.ru/";
@@ -366,9 +458,8 @@ export default {
       }
     },
     createLegalEntity() {
-      const formData = this.prepareFormData();
       if (!this.form.id) {
-        this.$store.dispatch('createLegalEntity', formData).then(res => {
+        this.$store.dispatch('createLegalEntity', this.form).then(res => {
           this.state = 'success'
           eventBus.$emit('showSystemMessage', {response: res, state: this.state, send: false})
         }).catch(err => {
@@ -376,7 +467,7 @@ export default {
           eventBus.$emit('showSystemMessage', {response: err, state: this.state, send: false})
         })
       } else {
-        this.$store.dispatch('editLegalEntity', {data: formData, legalEntityDetail: this.form}).then(res => {
+        this.$store.dispatch('editLegalEntity', this.form).then(res => {
           this.state = 'success'
           eventBus.$emit('showSystemMessage', {response: res, state: this.state, send: false})
         }).catch(err => {
@@ -384,22 +475,41 @@ export default {
           eventBus.$emit('showSystemMessage', {response: err, state: this.state, send: false})
         })
       }
-
     }
   },
   watch: {
-    callSave(val) {
+    legalEntityData(val) {
       if (val) {
-        this.createLegalEntity()
+        this.update(val.id)
       }
     },
-    legalEntityData(val){
-      if (val){
-        this.update(val.id)
+    additionalInfoList: {
+      deep: true,
+      handler() {
+        // Автоматическое обновление form.additional_info
+        const updatedInfo = {...this.form.additional_info};
+
+        // Удаляем старые дополнительные поля
+        const systemFields = ['supervisor', 'supervisorTitle', 'update_date'];
+        Object.keys(updatedInfo).forEach(key => {
+          if (!systemFields.includes(key)) delete updatedInfo[key];
+        });
+
+        // Добавляем новые поля
+        this.additionalInfoList.forEach(item => {
+          if (item.type && item.value) {
+            updatedInfo[item.type] = item.value;
+          }
+        });
+
+        this.form.additional_info = updatedInfo;
       }
     }
   },
   computed: {
+    filteredAdditionalInfo() {
+      return this.additionalInfoList;
+    },
     userData() {
       return this.$store.getters.authUserData
     },
@@ -430,5 +540,11 @@ export default {
   padding-bottom: 0;
   padding-top: 8px;
 
+}
+
+.mx-datepicker {
+  position: relative;
+  display: inline-block;
+  width: 100%;
 }
 </style>

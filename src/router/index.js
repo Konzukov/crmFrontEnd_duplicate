@@ -3,7 +3,7 @@ import VueRouter from 'vue-router'
 import Authorization from '../components/Authorization'
 import Dashboard from "../components/Dashboard";
 import ReferenceBook from "../components/ReferenceBook"
-import PhysicalPerson from "../components/referenceBook/PhysicalPerson/PhysicalPerson";
+// import PhysicalPerson from "../components/referenceBook/PhysicalPerson/PhysicalPerson";
 import LegalEntity from "../components/referenceBook/LegalEntity";
 import Participator from "../components/referenceBook/Participator";
 import CRM from "../components/CRM";
@@ -84,15 +84,16 @@ const routes = [
                 props: true,
                 children: [
                     {
-                        path: 'physical-person-v2',
-                        name: 'physicalPersonV2',
-                         component: () => import('@/views/PhysicalPersonV2/PhysicalPerson.vue')
-                    },
-                    {
                         path: 'physical-person',
                         name: 'physical-person',
-                        component: PhysicalPerson
-                    }, {
+                         component: () => import('@/views/PhysicalPersonV2/PhysicalPerson.vue')
+                    },
+                    // {
+                    //     path: 'physical-person',
+                    //     name: 'physical-person',
+                    //     component: PhysicalPerson
+                    // },
+                    {
                         path: 'legal-entity',
                         name: 'legal-entity',
                         component: LegalEntity

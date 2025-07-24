@@ -17,8 +17,8 @@ export default {
 
     },
     mutations: {
-        syncPostAccount(state, postAccount){
-          state.postAccount = postAccount
+        syncPostAccount(state, postAccount) {
+            state.postAccount = postAccount
         },
         syncIncomingPost(state, inPostList) {
             state.incomingPost = inPostList
@@ -67,18 +67,18 @@ export default {
         }
     },
     actions: {
-        getPostAccount({commit}){
-          return new Promise((resolve, reject) => {
-              axios({
-                  method: "GET",
-                  url: customConst.PAPERFLOW_API + 'post-account'
-              }).then(res=>{
-                  commit('syncPostAccount', res.data.data.data)
-                  resolve(res)
-              }).catch(err=>{
-                  reject(err)
-              })
-          })
+        getPostAccount({commit}) {
+            return new Promise((resolve, reject) => {
+                axios({
+                    method: "GET",
+                    url: customConst.PAPERFLOW_API + 'post-account'
+                }).then(res => {
+                    commit('syncPostAccount', res.data.data.data)
+                    resolve(res)
+                }).catch(err => {
+                    reject(err)
+                })
+            })
         },
         getAllPost({commit}) {
             return new Promise((resolve, reject) => {
@@ -204,13 +204,27 @@ export default {
                 })
             })
         },
-
+        getProjectPost({commit}, pk) {
+            let formData = new FormData()
+            formData.append('project', pk)
+            return new Promise((resolve, reject) => {
+                axios({
+                    method: "POST",
+                    url: customConst.PAPERFLOW_API + `project-post`,
+                    data: formData
+                }).then((res => {
+                    resolve(res.data.data.data)
+                })).catch(err => {
+                    reject(err)
+                })
+            })
+        },
 
     },
     getters: {
-        postAccountData(state){
+        postAccountData(state) {
             console.log(state.postAccount)
-          return state.postAccount.filter(obj=> obj['post_type'] === 'ElectronicMail' || obj['post_type'] === 'PaperMail')
+            return state.postAccount.filter(obj => obj['post_type'] === 'ElectronicMail' || obj['post_type'] === 'PaperMail')
         },
         allPostListData(state) {
             return state.post

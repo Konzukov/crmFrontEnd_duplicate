@@ -62,7 +62,7 @@
                       :items="contractorList"
                       dense
                       v-model="from"
-                      label="От кого"
+                      :label="form.route? 'Отправитель': 'Получатель'"
                       outlined
                       return-object
                       clearable
@@ -81,7 +81,7 @@
                   <v-autocomplete
                       outlined
                       dense
-                      label="Кому"
+                      :label="form.route? 'Получатель': 'Отправитель'"
                       :items="participatorList"
                       clearable
                       v-model="form.to"
@@ -180,7 +180,7 @@ export default {
       this.overlay = true
       this.$store.dispatch('getParticipator').then(() => {
         this.$store.dispatch('getLegalEntity').then(() => {
-          this.$store.dispatch('getPhysicalPerson').then(() => {
+          this.$store.dispatch('fetchPhysicalPersons').then(() => {
             this.$store.dispatch('getProjectList').then(() => {
               this.$store.dispatch('allSystemUser').then(() => {
                 this.$store.dispatch('getProjectList').then(() => {
@@ -283,7 +283,6 @@ export default {
       }
     },
     changeRoute() {
-      console.log('click')
       this.route = !this.route
       this.form.route = this.route
     }
@@ -302,15 +301,15 @@ export default {
         if (this.$store.getters.participatorList) {
           return this.$store.getters.participatorList
         }
-        return new Array()
+        return []
       }
     },
     contractorList: {
       get() {
-        if (this.$store.getters.contractorListData) {
-          return this.$store.getters.contractorListData
+        if (this.$store.getters.allRefData) {
+          return this.$store.getters.allRefData
         }
-        return new Array()
+        return []
       }
     },
     projectList: {
@@ -318,7 +317,7 @@ export default {
         if (this.$store.getters.projectListData) {
           return this.$store.getters.projectListData
         }
-        return new Array()
+        return []
       },
     },
     ...mapGetters({

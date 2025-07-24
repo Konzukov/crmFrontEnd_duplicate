@@ -235,7 +235,7 @@ export default {
   created() {
     this.$store.dispatch('getParticipator').then(() => {
       this.$store.dispatch('getLegalEntity').then(() => {
-        this.$store.dispatch('getPhysicalPerson')
+        this.$store.dispatch('fetchPhysicalPersons')
       })
     })
     this.$parent.$on('addContract', ({contractor, participant}) => {

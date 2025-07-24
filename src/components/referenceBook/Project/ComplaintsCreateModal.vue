@@ -142,7 +142,7 @@ export default {
   created() {
     if (this.allRefList.length === 0) {
       this.$store.dispatch('getLegalEntity')
-      this.$store.dispatch('getPhysicalPerson')
+      this.$store.dispatch('fetchPhysicalPersons')
     }
     eventBus.$on('addComplaints', (project) => {
       this.form.project = project

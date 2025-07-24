@@ -77,7 +77,7 @@ export default {
     dispatchData() {
       this.$store.dispatch('getParticipator');
       this.$store.dispatch('getLegalEntity');
-      this.$store.dispatch('getPhysicalPerson');
+      this.$store.dispatch('fetchPhysicalPersons');
       this.$store.dispatch('getProjectList');
       this.$store.dispatch('getUploadingTemplates')
       this.$store.dispatch('getDocType')

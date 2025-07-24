@@ -471,7 +471,7 @@
         created() {
             this.$store.dispatch('getParticipator').then(() => {
                 this.$store.dispatch('getLegalEntity').then(() => {
-                    this.$store.dispatch('getPhysicalPerson').then(() => {
+                    this.$store.dispatch('fetchPhysicalPersons').then(() => {
                         this.$store.dispatch('getProjectList').then(() => {
 
                         })

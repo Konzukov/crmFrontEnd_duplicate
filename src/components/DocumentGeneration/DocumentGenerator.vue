@@ -430,7 +430,7 @@
                                       @change="checkForm"
                                       dense outlined v-model="dataFile" :label="field.name"></v-file-input>
                       </template>
-                      <v-text-field v-else-if="!field['auto_generated']" :rules="field.required? rules.required: []"
+                      <v-text-field v-else-if="!field['auto_generated']" :rules="getFieldRules(field)"
                                     @change="checkForm"
                                     dense outlined v-model="templateFields[field.value]"
                                     :label="field.name"></v-text-field>
@@ -709,6 +709,32 @@
                                             v-model="employmentService"></v-autocomplete>
                           </v-col>
                         </v-row>
+                        <!--                  POST -->
+                        <v-row v-if="field.value ==='OUT_POST'" justify="start">
+                          <v-col cols="12">
+                            <v-autocomplete outlined dense :label="field.name"
+                                            :items="postList"
+                                            item-text="name"
+                                            item-value="pk"
+                                            :rules="rules.required"
+                                            :error-messages="gibdd && !gibdd.legal_address? 'Необходимо заполнить данные': ''"
+                                            v-model="templateFields[field.value]">
+                              <template v-slot:selection="data">
+                                <v-chip>
+                                  {{ data.item.rpo }}
+                                </v-chip>
+                              </template>
+                              <template v-slot:item="data">
+                                <v-list-item-content>
+                                  <v-list-item-title>{{ data.item.from_who.fullName }}</v-list-item-title>
+                                  <v-list-item-subtitle style="font-size: 10px; color: #00a6ee">
+                                    {{ data.item.rpo }} - {{ data.item.departure_date }}
+                                  </v-list-item-subtitle>
+                                </v-list-item-content>
+                              </template>
+                            </v-autocomplete>
+                          </v-col>
+                        </v-row>
                         <!--EMPLOYMENT_SERVICE-->
                         <v-row v-if="field.value ==='FROM_MONTH'" justify="start" class="mr-1 ml-1">
                           <v-autocomplete outlined dense :label="field.name" :items="monthList" item-value="text"
@@ -819,6 +845,17 @@
                   <v-expansion-panel-content>
                     <v-list class="field__list" v-for="field in otherFields" :key="field.id">
                       <template v-if="field['selected']">
+                        <v-row v-if="field.value === 'CREDITOR_POST_ADDRESS'" justify="start">
+                          <v-col cols="12">
+                            <v-autocomplete outlined dense :label="field.name"
+                                            :disabled="!creditor"
+                                            :items="creditor? creditor.communication : []"
+                                            item-text="value"
+                                            item-value="value"
+                                            :rules="rules.required"
+                                            v-model="templateFields[field.value]"></v-autocomplete>
+                          </v-col>
+                        </v-row>
                         <v-row v-if="field.value ==='BAILIFFS'" justify="start">
                           <v-col cols="4">
                             <v-autocomplete outlined dense label="Регион" :items="regionList" item-value="id"
@@ -1185,7 +1222,7 @@
     <CreatePostMail></CreatePostMail>
     <ContractorCreateModal></ContractorCreateModal>
     <LegalEntityCreateModal @contractorAdded="updateItem" @contractorUpdate="update"></LegalEntityCreateModal>
-    <v-dialog v-model="confirmSave" width="35vw">
+    <v-dialog v-model="confirmSave" width="40vw">
       <v-card class="confirm-window_container">
         <v-card-title class="mb-4">
           <v-row justify="center">Подтверждение сохранения документа</v-row>
@@ -1193,11 +1230,20 @@
         <v-card-text class="mt-4 confirm-window" v-if="docErrors">
           <v-row justify="center">
             <h3 class="mb-4">
-              {{ this.docErrors.subject }}
+              {{ docErrors.subject }}
             </h3>
           </v-row>
           <v-row>{{ this.docErrors.text }}</v-row>
-          <v-row><strong>{{ this.docErrors.actions }}</strong></v-row>
+          <v-row v-if="docErrors.actions.action === 'openModal'">
+            <v-col cols="12" md="8">
+              <strong>{{ docErrors.actions.text }}</strong>
+            </v-col>
+            <v-col cols="12" md="4">
+              <v-btn @click="openModal(docErrors.actions.object)">Редактировать</v-btn>
+            </v-col>
+
+          </v-row>
+          <v-row v-else><strong>{{ docErrors.actions.text }}</strong></v-row>
           <v-row>
             <v-checkbox v-model="confirmData" label="Подтверждаю корректность данных"></v-checkbox>
           </v-row>
@@ -1232,6 +1278,7 @@
       </v-card>
     </v-dialog>
     <SystemMessage :state.sync="state" :project="project"/>
+    <PhysicalPersonModalFormView></PhysicalPersonModalFormView>
   </v-container>
 </template>
 
@@ -1244,9 +1291,10 @@ import CreatePostMail from "@/components/PostMail/CreatePostMail";
 import ContractorCreateModal from "@/components/referenceBook/ContractorCreateModal";
 import LegalEntityCreateModal from "@/components/referenceBook/LegalEntity/LegalEntityCreateModal.vue";
 import SystemMessage from "@/components/UI/SystemMessage.vue";
-import {isArray} from "lodash";
+
 import {ProcedureType} from "@/const/dataTypes";
 import {VueEditor} from "vue2-editor";
+import PhysicalPersonModalFormView from "@/views/PhysicalPersonV2/PhysicalPersonModalFormView.vue";
 
 let vueStore = {
   valid: false
@@ -1276,6 +1324,7 @@ export default {
     overlay: false,
     error: false,
     region: null,
+    outPost: null,
     loadDataFromTable: false,
     dataFile: null,
     vueStore: vueStore,
@@ -1308,6 +1357,7 @@ export default {
     bankCardList: null,
     bankAccount: null,
     bankCard: [],
+    postList: [],
     contractList: null,
     state: '',
     rules: {
@@ -1366,13 +1416,6 @@ export default {
     otherFields() {
       return this.template.fields.filter(obj => !obj['field_type'])
     }
-    // bailiffsList: function () {
-    //   let bailiffs = this.$store.getters.bailiffsListData
-    //   // if (this.region) {
-    //   //   return bailiffs.filter(obj => obj.region.id === this.region)
-    //   // }
-    //   return bailiffs
-    // },
   },
   watch: {
     template() {
@@ -1392,8 +1435,15 @@ export default {
     }
   },
   methods: {
+    openModal({objType, id}){
+      console.log(objType, id)
+      switch (objType) {
+        case 'PhysicalPerson':
+          this.$emit('showModalPerson', id)
+
+      }
+    },
     update(item) {
-      console.log("update()", item)
       this.$store.dispatch('getLegalEntity')
     },
     updateItem(item) {
@@ -1436,6 +1486,38 @@ export default {
     },
     checkForm() {
       this.$refs.generator.validate()
+
+    },
+    validateInn(value) {
+      if (!value) return true;
+      const cleanValue = value.replace(/\D/g, '');
+      return cleanValue.length === 12 || 'ИНН должен содержать 12 цифр';
+    },
+    getDocumentNumber() {
+      console.log(this.templateFields['OUT_NUMBER'] || this.templateFields['NUMBER'] || '')
+      return this.templateFields['OUT_NUMBER'] || this.templateFields['NUMBER'] || '';
+    },
+    validateSnils(value) {
+      if (!value) return true;
+      const cleanValue = value.replace(/\D/g, '');
+      const isValidLength = cleanValue.length === 11;
+      const isValidFormat = /^\d{3}-\d{3}-\d{3} \d{2}$/.test(value);
+      return (isValidLength && isValidFormat) || 'Неверный формат СНИЛС (XXX-XXX-XXX XX)';
+    },
+    getFieldRules(field) {
+      const rules = [];
+      if (field.required) {
+        rules.push(v => !!v || 'Обязательное поле');
+      }
+
+      const fieldName = field.name.toLowerCase();
+      if (fieldName.includes('инн')) {
+        rules.push(v => this.validateInn(v));
+      } else if (fieldName.includes('снилс')) {
+        rules.push(v => this.validateSnils(v));
+      }
+
+      return rules;
     },
     getProjectDetail(item) {
       this.$store.dispatch('getProjectDetail', item).then(data => {
@@ -1457,11 +1539,13 @@ export default {
         this.contractList = data.contract
         this.fileName = data['name'].split(' ')[0]
         this.$store.dispatch('getProjectAct', data['id']).then(res => {
-          let act = res.data.data.data
-          data['act'] = act
+          data['act'] = res.data.data.data
           compareFields(this.template.fields, data).then(async (data) => {
             this.templateFields = data
           })
+        })
+        this.$store.dispatch('getProjectPost', this.projectData.pk).then(res => {
+          this.postList = [...res]
         })
         this.$refs.generator.validate()
       })
@@ -1470,28 +1554,34 @@ export default {
       if (item) {
         if (item.type === "LegalEntity") {
           return !item.legal_address;
-        } else {
-          this.$store.dispatch('getPhysicalPersonDetail', item.pk).then(res => {
-            let registration = ''
-            if (isArray(res.registration)) {
-              if (res.registration.length > 0) {
-                if (res.registration.at(-1).postcode) {
-                  registration = `${res.registration.at(-1).postcode}, ${res.registration.at(-1).address}`
-                } else {
-                  registration = `${res.registration.at(-1).address}`
-                }
-                this.creditor.address = registration
-                return false
-              } else {
-                return true
-              }
-            } else {
-              return true
-            }
-          })
         }
+        // else {
+        //   let personDomicile = null;
+        //   let personPostcode = null;
+        //   const russianCitizenship = item.citizenships?.find(c => c.country.id === 1);
+        //   const citizenshipId = russianCitizenship?.id ||
+        //       (item.citizenships?.length > 0 ? item.citizenships[0].id : null);
+        //   // Получаем регистрацию для выбранного гражданства
+        //   if (item.registration && item.registration.length > 0) {
+        //     const registration = citizenshipId ?
+        //         item.registration.find(reg => reg.citizenship === citizenshipId) :
+        //         item.registration[0];
+        //
+        //     if (registration) {
+        //       personDomicile = registration.address;
+        //       personPostcode = registration.postcode;
+        //     }
+        //     if (personPostcode) {
+        //       this.creditor.address = `${personPostcode}, ${personDomicile}`
+        //     } else {
+        //       this.creditor.address = `${personDomicile}`
+        //     }
+        //     return false
+        //   } else {
+        //     return true
+        //   }
+        // }
       }
-
     },
     getCreditOrganizationDetail(item) {
       this.project = 36
@@ -1577,15 +1667,28 @@ export default {
           formData.append('CREDITOR_UUID', this.creditor.uuid)
           formData.append('CREDITOR_INN', this.creditor?.inn)
           formData.append('CREDITOR_OGRN', this.creditor?.ogrn)
-          formData.append('CREDITOR_ADDRESS', this.creditor?.legal_address)
+          formData.append('CREDITOR_ADDRESS', this.templateFields['CREDITOR_POST_ADDRESS'])
         } else {
           formData.append('CREDITOR_UUID', this.creditor.uuid)
           formData.append('CREDITOR', this.creditor.fullName)
-          formData.append('CREDITOR_INN', this.creditor?.inn)
-          formData.append('CREDITOR_OGRN', this.creditor?.ogrn)
-          console.log(this.creditor.address)
-          formData.append('CREDITOR_ADDRESS', this.creditor?.address)
+          const russianCitizenship = this.creditor.citizenships?.find(c => c.country.id === 1);
+          const citizenshipId = russianCitizenship?.id ||
+              (this.creditor.citizenships?.length > 0 ? this.creditor.citizenships[0].id : null);
+          if (this.creditor?.identifiers?.length > 0) {
+            // Находим блок идентификаторов для нужного гражданства
+            const identifierBlock = citizenshipId
+                ? this.creditor.identifiers.find(block => block.citizenship === citizenshipId)
+                : this.creditor.identifiers[0];
 
+            if (identifierBlock?.identifier) {
+              // Ищем конкретные идентификаторы внутри блока
+              const innIdentifier = identifierBlock.identifier.find(id => id.type === 'INN');
+              const snilsIdentifier = identifierBlock.identifier.find(id => id.type === 'SNILS');
+              formData.append('CREDITOR_INN', innIdentifier?.value || null)
+              formData.append('CREDITOR_OGRN', snilsIdentifier?.value || null)
+            }
+          }
+          formData.append('CREDITOR_ADDRESS', this.templateFields['CREDITOR_POST_ADDRESS'])
         }
 
       }
@@ -1619,24 +1722,35 @@ export default {
         data: formData,
         responseType: 'blob'
       }).then(res => {
+        let fileExtension = this.docType === 'docx' ? '.docx' : '.pdf';
         let fileName;
-        if (this.template.name.startsWith('Счет') || this.template.name.startsWith('Акт')) {
-          fileName = `${this.fileName}_${this.template.name.replaceAll(' ', '_')}_${this.templateFields['NUMBER']}`
-        } else {
-          if (this.templateFields['OUT_NUMBER']) {
-            // fileName = `${this.fileName}_${this.template.name.replaceAll(' ', '_')}_${this.templateFields['OUT_NUMBER']}`
-            fileName = `${this.projectData.code}-${this.templateFields['OUT_NUMBER']}`
-          } else {
-            fileName = `${this.projectData.code}_${this.templateFields['NUMBER']}`
+        if (this.template.category === "Судебное делопроизводство") {
+          fileName = `${this.projectData.code}_${this.getDocumentNumber()}_${this.template.name.replace(/\s+/g, '_')}`
+          const pageCount = res.headers['x-page-count'] || '';
+          if (pageCount) {
+            fileName += `_${pageCount}л`;
           }
-          if (this.template.name === 'ходатайтсво об ознакомлении с материалами дела') {
-            fileName += '_1л'
+        } else if (this.template.name.startsWith('Промежуточный отчет')) {
+          let contractorName;
+          if (this.projectData.physical_contractor) {
+            contractorName = this.projectData.physical_contractor.last_name
+          } else {
+            contractorName = this.projectData.legal_contractor.full_name
+          }
+          fileName = `${this.projectData.code}_${contractorName.replace(/\s+/g, '_')}_${"Промежуточный отчет".replace(/\s+/g, '_')}`
+        } else {
+          if (this.template.name.startsWith('Счет') || this.template.name.startsWith('Акт')) {
+            fileName = `${this.fileName}_${this.template.name.replaceAll(' ', '_')}-${this.getDocumentNumber()}`
+          } else {
+            fileName = `${this.projectData.code}-${this.getDocumentNumber()}`
           }
         }
+        fileName += fileExtension;
         saveAs(res.data, fileName)
         this.overlay = false
         this.loading = false
       }).then(() => {
+        this.confirmSave = true
         if (!this.template.name.includes('ЕФРСБ')) {
           this.confirmSave = true
         }
@@ -1657,36 +1771,51 @@ export default {
           this.state = 'error'
           this.$emit('showSystemMessage', {response: err, state: this.state})
         }
+      }).finally(() => {
+        this.overlay = false
+        this.loading = false
       })
     },
     async download() {
       let formData = this.setFormData()
+      formData.append('confirmSave', this.confirmSave)
       await this.$http({
         method: "POST",
         url: customConst.GENERATOR + 'document-template/download-file/',
         data: formData,
         responseType: 'blob'
       }).then(async res => {
+        let fileExtension = this.docType === 'docx' ? '.docx' : '.pdf';
         let fileName;
-        if (this.template.name.startsWith('Счет') || this.template.name.startsWith('Акт')) {
-          fileName = `${this.fileName}_${this.template.name.replaceAll(' ', '_')}_${this.templateFields['NUMBER']}`
-        } else {
-          if (this.templateFields['OUT_NUMBER']) {
-            // fileName = `${this.fileName}_${this.template.name.replaceAll(' ', '_')}_${this.templateFields['OUT_NUMBER']}`
-            fileName = `${this.projectData.code}-${this.templateFields['OUT_NUMBER']}`
-          } else {
-            fileName = `${this.projectData.code}_${this.templateFields['NUMBER']}`
+        if (this.template.category === "Судебное делопроизводство") {
+          fileName = `${this.projectData.code}_${this.getDocumentNumber()}_${this.template.name.replace(/\s+/g, '_')}`
+          const pageCount = res.headers['x-page-count'] || '';
+          if (pageCount) {
+            fileName += `_${pageCount}л`;
           }
-          if (this.template.name === 'ходатайтсво об ознакомлении с материалами дела') {
-            fileName += '_1л'
+        } else if (this.template.name.startsWith('Промежуточный отчет')) {
+          let contractorName;
+          if (this.projectData.physical_contractor) {
+            contractorName = this.projectData.physical_contractor.last_name
+          } else {
+            contractorName = this.projectData.legal_contractor.full_name
+          }
+          fileName = `${this.projectData.code}_${contractorName.replace(/\s+/g, '_')}_${"Промежуточный отчет".replace(/\s+/g, '_')}`
+        } else {
+          if (this.template.name.startsWith('Счет') || this.template.name.startsWith('Акт')) {
+            fileName = `${this.fileName}_${this.template.name.replaceAll(' ', '_')}-${this.getDocumentNumber()}`
+          } else {
+            fileName = `${this.projectData.code}-${this.getDocumentNumber()}`
           }
         }
+        fileName += fileExtension;
         await saveAs(res.data, fileName)
         this.overlay = false
         this.loading = false
       })
     },
     async saveDoc(readyToSend = false, postOrder = false) {
+
       this.overlay = true
       this.loading = true
       let formData = this.setFormData()
@@ -1721,7 +1850,10 @@ export default {
             resolve()
           }, 1000)
         }).then(() => {
-          this.templateFields['OUT_NUMBER'] = Number(this.templateFields['OUT_NUMBER']) + 1
+          if (this.templateFields['OUT_NUMBER']){
+            this.templateFields['OUT_NUMBER'] = Number(this.templateFields['OUT_NUMBER']) + 1
+          }
+
         }).catch(err => {
           this.overlay = false
           this.loading = false
@@ -1852,7 +1984,8 @@ export default {
       } else {
         this.$emit('addContractor')
       }
-    },
+    }
+    ,
   },
   filters: {
     getProcedure(item) {
@@ -1882,7 +2015,7 @@ export default {
     await this.$store.dispatch('getRegion')
     // await this.$store.dispatch('getBailiffs')
     await this.$store.dispatch('getContractList')
-    await this.$store.dispatch('getPhysicalPerson')
+    await this.$store.dispatch('fetchPhysicalPersons')
     await this.$store.dispatch('getLegalEntity')
 
 
@@ -1893,6 +2026,7 @@ export default {
     ContractorCreateModal,
     LegalEntityCreateModal,
     VueEditor,
+    PhysicalPersonModalFormView,
   }
 };
 </script>

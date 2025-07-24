@@ -171,11 +171,12 @@ export default {
   methods: {
     loadData(item) {
       this.$store.dispatch('getLegalEntityDetailInfo', item.pk).then((data) => {
-        Object.entries(data).forEach(([key, val], )=>{
-          if (key  === 'communication'){
+        Object.entries(data).forEach(([key, val],) => {
+          console.log(key, val)
+          if (key === 'communication') {
             console.log(key, val)
 
-          }else {
+          } else {
             this.form[key] = val
           }
         })
@@ -270,16 +271,12 @@ export default {
   },
   watch: {
     legalData: {
+      deep: true,
+      immediate: true,
       handler(val) {
         this.loadData(val)
-        // for (const [key, value] of Object.entries(val)) {
-        //   if (key !== 'communication'){
-        //     this.$set(this.form, key, value)
-        //   }
-        // }
       },
-      deep: true,
-      immediate: true
+
     },
   },
   mounted() {
