@@ -153,14 +153,25 @@ export default {
                 })
             })
         },
-
+        getProjectsByCaseNumber({commit}, caseNumber) {
+            return new Promise((resolve, reject) => {
+                const url = customConst.REFERENCE_BOOK_API + 'project-list'
+                axios.get(url, {
+                    params: {case_number: caseNumber}
+                }).then(res => {
+                    resolve(res)
+                }).catch(err => {
+                    reject(err)
+                })
+            })
+        }
     },
     getters: {
         projectListData(state) {
             return state.projectList
         },
         activeProjectListData(state) {
-            return state.projectList.filter(obj=>!obj['isArchive'])
+            return state.projectList.filter(obj => !obj['isArchive'])
         },
         projectDetailData(state) {
             return state.projectDetail

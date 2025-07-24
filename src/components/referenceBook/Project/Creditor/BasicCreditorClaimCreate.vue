@@ -32,7 +32,7 @@
                 </v-col>
                 <v-col cols="12">
                   <v-text-field dense outlined label="Сумма требования" v-model="form.claim_amount"
-                                @keypress="isNumber($event)"></v-text-field>
+                                @input="handleInput"></v-text-field>
                 </v-col>
               </v-row>
             </v-col>
@@ -111,14 +111,28 @@ export default {
         this.form.physical_creditor = item.id
       }
     },
-    isNumber: function (evt) {
-      evt = (evt) ? evt : window.event;
-      let charCode = (evt.which) ? evt.which : evt.keyCode;
-      if ((charCode > 31 && (charCode < 48 || charCode > 57)) && charCode !== 46 && charCode !== 44) {
-        evt.preventDefault()
-      } else {
-        return true;
-      }
+handleInput(value) {
+      // Сохраняем сырое значение для обработки
+      this.rawValue = value;
+
+      // Обработка ввода
+      let cleaned = value
+        .replace(/,/g, '.')          // Замена запятых на точки
+        .replace(/[^\d.]/g, '')      // Удаление нецифровых символов кроме точек
+        .replace(/\.+/g, '.')        // Замена множественных точек на одну
+        .replace(/(\.\d*)\./g, '$1'); // Удаление лишних точек после существующей
+
+      // Разделение на целую и дробную части
+      const parts = cleaned.split('.');
+      let integerPart = parts[0].replace(/\D/g, '');
+      let fractionalPart = parts[1] ? parts[1].substring(0, 2) : '';
+
+      // Сборка значения
+      let newValue = integerPart;
+      if (fractionalPart) newValue += `.${fractionalPart}`;
+
+      // Сохранение в модель
+      this.form.claim_amount = newValue ? parseFloat(newValue) : null;
     },
   },
   created() {
