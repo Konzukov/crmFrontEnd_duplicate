@@ -442,6 +442,14 @@
                   <v-expansion-panel-content>
                     <v-list class="field__list" v-for="field in procedureFields" :key="field.id">
                       <template v-if="field['selected']">
+                        <v-row v-if="field.value ==='MANAGER_OR_REPRESENTATIVE'" justify="start">
+                          <v-col cols="12">
+                            <v-autocomplete outlined dense :label="field.name" :items="allSystemUsersList" item-value="id"
+                                            v-model="templateFields[field.value]"
+                                            item-text="fullName"></v-autocomplete>
+                          </v-col>
+                        </v-row>
+
                         <v-row v-if="field.value ==='BAILIFFS'" justify="start">
                           <v-col cols="4">
                             <v-autocomplete outlined dense label="Регион" :items="regionList" item-value="id"
@@ -805,6 +813,7 @@
                                       dense outlined v-model="dataFile" :label="field.name"></v-file-input>
                       </template>
                       <template v-else-if="field['is_textarea']">
+                        <label>{{field.name}}</label>
                         <VueEditor v-model="templateFields[field.value]"></VueEditor>
                       </template>
                       <template v-else-if="field['value']==='DEBT_OFF'">
@@ -1387,6 +1396,7 @@ export default {
       participantDetail: 'participantFullDetail',
       currentUser: 'authUserData',
       allRefList: 'allRefData',
+      allSystemUsersList: 'allSystemUsersData',
       legalList: 'legalEntityData',
       creditOrganizationList: 'creditOrganizationListData',
       fnsList: 'fnsListData',
@@ -1435,7 +1445,10 @@ export default {
     }
   },
   methods: {
-    openModal({objType, id}){
+    getDocs(){
+
+    },
+    openModal({objType, id}) {
       console.log(objType, id)
       switch (objType) {
         case 'PhysicalPerson':
@@ -1850,7 +1863,7 @@ export default {
             resolve()
           }, 1000)
         }).then(() => {
-          if (this.templateFields['OUT_NUMBER']){
+          if (this.templateFields['OUT_NUMBER']) {
             this.templateFields['OUT_NUMBER'] = Number(this.templateFields['OUT_NUMBER']) + 1
           }
 
@@ -2017,6 +2030,7 @@ export default {
     await this.$store.dispatch('getContractList')
     await this.$store.dispatch('fetchPhysicalPersons')
     await this.$store.dispatch('getLegalEntity')
+    await this.$store.dispatch('allSystemUser')
 
 
   },
