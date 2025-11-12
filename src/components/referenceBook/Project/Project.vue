@@ -359,8 +359,6 @@ export default {
           participatorList: 'participatorList',
           directionsList: 'directionsListData'
         })
-
-
   },
   filters: {
     getProcedure(item) {
@@ -470,7 +468,7 @@ export default {
 
 <style scoped>
 .grouped-view {
-  max-height: 60vh;
+  max-height: 75vh;
   overflow-y: auto;
   border: 1px solid #eee;
   border-radius: 4px;

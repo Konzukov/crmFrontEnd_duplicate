@@ -166,17 +166,6 @@
       </v-col>
     </v-row>
     <v-container class="d-none">
-<!--      <v-dialog v-model="selectToSend">-->
-<!--        <v-card>-->
-<!--          <v-card-text>-->
-<!--            <v-list>-->
-<!--              <v-list-item v-for="(doc, i) in selectDocToSend" :key="i">-->
-<!--                {{ doc }} {{ i }}-->
-<!--              </v-list-item>-->
-<!--            </v-list>-->
-<!--          </v-card-text>-->
-<!--        </v-card>-->
-<!--      </v-dialog>-->
       <ErrorHandling></ErrorHandling>
       <editDocument></editDocument>
       <ChangeFile @finished="getData"></ChangeFile>
@@ -194,8 +183,6 @@ import editDocument from "@/components/CRM/PaperFlow/modal/editDocument";
 import ChangeFile from "@/components/CRM/PaperFlow/modal/ChangeFile";
 import DeleteDocument from "@/components/CRM/PaperFlow/modal/deleteDocument";
 import PostEdit from "@/components/CRM/PaperFlow/Post/modal/PostEdit";
-// import DocumentDetail from "@/components/CRM/PaperFlow/DocumentView";
-// import DocumentViewer from "@/components/CRM/PaperFlow/DocumentViewer.vue";
 import TaskDetail from "@/components/CRM/Task/TaskDetail";
 import TaskCreateComponent from "@/components/CRM/Task/TaskCreateComponent";
 import EventCreateComponent from "@/components/CRM/Event/EventCreateComponent";
@@ -283,12 +270,29 @@ export default {
 
     },
     downloadItem(item) {
+      // Генерируем уникальный ID для отслеживания загрузки
+      const downloadId = Date.now().toString() + Math.random().toString(36).substr(2, 9)
+
+      // Добавляем запись о загрузке
+      this.$store.dispatch('downloads/addDownload', {
+        id: downloadId,
+        fileName: item.file || item.fileName // Используйте правильное свойство
+      }, {root: true})
+      console.log(item.type)
       switch (item.type) {
-        case "document" :
-          this.$store.dispatch('downloadDocument', {'pk': item.pk, 'fileName': item.fileName})
+        case "document":
+          // Убедитесь, что используете правильное пространство имен
+          this.$store.dispatch('downloads/downloadDocument', {
+            pk: item.pk,
+            fileName: item.file || item.fileName, // Используйте правильное свойство
+            downloadId
+          }, {root: true})
           break
         case 'file':
-          this.$store.dispatch('downloadFile', item)
+          this.$store.dispatch('downloadFile', {
+            file: item,
+            downloadId
+          })
           break
       }
     },

@@ -29,6 +29,8 @@ let DocumentNameTemplate = [
     },
     {id: 2, name: "Шаблон для гос.услуг", helpText: "<other>___<date>", regExp: "___(\\d{8,8}).pdf"},
     {id: 3, name: "Шаблон загрузки счетов YAML", helpText: "Файл в формате yaml с данными по счетам"},
+    {id: 4, name: "Шаблон загрузки счетов JSON", helpText: "Файл в формате JSON с данными по счетам"},
+    {id: 5, name: "Шаблон загрузки чеков почты JSON", helpText: "Архив с json и pdf со сканами чеков"},
 ]
 
 let LegalEntityType = [
@@ -76,6 +78,7 @@ let CommunicationMethodType = [
     {value: "ElectronicMail", text: "Электронные письма (ЭЗП)"},
     {value: "PaperMail", text: "Бумажная почта"},
     {value: "Email", text: "Электронная почта (Email)"},
+    {value: "Phone", text: "Номер телефона"},
 ]
 
 export {ThirdStageType}

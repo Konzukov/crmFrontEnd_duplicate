@@ -233,6 +233,7 @@ export default {
     additionalField: [
       {val: 'SRO_NUM', text: 'Номер саморегулируемой организации'},
       {val: 'SRO_REG_DATE', text: 'Дата регистрации саморегулируемой организации'},
+      {val: 'court_code', text: 'Код суда'},
     ],
     errorMessage: {
       inn: ''

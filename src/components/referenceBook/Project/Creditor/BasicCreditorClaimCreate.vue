@@ -99,7 +99,7 @@ export default {
 
       } else {
         this.$store.dispatch('saveBasicCreditorClaim', formData).then(res => {
-          this.$emit('updateBasicCreditorClaim')
+          this.$emit('updateBasicCreditorClaim', res)
           this.close()
         })
       }
@@ -111,16 +111,16 @@ export default {
         this.form.physical_creditor = item.id
       }
     },
-handleInput(value) {
+    handleInput(value) {
       // Сохраняем сырое значение для обработки
       this.rawValue = value;
 
       // Обработка ввода
       let cleaned = value
-        .replace(/,/g, '.')          // Замена запятых на точки
-        .replace(/[^\d.]/g, '')      // Удаление нецифровых символов кроме точек
-        .replace(/\.+/g, '.')        // Замена множественных точек на одну
-        .replace(/(\.\d*)\./g, '$1'); // Удаление лишних точек после существующей
+          .replace(/,/g, '.')          // Замена запятых на точки
+          .replace(/[^\d.]/g, '')      // Удаление нецифровых символов кроме точек
+          .replace(/\.+/g, '.')        // Замена множественных точек на одну
+          .replace(/(\.\d*)\./g, '$1'); // Удаление лишних точек после существующей
 
       // Разделение на целую и дробную части
       const parts = cleaned.split('.');
@@ -137,7 +137,8 @@ handleInput(value) {
   },
   created() {
     this.$parent.$on('createBasicCreditorClaim', (project) => {
-      this.form.project = project
+      console.log(project)
+      this.form.project = project.id
       this.dialog = true
     })
     this.$parent.$on('editBasicCreditorClaim', (item) => {

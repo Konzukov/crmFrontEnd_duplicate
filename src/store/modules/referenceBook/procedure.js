@@ -11,6 +11,7 @@ export default {
     state: {
         creditorMeeting: [],
         basicCreditorClaim: [],
+        creditorClaimsRegister: [],
         involvedPerson: [],
         complaints: [],
     },
@@ -29,6 +30,13 @@ export default {
         },
         syncBasicCreditorClaim(state, data) {
             state.basicCreditorClaim = [...data]
+        },
+        syncCreditorClaimRegister(state, data){
+            console.log(data)
+          state.creditorClaimsRegister = [...data]
+        },
+        syncAddBasicCreditorClaim(state, data) {
+            state.basicCreditorClaim.push(data)
         },
         syncInvolvedPerson(state, data) {
             state.involvedPerson = [...data]
@@ -98,6 +106,21 @@ export default {
                 })
             })
         },
+        getCreditorClaim({commit}, pk) {
+            return new Promise((resolve, reject) => {
+                axios({
+                    method: "GET",
+                    url: customConst.REFERENCE_BOOK_API + 'creditors-claims',
+                    params: {project: pk}
+                }).then(res => {
+                    console.log(res.data.data.data)
+                    commit('syncCreditorClaimRegister', res.data.data.data)
+                    resolve(res.data.data.data)
+                }).catch(err=>{
+                    reject(err)
+                })
+            })
+        },
         getBasicCreditorClaim({commit}, pk) {
             return new Promise((resolve, reject) => {
                 axios({
@@ -119,6 +142,7 @@ export default {
                     url: customConst.REFERENCE_BOOK_API + 'basic-creditor-claim/',
                     data: formData
                 }).then((res => {
+                    commit('syncAddBasicCreditorClaim', res.data.data.data)
                     resolve(res.data.data.data)
                 })).catch(err => {
                     reject(err)
@@ -360,6 +384,10 @@ export default {
         },
         complaintsData(state) {
             return state.complaints
+        },
+        creditorClaimRegisterData(state){
+            console.log(state.creditorClaimsRegister)
+            return state.creditorClaimsRegister
         }
     }
 }

@@ -1,8 +1,7 @@
-// let  BASE_URL = 'http://192.168.2.13:8181'
-let  BASE_URL = 'http://127.0.0.1:8181'
-// let  BASE_URL = 'http://tcrm.planer-1studio.ru'
-// let  BASE_URL = 'http://crm.planer-studio.ru:9090'
-// 193.93.122.9
+const BASE_URL = process.env.NODE_ENV === 'production'
+  ? 'http://crm.planer-studio.ru:9090'
+  : 'http://127.0.0.1:8181'
+
 const REFERENCE_BOOK_API = `${BASE_URL}/api/reference_book/`
 const AUTH_API = `${BASE_URL}/api/auth/`
 const CRM_API = `${BASE_URL}/api/crm/`
@@ -14,6 +13,7 @@ const MONEY = `${BASE_URL}/api/money/`
 const PROCEDURE = `${BASE_URL}/api/procedure/`
 const GENERATOR = `${BASE_URL}/api/document-generator/`
 const NOTIFY = `${BASE_URL}/api/notify/`
+const DOCUMENT_FLOW = `${BASE_URL}/api/document-flow/`
 
 export default {
     BASE_URL,
@@ -27,7 +27,8 @@ export default {
     MONEY,
     PROCEDURE,
     GENERATOR,
-    NOTIFY
+    NOTIFY,
+    DOCUMENT_FLOW,
 }
 
 

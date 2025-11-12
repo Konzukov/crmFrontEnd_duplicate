@@ -86,7 +86,7 @@ const routes = [
                     {
                         path: 'physical-person',
                         name: 'physical-person',
-                         component: () => import('@/views/PhysicalPersonV2/PhysicalPerson.vue')
+                        component: () => import('@/views/PhysicalPersonV2/PhysicalPerson.vue')
                     },
                     // {
                     //     path: 'physical-person',
@@ -143,6 +143,11 @@ const routes = [
                                 path: 'file-view',
                                 name: 'file-view',
                                 component: () => import('../components/referenceBook/Project/FileView/FileView')
+                            },
+                            {
+                                path: 'creditor-view',
+                                name: 'creditor-view',
+                                component: () => import('@/components/referenceBook/Project/Creditor/CreditorClaimView.vue')
                             },
                             {
                                 path: 'procedure',
@@ -226,6 +231,7 @@ const routes = [
                 component: CRM,
                 props: true,
                 children: [
+
                     {
                         path: 'events',
                         name: 'event-list',
@@ -330,6 +336,7 @@ const routes = [
                         name: 'file-view-detail',
                         component: FileView
                     },
+
                     {
                         name: 'create-outgoing-post',
                         path: 'create-outgoing-post',
@@ -351,6 +358,22 @@ const routes = [
                         component: () => import('../components/CRM/PaperFlow/Post/PostParsing'),
                     },
                 ]
+            },
+            {
+                path: 'document-flow',
+                name: 'document-flow',
+                component: () => import('@/components/CRM/DocumentFlow/DocumentFlow.vue'),
+                children: [
+                    {
+                        path: 'files',
+                        name: 'files',
+                        component: () => import('@/components/CRM/DocumentFlow/DocumentFlowFiles.vue')
+                    },
+                    {
+                        path: 'documents',
+                        name: 'documents',
+                    }
+                ],
             },
             {
                 path: 'report',
@@ -498,6 +521,28 @@ const routes = [
                 name: 'background-task',
                 path: 'background-task',
                 component: () => import('@/components/Dashboard/BackgroundTask')
+            },
+            {
+                path: 'wiki',
+                name: 'wiki',
+                component: () => import('@/components/referenceBook/Wiki/WIki.vue'),
+                props: true,
+                children: [
+                    {
+                        path: 'video-instruction',
+                        name: 'video-instruction',
+                        component: () => import('@/components/referenceBook/Wiki/VideoInstruction.vue'),
+                        props: true,
+                        children: [
+                            {
+                                path: ':id',
+                                name: 'wiki-detail',
+                                component: () => import('@/components/referenceBook/Wiki/WIkiArticle.vue'),
+                                props: true,
+                            }
+                        ]
+                    }
+                ]
             }
         ]
     },

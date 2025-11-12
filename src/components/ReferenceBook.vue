@@ -89,7 +89,7 @@ export default {
 
 <style scoped>
 div.container {
-  height: 88vh;
+  height: 87vh;
   padding: 0 2px !important;
 }
 

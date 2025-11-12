@@ -1,12 +1,18 @@
 <template>
   <v-app>
     <router-view></router-view>
+    <DownloadProgress />
+    <GlobalSnackbar />
   </v-app>
 </template>
 
 <script>
+import DownloadProgress from "@/components/UI/DownloadProgress.vue";
+import GlobalSnackbar from "@/components/UI/GlobalSnackbar.vue";
+
 export default {
   name: 'App',
+  components: {GlobalSnackbar, DownloadProgress},
   computed: {
     isLoggedIn() {
       return this.$store.getters.isLoggedIn

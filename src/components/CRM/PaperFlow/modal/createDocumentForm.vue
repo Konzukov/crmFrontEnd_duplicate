@@ -59,7 +59,9 @@
                   <v-col md="auto">
                     <v-autocomplete outlined dense label="Вид корреспонденции" :items="correspondenceType"
                                     item-text="name"
-                                    item-value="id" return-object v-model="form.correspondence_type"></v-autocomplete>
+                                    item-value="id" return-object v-model="form.correspondence_type"
+                                    @change="setQuarter"
+                    ></v-autocomplete>
                   </v-col>
                   <v-col md="auto" v-if="!form.route">
                     <v-text-field outlined dense label="Исходящий номер"
@@ -72,6 +74,20 @@
                     <v-text-field label="Сумма документа" dense outlined v-model="form.price"
                                   @keypress="isNumber($event)"></v-text-field>
                   </v-col>
+                  <template v-if="form.correspondence_type['name'] === 'Квартальный отчет'">
+                    <v-col cols="6">
+                      <v-autocomplete
+                          outlined
+                          dense
+                          label="Квартал и год"
+                          :items="quarterYearOptions"
+                          item-text="text"
+                          item-value="value"
+                          v-model="selectedQuarterYear"
+                          @change="updateQuarterYear"
+                      ></v-autocomplete>
+                    </v-col>
+                  </template>
                 </v-row>
                 <v-row justify="start">
                   <v-col md="5" sm="5" class="mr-2">
@@ -124,6 +140,7 @@
                         append-outer-icon="mdi-plus"
                         @click:append-outer="addNewProject"
                         :disabled="uploadTemplate['id']===1"
+                        @change="calculateQuarter"
                     >
                       <template v-slot:selection="data">
                         <v-chip>
@@ -172,27 +189,32 @@
     <ErrorHandling ref="errorHandling" :hasError="uploadProcess.errors.hasError"
                    :message="uploadProcess.errors.message"
                    class="errors"></ErrorHandling>
-    <ConfirmDialog @forceAdd="addConfirm"></ConfirmDialog>
+    <ConfirmDialog @forceAdd="addConfirm" @handleEditDoc="editExistDoc"></ConfirmDialog>
+    <EditDocument></EditDocument>
   </v-container>
 </template>
 
 <script>
 import filter from '../../../../mixin/filter'
 import moment from 'moment'
-import {eventBus} from "../../../../bus";
+import {eventBus} from "@/bus";
 import AddingTag from "../../../Tagging/AddTag";
 import ErrorHandling from "../../../ErrorHandling/ErrorHandling";
 import {mapGetters} from 'vuex'
 import ConfirmDialog from "@/components/CRM/PaperFlow/modal/ConfirmDialog";
-import ProjectCreateModal from "@/components/referenceBook/Project/modal/ProjectCreateModal";
 import ContractorCreateModal from "@/components/referenceBook/ContractorCreateModal";
 import {ProcedureType} from "@/const/dataTypes";
+import {fileUploadUtils, fileUtils} from "@/utils/main";
+import ProjectCreateModal from "@/components/referenceBook/Project/modal/ProjectCreateModal.vue";
+import EditDocument from "@/components/CRM/PaperFlow/modal/editDocument.vue";
 
 export default {
   name: "createDocumentForm",
   props: ['uploadFile', 'eventData', 'uploadTemplate', 'postPk', 'project', 'taskPk', 'eventPk'],
   data() {
     return {
+      selectedQuarterYear: null,
+      quarterYearOptions: [],
       uploadProcess: {
         uploaded: false,
         uploading: false,
@@ -206,7 +228,7 @@ export default {
       form: {
         file: '',
         receiving_date: '',
-        from_physical_person: '',
+        from_physical: '',
         out_number: null,
         from_legal: '',
         route: true,
@@ -217,6 +239,8 @@ export default {
         to: '',
         correspondence_type: '',
         price: null,
+        quarter_year: null,
+        quarter: null,
       },
       templateError: false,
       errorMessage: '',
@@ -225,65 +249,126 @@ export default {
     }
   },
   methods: {
+    editExistDoc(item){
+      this.$emit('editDoc', item)
+      console.log(item)
+    },
+    calculateQuarter(item) {
+      console.log(item)
+    },
+    generateQuarterYearOptions() {
+      const currentYear = new Date().getFullYear();
+      const years = [currentYear - 1, currentYear];
+      const quarters = [1, 2, 3, 4];
+
+      this.quarterYearOptions = [];
+
+      years.forEach(year => {
+        quarters.forEach(quarter => {
+          this.quarterYearOptions.push({
+            text: `${year} год, ${quarter} квартал`,
+            value: `${year}-${quarter}`,
+            year: year,
+            quarter: quarter
+          });
+        });
+      });
+    },
+    setCurrentQuarterYear() {
+      const currentDate = new Date();
+      const currentYear = currentDate.getFullYear();
+      const currentMonth = currentDate.getMonth() + 1;
+
+      // Определяем текущий квартал
+      let currentQuarter = 1;
+      if (currentMonth >= 4 && currentMonth <= 6) currentQuarter = 2;
+      else if (currentMonth >= 7 && currentMonth <= 9) currentQuarter = 3;
+      else if (currentMonth >= 10 && currentMonth <= 12) currentQuarter = 4;
+
+      this.selectedQuarterYear = `${currentYear}-${currentQuarter}`;
+      this.form.quarter_year = currentYear;
+      this.form.quarter = currentQuarter;
+    },
+    updateQuarterYear() {
+      if (this.selectedQuarterYear) {
+        const [year, quarter] = this.selectedQuarterYear.split('-');
+        this.form.quarter_year = parseInt(year);
+        this.form.quarter = parseInt(quarter);
+      } else {
+        this.form.quarter_year = null;
+        this.form.quarter = null;
+      }
+    },
+    setQuarter(item) {
+      console.log(item)
+      if (item.name === "Квартальный отчет") {
+        this.generateQuarterYearOptions()
+        this.setCurrentQuarterYear()
+        // const currentMonth = new Date().getMonth() + 1; // Месяцы от 1 до 12
+        // const currentYear = new Date().getFullYear()
+        // if (currentMonth >= 1 && currentMonth <= 3) {
+        //   this.form.quarter = 1;
+        // } else if (currentMonth >= 4 && currentMonth <= 6) {
+        //   this.form.quarter = 2;
+        // } else if (currentMonth >= 7 && currentMonth <= 9) {
+        //   this.form.quarter = 3;
+        // } else {
+        //   this.form.quarter = 4;
+        // }
+        // this.form.quarter_year = currentYear
+      }
+    },
     async save(force = false) {
       if (!this.templateError && !this.removed) {
         let tagsList;
         if (this.$refs.tagsList) {
           tagsList = this.$refs.tagsList.selected
         }
-        let formData = new FormData()
-        Object.keys(this.form).forEach(key => {
-              if (this.form[key]) {
-                if (typeof this.form[key] === 'object') {
-                  if (key === 'receiving_date') {
-                    formData.append(key, moment(this.form[key]).format('YYYY-MM-DD'))
-                  } else if (key === 'project') {
-                    if (this.form.project.length > 0) {
-                      console.log(this.form.project)
-                      this.form.project.forEach(obj => {
-                        if (typeof obj === 'object') {
-                          formData.append(key, obj.pk.toString())
-                        } else {
-                          formData.append(key, obj.toString())
-                        }
-                      })
-                    }
-                  } else if (key === 'event') {
-                    if (this.form.event.length > 0) {
-                      this.form.event.forEach(obj => {
-                        formData.append(key, obj.pk.toString())
-                      })
-                    }
-                  } else if (key === 'file') {
-                    formData.set(key, this.form[key])
-                  } else if (key === 'correspondence_type') {
-                    formData.set(key, this.form[key]['id'])
-                  } else {
-                    formData.set(key, this.form[key]['pk'])
-                  }
-                } else {
-                  if (this.form[key] === 'price') {
-                    formData.set(key, this.form[key].replace(/,/g, '.'))
-                  }
-                  formData.set(key, this.form[key])
-                }
-              } else {
-                if (key === 'route') {
-                  formData.set(key, this.form[key])
-                } else {
-                  formData.set(key, '')
-                }
-              }
-            }
-        )
-        if (tagsList) {
+
+        // Проверяем размер файла перед загрузкой
+        if (this.form.file && !fileUploadUtils.checkFileSize(this.form.file, 100)) {
+          console.warn(`Файл ${this.form.file.name} имеет большой размер: ${fileUtils.formatFileSize(this.form.file.size)}`)
+        }
+
+        // Подготавливаем данные для FormData
+        const formDataObj = {
+          receiving_date: this.form.receiving_date ? moment(this.form.receiving_date).format('YYYY-MM-DD') : '',
+          from_physical: this.form.from_physical?.pk || this.form.from_physical || '',
+          out_number: this.form.out_number || '',
+          from_legal: this.form.from_legal?.pk || this.form.from_legal || '',
+          route: this.form.route,
+          task: this.form.task?.pk || this.form.task || '',
+          event: this.form.event?.pk || this.form.event || '',
+          post: this.form.post?.pk || this.form.post || '',
+          to: this.form.to?.pk || this.form.to || '',
+          quarter_year: this.form.quarter_year || '',
+          quarter: this.form.quarter || '',
+          correspondence_type: this.form.correspondence_type?.id || this.form.correspondence_type || '',
+          price: this.form.price ? this.form.price.toString().replace(/,/g, '.') : ''
+        }
+
+        // Добавляем проекты и события как массивы
+        if (this.form.project && this.form.project.length > 0) {
+          formDataObj.project = this.form.project
+        }
+
+        if (this.form.event && Array.isArray(this.form.event) && this.form.event.length > 0) {
+          formDataObj.event = this.form.event
+        }
+
+        // Создаем оптимизированный FormData
+        let formData = fileUploadUtils.createOptimizedFormData(formDataObj, this.form.file)
+
+        // Добавляем теги
+        if (tagsList && tagsList.length > 0) {
           tagsList.forEach(obj => {
             if (obj) {
               formData.append('tags', obj.pk.toString())
             }
-            this.$emit('resetTagForm')
           })
+          this.$emit('resetTagForm')
         }
+
         if (this.uploadProcess.uploaded === false) {
           this.uploadProcess.uploading = true
           await this.$store.dispatch('saveDocument', {
@@ -304,12 +389,14 @@ export default {
               this.uploadProcess.errors.message = err.response.data.errors.message
               this.uploadProcess.errors.existFile = err.response.data.errors.existFile
               this.uploadFile['hasError'] = true
+              throw err
             } else {
               let fileName = this.uploadFile.name
               this.$emit('hasError', {err, fileName})
               this.uploadProcess.errors.hasError = true
               this.uploadProcess.errors.message = err
               this.uploadFile['hasError'] = true
+              throw err
             }
           })
         }
@@ -320,11 +407,11 @@ export default {
     },
     setFrom(item) {
       if (item['type'] === 'PhysicalPerson') {
-        this.form.from_physical_person = item
+        this.form.from_physical = item
         this.form.from_legal = ''
       } else {
         this.form.from_legal = item
-        this.form.from_physical_person = ''
+        this.form.from_physical = ''
       }
     },
     addContractor() {
@@ -347,25 +434,26 @@ export default {
       this.save(true)
     },
     showDuplicate(e, error) {
-      this.$emit('showDuplicate', error)
+      // error содержит existFile из ответа сервера
+      this.$emit('showDuplicate', {
+        existFile: error, // существующий документ
+        newFile: this.form.file // текущий загружаемый файл
+      })
     },
     checkFileNameValid() {
       if (this.uploadTemplate) {
         const regex = new RegExp(this.uploadTemplate.regExp, 'g');
-        console.log(regex)
         let testFileName = regex.exec(this.uploadFile['name'])
         if (!testFileName) {
           this.templateError = true
           this.errorMessage = "Шаблон не может быть применен. Проверьте корректность имени файла"
         } else {
-          console.log(testFileName)
           if (this.uploadTemplate.id === 1) {
             let codeList = testFileName[1].split('-')
-            let fileDate = moment(testFileName[2], 'YYYYMMDD').format('YYYY-MM-DD')
-            this.form.receiving_date = fileDate
+            this.form.receiving_date = moment(testFileName[2], 'YYYYMMDD').format('YYYY-MM-DD')
             let existProject = this.projectList.filter(item => {
               for (let code of codeList) {
-                if (item.code === code) {
+                if (item.code.toLowerCase() === code.toLowerCase()) {
                   return item
                 }
               }
@@ -377,8 +465,7 @@ export default {
               this.projectError = `Проекты с кодами ${codeList.toString()} не найдены`
             }
           } else if (this.uploadTemplate.id === 2) {
-            let fileDate = moment(testFileName[1], 'YYYYMMDD').format('YYYY-MM-DD')
-            this.form.receiving_date = fileDate
+            this.form.receiving_date = moment(testFileName[1], 'YYYYMMDD').format('YYYY-MM-DD')
           }
         }
       }
@@ -408,7 +495,7 @@ export default {
         if (this.$store.getters.participatorList) {
           return this.$store.getters.participatorList
         }
-        return new Array()
+        return []
       }
     },
     contractorList: {
@@ -416,7 +503,7 @@ export default {
         if (this.$store.getters.allRefData) {
           return this.$store.getters.allRefData
         }
-        return new Array()
+        return []
       }
     },
     projectList: {
@@ -424,7 +511,7 @@ export default {
         if (this.$store.getters.projectListData) {
           return this.$store.getters.projectListData
         }
-        return new Array()
+        return []
       }
     },
     systemUser: {
@@ -432,7 +519,7 @@ export default {
         if (this.$store.getters.allSystemUsersData) {
           return this.$store.getters.allSystemUsersData
         }
-        return new Array()
+        return []
       }
     },
     eventRoute() {
@@ -497,7 +584,7 @@ export default {
       this.$destroy()
     })
   },
-  components: {ContractorCreateModal, ProjectCreateModal, AddingTag, ErrorHandling, ConfirmDialog},
+  components: {EditDocument, ContractorCreateModal, ProjectCreateModal, AddingTag, ErrorHandling, ConfirmDialog},
   mixins: [filter]
 }
 </script>

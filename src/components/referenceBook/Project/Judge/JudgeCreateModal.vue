@@ -6,8 +6,8 @@
         <v-form v-model="valid">
           <v-row justify="start">
             <v-col lg="6" md="6" sm="12" xs="12">
-              <v-autocomplete dense outlined label="Суд" :items="courtList" item-value="pk"
-                              item-text="name" v-model="form.court"></v-autocomplete>
+              <v-autocomplete dense outlined label="Суд" :items="courtList" item-value="id"
+                              item-text="name" v-model="form.legal"></v-autocomplete>
             </v-col>
           </v-row>
           <v-row justify="start">
@@ -36,6 +36,7 @@
 
 <script>
 import {mapActions, mapGetters} from "vuex";
+import {isObject} from "lodash";
 
 export default {
   name: "JudgeCreateModal",
@@ -43,7 +44,7 @@ export default {
     show: false,
     valid: false,
     form: {
-      court: null,
+      legal_court: null,
       office_room: null,
       full_name: null
     }
@@ -55,7 +56,7 @@ export default {
   },
   methods: {
     ...mapActions({
-      fetchCurtList: 'getCourtList',
+      fetchCurtList: 'getLegalEntity',
     }),
     close(){
       this.show = false
@@ -82,17 +83,20 @@ export default {
       if (!this.courtList || this.courtList.length === 0) {
         this.fetchCurtList()
       }
-      let filteredCourt = this.courtList.filter(obj => {
-        return obj.name === court
-      })[0]
+      let filteredCourt = null
+      if (isObject(court)){
+         filteredCourt = court
+      }else {
+        filteredCourt = this.courtList.find(obj => obj.name === court)
+      }
       if (filteredCourt){
-        this.form.court = filteredCourt.id
+        this.form.legal = filteredCourt.id
       }
 
       this.form.full_name = judge
       this.form.office_room = cab
       this.show = true
-      console.log(this.curt, this.judge)
+
     })
   }
 }

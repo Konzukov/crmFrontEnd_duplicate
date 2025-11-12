@@ -89,13 +89,15 @@
                                     item-value="pk" :error="!!errors['court']"
                                     :error-messages="errors['court']"
                                     @change="clearJudge"
-                                    v-model="project.court"></v-autocomplete>
+                                    v-model="project.legal_court"></v-autocomplete>
                   </v-col>
                   <v-col cols="5">
                     <v-autocomplete outlined dense clearable label="Судья"
-                                    :disabled="!project.court"
+                                    :disabled="!project.legal_court"
                                     :error="!!errors['judge']"
                                     :error-messages="errors['judge']"
+                                    append-outer-icon="mdi-plus"
+                                    @click:append-outer="addJudge(project.legal_court)"
                                     :items="judgesList" item-text="full_name" item-value="id"
                                     v-model="project.judge"></v-autocomplete>
                   </v-col>
@@ -161,11 +163,9 @@
                 </v-row>
               </v-expansion-panel-content>
             </v-expansion-panel>
-
             <v-expansion-panel v-if="currentUser && currentUser[0]['user']['is_superuser']">
               <v-expansion-panel-header class="pr-5 pl-5">Комментарий</v-expansion-panel-header>
               <v-expansion-panel-content>
-
                 <v-row justify="start" class="mt-2">
                   <VueEditor v-model="project.comment" class="comment"></VueEditor>
                 </v-row>
@@ -263,7 +263,7 @@ export default {
       description: '',
       objective: '',
       responsible: '',
-      court: '',
+      legal_court: '',
       judge: '',
       comment: '',
       court_document: []
@@ -280,10 +280,10 @@ export default {
     }),
     judgesList() {
       const judgeListData = this.$store.getters.judgeListData
-      if (this.project.court) {
+      if (this.project.legal_court) {
         return judgeListData.filter(obj => {
-          if (obj.court) {
-            return obj.court.id === this.project.court
+          if (obj.legal) {
+            return obj.legal.id === this.project.legal_court
           }
         })
       }
@@ -310,14 +310,14 @@ export default {
       })
     },
     async determineServerUrl() {
-      const devServer = "http://127.0.0.1:8000";
-      // const localServer = 'http://192.168.1.112:8000';
+      // const devServer = "http://127.0.0.1:8000";
+      const localServer = 'http://192.168.1.112:8000';
       const remoteServer = 'http://80.254.125.196:9563';
 
       try {
         // Проверка доступности локального сервера
-        const isAvailable = await this.checkServerAvailability(devServer);
-        return isAvailable ? devServer : remoteServer;
+        const isAvailable = await this.checkServerAvailability(localServer);
+        return isAvailable ? localServer : remoteServer;
       } catch (error) {
         return remoteServer; // Возвращаем удаленный сервер при ошибке
       }
@@ -354,13 +354,13 @@ export default {
     },
     async setJudge(val) {
       await this.$store.dispatch('getJudgeList')
-      let filteredJudge = this.judgesList.filter(obj => {
+      let filteredJudge = this.judgesList.find(obj => {
         return obj.id === val.id
-      })[0]
-      let filteredCurt = this.courtList.filter(obj => {
+      })
+      let filteredCurt = this.courtList.find(obj => {
         console.log(val)
         return obj.id === val.court
-      })[0]
+      })
       if (filteredJudge) {
         this.project.judge = filteredJudge.id
       }
@@ -492,8 +492,11 @@ export default {
     setCurt(item) {
       if (item) {
         let curtCode = item.split("-")[0]
-        let curt = this.courtList.filter(item => item.code === curtCode)[0]
-        this.project.court = curt["pk"]
+        let curt = this.courtList.find(item => {
+          console.log(item?.additional_info?.court_code === curtCode)
+          return item?.additional_info?.court_code === curtCode
+        })
+        this.project.legal_court = curt["pk"]
       }
     },
     setAgent(item) {
@@ -533,6 +536,12 @@ export default {
     forceSave(forced) {
       this.isForce = forced
       this.save()
+    },
+    addJudge(curt) {
+      const curtData = this.courtList.find(obj=>obj.pk === curt)
+      this.$emit('createJudge', {
+        court: curtData
+      })
     },
     addContractor() {
       this.$emit('addContractor')

@@ -27,6 +27,7 @@
           <v-row justify="center">
             <v-col md="8">
               <v-select v-if="useTemplate"
+                        dense
                         v-model="template"
                         outlined
                         :items="uploadTemplates"
@@ -44,12 +45,15 @@
                   <v-file-input counter
                                 label="Добавьте файлы"
                                 multiple
+                                dense
                                 :accept="template.id === 3? '.yml,.yaml': ''"
                                 v-model="files"
                                 placeholder="Выберете или перетащите файлы"
                                 outlined
                                 clearable
                                 @click:clear="resetForm"
+                                persistent-hint
+                                :hint="uploadInfoHint()"
                   >
                   </v-file-input>
                 </form>
@@ -62,6 +66,29 @@
                                       :uploadFile.sync="item"
                                       :key="i"
                 ></yaml-file-processing>
+
+              </v-expansion-panels>
+              <v-expansion-panels v-else-if="template.id === 5">
+                <JSONFileProcessing
+                    v-for="(item, i) in files"
+                    :ref="`yamlForm`"
+                    :uploadFile.sync="item"
+                    :templateType="'post'"
+                    :key="i"
+                >
+                </JSONFileProcessing>
+              </v-expansion-panels>
+
+              <!-- Для шаблона загрузки счетов JSON (id: 4) -->
+              <v-expansion-panels v-else-if="template.id === 4">
+                <JSONFileProcessing
+                    v-for="(item, i) in files"
+                    :ref="`yamlForm`"
+                    :uploadFile.sync="item"
+                    :templateType="'bank_account'"
+                    :key="i"
+                >
+                </JSONFileProcessing>
               </v-expansion-panels>
               <v-expansion-panels flat focusable v-else>
                 <createDocumentForm v-for="(item, i) in files"
@@ -88,7 +115,35 @@
                 <v-btn v-if="template.id ===3 " color="success" :disabled="files.length === 0" @click="processYaml">
                   Обработать
                 </v-btn>
-                <v-btn v-else color="success" :disabled="files.length === 0" @click="saveAll">Сохранить все</v-btn>
+                <v-btn v-else color="success" :disabled="files.length === 0 || uploadState.isUploading"
+                       @click="saveAll">
+                  {{ uploadState.isUploading ? 'Загрузка...' : 'Сохранить все' }}
+                </v-btn>
+              </v-col>
+            </v-row>
+
+            <!-- Индикатор прогресса загрузки -->
+            <v-row v-if="uploadState.isUploading" justify="center" class="mt-3">
+              <v-col cols="12" md="8">
+                <v-card outlined style="overflow: hidden;">
+                  <v-card-text>
+                    <div class="text-center mb-2">
+                      <strong>Загрузка файлов: {{
+                          updateUploadProgress().uploadedFiles
+                        }}/{{ updateUploadProgress().totalFiles }}</strong>
+                    </div>
+                    <v-progress-linear
+                        :value="updateUploadProgress().totalProgress"
+                        color="primary"
+                        height="20"
+                        striped
+                    >
+                      <template v-slot:default="{ value }">
+                        <strong>{{ Math.ceil(value) }}%</strong>
+                      </template>
+                    </v-progress-linear>
+                  </v-card-text>
+                </v-card>
               </v-col>
             </v-row>
           </v-card-actions>
@@ -101,10 +156,11 @@
 
 <script>
 import createDocumentForm from "./createDocumentForm";
-import {eventBus} from "../../../../bus";
+import {eventBus} from "@/bus";
 import {DocumentNameTemplate} from "@/const/dataTypes";
 import YamlFileProcessing from "@/components/CRM/PaperFlow/modal/yamlFileProcessing.vue";
 import LegalEntityCreateModal from "@/components/referenceBook/LegalEntity/LegalEntityCreateModal.vue";
+import JSONFileProcessing from "@/components/CRM/PaperFlow/modal/JSONFileProcessing.vue";
 
 export default {
   name: "createDocument",
@@ -123,6 +179,13 @@ export default {
       taskData: '',
       files: [],
       show: true,
+      // Добавляем состояние для отслеживания загрузки
+      uploadState: {
+        totalFiles: 0,
+        uploadedFiles: 0,
+        failedFiles: 0,
+        isUploading: false
+      }
     }
   },
   computed: {
@@ -136,6 +199,9 @@ export default {
     }
   },
   methods: {
+    uploadInfoHint() {
+      return `Файлов для загрузки: ${this.files.length}. Общий размер: ${this.formatTotalSize()}`
+    },
     async processYaml() {
       let yamlFormComponent = this.$refs['yamlForm']
       await Promise.all(yamlFormComponent.map(async (_component) => {
@@ -203,9 +269,6 @@ export default {
       }
     },
     delDoc(elem, item, index) {
-      // let docFormComponent = this.$refs['docForm']
-      // let childComponent = this.$refs['docForm'][index]
-      // childComponent.$destroy()
       this.files = this.files.filter(obj => {
         if (obj !== item) {
           return obj
@@ -216,32 +279,137 @@ export default {
     dropAddFile(e) {
       let droppedFiles = e.dataTransfer.files;
       if (!droppedFiles) return false;
-      ([...droppedFiles]).forEach(file => {
-        console.log(file)
-        this.files.push(file)
-      })
+
+      // Фильтруем и проверяем файлы перед добавлением
+      const validFiles = Array.from(droppedFiles).filter(file => {
+        // Проверяем размер файла
+        const maxSize = 100 * 1024 * 1024; // 100MB
+        if (file.size > maxSize) {
+          console.warn(`Файл ${file.name} слишком большой (${(file.size / 1024 / 1024).toFixed(2)}MB)`)
+          return false;
+        }
+
+        // Проверяем тип файла (опционально)
+        const allowedTypes = [
+          'application/pdf',
+          'application/msword',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'application/vnd.ms-excel',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'image/jpeg',
+          'image/png',
+          'image/gif',
+          'text/plain'
+        ];
+
+        if (!allowedTypes.includes(file.type)) {
+          console.warn(`Неподдерживаемый тип файла: ${file.name} (${file.type})`)
+        }
+
+        return true;
+      });
+
+      this.files.push(...validFiles);
+    },
+
+    // Метод для предварительной проверки файлов
+    validateFiles(files) {
+      const results = {
+        valid: [],
+        invalid: [],
+        totalSize: 0
+      };
+
+      files.forEach(file => {
+        const maxSize = 100 * 1024 * 1024; // 100MB
+        const fileSizeMB = file.size / 1024 / 1024;
+
+        if (file.size > maxSize) {
+          results.invalid.push({
+            file,
+            reason: `Файл слишком большой (${fileSizeMB.toFixed(2)}MB)`
+          });
+        } else {
+          results.valid.push(file);
+          results.totalSize += file.size;
+        }
+      });
+
+      return results;
     },
     async saveAll() {
       let docFormComponent = this.$refs['docForm']
-      new Promise(async resolve => {
-        for (let _component of docFormComponent) {
-          await _component.save()
-        }
-        resolve()
-      }).then(() => {
-        for (let obj of this.files) {
-          if (obj.hasError) {
+
+      // Инициализируем состояние загрузки
+      this.uploadState.totalFiles = docFormComponent.length
+      this.uploadState.uploadedFiles = 0
+      this.uploadState.failedFiles = 0
+      this.uploadState.isUploading = true
+      this.hasError = false
+
+      try {
+        // Последовательная загрузка файлов
+        for (let index = 0; index < docFormComponent.length; index++) {
+          const component = docFormComponent[index]
+          try {
+            await component.save()
+            this.uploadState.uploadedFiles++
+          } catch (error) {
+            this.uploadState.failedFiles++
             this.hasError = true
-            break
+            console.error(`Ошибка загрузки файла ${index + 1}:`, error)
+
+            // Если это ошибка 444 (файл уже существует), не прерываем процесс,
+            // но оставляем диалог открытым
+            if (error.response?.status === 444) {
+              // Можно добавить дополнительную обработку, если нужно
+              console.warn('Файл уже существует, продолжаем загрузку остальных')
+            }
           }
         }
         if (!this.hasError) {
           this.close()
-
         }
-      })
-      // this.close()
-      // eventBus.$emit('saveAllDoc')
+      } catch (error) {
+        console.error('Критическая ошибка во время загрузки:', error)
+        this.hasError = true
+      } finally {
+        // Закрываем диалог только если не было ошибок
+        if (!this.hasError) {
+          this.close()
+        }
+      }
+    },
+
+    // Метод для обновления состояния загрузки
+    updateUploadProgress() {
+      const totalProgress = this.uploadState.totalFiles > 0
+          ? Math.round((this.uploadState.uploadedFiles / this.uploadState.totalFiles) * 100)
+          : 0
+
+      return {
+        totalProgress,
+        uploadedFiles: this.uploadState.uploadedFiles,
+        totalFiles: this.uploadState.totalFiles,
+        failedFiles: this.uploadState.failedFiles
+      }
+    },
+    formatTotalSize() {
+      const totalBytes = this.files.reduce((sum, file) => sum + file.size, 0);
+      const totalMB = totalBytes / (1024 * 1024);
+      return `${totalMB.toFixed(2)} MB`;
+    },
+    getFileTypesSummary() {
+      const types = {};
+      this.files.forEach(file => {
+        const type = file.type.split('/')[0]; // Получаем основной тип (application, image, text)
+        types[type] = (types[type] || 0) + 1;
+      });
+
+      const summary = Object.entries(types)
+          .map(([type, count]) => `${count} ${type}`)
+          .join(', ');
+      return summary || 'Нет файлов';
     },
     cleanTemplate(item) {
       if (!item) {
@@ -249,7 +417,7 @@ export default {
       }
     },
     resetForm() {
-      this.files = new Array()
+      this.files = []
       eventBus.$emit('resetForm')
       // Object.assign(this.$data, this.$options.data())
     },
@@ -266,7 +434,7 @@ export default {
         }
       })
 
-    }
+    },
   },
   created() {
     this.$parent.$on('newDocument', () => {
@@ -306,6 +474,7 @@ export default {
     })
   },
   components: {
+    JSONFileProcessing,
     YamlFileProcessing,
     createDocumentForm,
     LegalEntityCreateModal

@@ -59,7 +59,7 @@ export default {
                 })
             })
         },
-        async fetchSinglePhysicalPersons({commit}, id){
+        async fetchSinglePhysicalPersons({commit}, id) {
             return await new Promise((resolve, reject) => {
                 axios.get(customConst.REFERENCE_BOOK_API + `physical-person/${id}`).then(res => {
                     resolve(res.data.data.data)
@@ -68,8 +68,19 @@ export default {
                 })
             })
         },
+        async checkPersonDuplicates({commit}, data) {
+            return await new Promise((resolve, reject) => {
+                axios.post(customConst.REFERENCE_BOOK_API + 'physical-person/check-person-duplicates/', data)
+                    .then(res => {
+                        resolve(res.data.data.data)
+                    })
+                    .catch(error => {
+                        reject(error)
+                    })
+            })
+        },
         async savePerson({commit}, person) {
-            let  dataToSend = {
+            let dataToSend = {
                 ...person,
                 citizenships: person.citizenships.map(c => ({
                     ...c,

@@ -74,12 +74,28 @@
               <v-list-item-title>Документы</v-list-item-title>
             </v-list-item-content>
           </v-list-item>
+          <v-list-item :to="{name: 'wiki'}">
+            <v-list-item-icon>
+              <v-icon>mdi-wikipedia</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Вики</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+          <v-list-item :to="{name: 'document-flow'}">
+            <v-list-item-icon>
+              <v-icon>mdi-file-document-edit</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Документы (v2)</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
         </v-list-item-group>
       </v-list>
     </v-navigation-drawer>
     <v-app-bar app dense height="35px">
       <v-row justify="end">
-        <v-col md="3" >{{ new Date().toLocaleDateString() }}</v-col>
+        <v-col md="3">{{ new Date().toLocaleDateString() }}</v-col>
         <v-col md="3" id="user-info">
           <v-menu
               open-on-hover
@@ -330,6 +346,7 @@ export default {
 #user-info {
   text-align: right;
 }
+
 .money-icon {
   max-height: 30px;
   height: 24px;

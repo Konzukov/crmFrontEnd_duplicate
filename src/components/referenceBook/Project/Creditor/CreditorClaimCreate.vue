@@ -137,6 +137,8 @@ export default {
     },
     reset() {
       this.$emit('resetForm')
+      this.$emit('close')
+      Object.assign(this.$data, this.$options.data())
     },
     save() {
       for (let prop in this.errorMessage) {
@@ -151,6 +153,8 @@ export default {
       if (this.form.id) {
         this.$store.dispatch('editCreditorClaim', {formData, id: this.form.id}).then(() => {
           this.$emit('updateCreditorClaimList')
+          Object.assign(this.$data, this.$options.data())
+
         }).catch(err => {
           let errors = err.response.data.errors
           Object.keys(errors).forEach(key => {
@@ -161,6 +165,7 @@ export default {
         this.$store.dispatch('saveCreditorClaim', formData).then((res) => {
           this.form.id = res.id
           this.$emit('updateCreditorClaimList')
+          Object.assign(this.$data, this.$options.data())
         }).catch(err => {
           let errors = err.response.data.errors
           Object.keys(errors).forEach(key => {

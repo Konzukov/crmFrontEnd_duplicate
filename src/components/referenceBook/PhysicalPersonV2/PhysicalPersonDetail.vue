@@ -291,12 +291,29 @@
                     ></v-select>
                   </v-col>
                   <v-col cols="12" md="5" class="pt-0 pb-0">
-                    <v-text-field dense outlined :rules="requiredRules" label="Адрес" class="required"
-                                  v-model="communication.value"></v-text-field>
+                    <template v-if="communication.communication_type === 'Email'">
+                      <v-text-field dense outlined :rules="emailRules" label="Email"
+                                    v-model="communication.value" class="required"></v-text-field>
+                    </template>
+                    <template v-else-if="communication.communication_type === 'Phone'">
+                      <v-text-field dense outlined :rules="requiredRules" label="Номер телефона"
+                                    v-mask="'+# (###) #######'"
+                                    v-model="communication.value" class="required"></v-text-field>
+                    </template>
+                    <template v-else>
+                      <v-textarea dense outlined :rules="requiredRules" label="Почтовый адрес" rows="2"
+                                  v-model="communication.value" class="required"></v-textarea>
+                    </template>
                   </v-col>
                   <v-col cols="12" md="2" class="pt-0 pb-0">
-                    <v-checkbox dense outlined label="Основной"
-                                v-model="communication.is_main"></v-checkbox>
+                    <v-checkbox
+                        v-if="communication.communication_type === 'Phone'"
+                        dense outlined label="Основной телефон"
+                        v-model="communication.is_main_phone"></v-checkbox>
+                    <v-checkbox
+                        v-else
+                        dense outlined label="Основной"
+                        v-model="communication.is_main"></v-checkbox>
                   </v-col>
                 </v-row>
               </v-card-text>
@@ -674,13 +691,35 @@
         </v-btn>
       </template>
     </v-snackbar>
+    <v-dialog v-model="duplicateDialog" max-width="800px">
+      <v-card>
+        <v-card-title>Найдены похожие записи</v-card-title>
+        <v-card-text>
+          <p>Обнаружены существующие записи с похожими данными:</p>
+          <v-data-table
+              :headers="duplicateHeaders"
+              :items="duplicates"
+              hide-default-footer
+              class="elevation-1"
+          >
+            <template v-slot:item.actions="{ item }">
+              <v-btn small color="primary" @click="useDuplicate(item)">Использовать</v-btn>
+            </template>
+          </v-data-table>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" @click="duplicateDialog = false">Продолжить создание</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-card>
 </template>
 
 <script>
 import {mapGetters} from "vuex";
 import {uuid} from "vue-uuid";
-import {cloneDeep} from "lodash";
+import {cloneDeep, debounce} from "lodash";
 import moment from "moment";
 // import {VueMaskFilter} from 'v-mask'
 
@@ -693,6 +732,14 @@ export default {
     yaml: Object,
   },
   data: () => ({
+    duplicateDialog: false,
+    duplicates: [],
+    duplicateHeaders: [
+      {text: 'ФИО', value: 'fullName'},
+      {text: 'Дата рождения', value: 'birthday'},
+      {text: 'Действия', value: 'actions', sortable: false}
+    ],
+    debouncedCheckDuplicates: null,
     saving: false,
     showNotification: false,
     notificationMessage: '',
@@ -703,6 +750,10 @@ export default {
     editedItem: null,
     originalItem: null,
     requiredRules: [v => !!v || 'Обязательное поле'],
+    emailRules: [
+      v => !!v || 'Email обязателен',
+      v => /.+@.+\..+/.test(v) || 'Email должен быть действительным'
+    ],
     genders: [
       {text: 'Мужской', value: 'Male'},
       {text: 'Женский', value: 'Female'},
@@ -727,6 +778,7 @@ export default {
       {key: 'ElectronicMail', val: 'Электронные письма'},
       {key: 'Email', val: 'Электронная почта'},
       {key: 'SBIS', val: 'Сбис'},
+      {key: 'Phone', val: 'Телефон'},
     ],
     familyRelationTypes: [
       {text: 'Супруг(а)', value: 'spouse'},
@@ -800,6 +852,26 @@ export default {
     }
   },
   watch: {
+    'editedItem.last_name': function (newVal) {
+      if (this.isCreating) {
+        this.debouncedCheckDuplicates();
+      }
+    },
+    'editedItem.first_name': function (newVal) {
+      if (this.isCreating) {
+        this.debouncedCheckDuplicates();
+      }
+    },
+    'editedItem.middle_name': function (newVal) {
+      if (this.isCreating) {
+        this.debouncedCheckDuplicates();
+      }
+    },
+    'editedItem.birthday': function (newVal) {
+      if (this.isCreating) {
+        this.debouncedCheckDuplicates();
+      }
+    },
     yaml: {
       immediate: true,
       handler(yamlData) {
@@ -909,8 +981,8 @@ export default {
     },
   },
   methods: {
-    copyAddress(content_object){
-       content_object.correspondence_address = this.editedItem.communication.filter(obj=> obj.is_main)[0].value
+    copyAddress(content_object) {
+      content_object.correspondence_address = this.editedItem.communication.filter(obj => obj.is_main)[0].value
     },
     async loadEGRULData(inn) {
       console.log(inn);
@@ -999,7 +1071,6 @@ export default {
 
       return results.flat();
     },
-// Извлечение информации об ИП
     extractIPInfo(ipData) {
       const attributes = ipData["@attributes"] || {};
       let ogrnip = attributes.ОГРНИП;
@@ -1454,6 +1525,7 @@ export default {
         communication_type: null,
         value: null,
         is_main: false,
+        is_main_phone: false
       })
     },
     addRegistration(citizenship) {
@@ -1535,7 +1607,6 @@ export default {
       this.saving = true
       return new Promise(async (resolve, reject) => {
         if (this.$refs.form.validate()) {
-
           try {
             const dataToSave = {
               ...this.editedItem,
@@ -1577,13 +1648,40 @@ export default {
           reject();
         }
       });
-    }
+    },
+    async checkDuplicates() {
+      // Проверяем, что есть хотя бы фамилия и имя
+      if (!this.editedItem.last_name) {
+        return;
+      }
+
+      try {
+        const duplicates = await this.$store.dispatch('checkPersonDuplicates', {
+          last_name: this.editedItem.last_name,
+        });
+        console.log(duplicates)
+        if (duplicates.length > 0) {
+          this.duplicates = duplicates;
+          this.duplicateDialog = true;
+        }
+      } catch (error) {
+        console.error('Ошибка при проверке дубликатов:', error);
+      }
+    },
+
+    // Метод для использования данных найденного дубликата
+    useDuplicate(duplicate) {
+      console.log(duplicate)
+      this.$emit('duplicate-selected', duplicate);
+      this.duplicateDialog = false;
+    },
   },
   created() {
     this.resetForm()
     if (this.countries.length === 0) {
       this.$store.dispatch('getCountry')
     }
+    this.debouncedCheckDuplicates = debounce(this.checkDuplicates, 500);
   }
 }
 </script>

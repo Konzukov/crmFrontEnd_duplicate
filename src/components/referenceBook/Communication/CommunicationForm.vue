@@ -17,13 +17,22 @@
             <template v-if="form.communication_type === 'Email'">
               <v-text-field dense outlined :rules="emailRules" label="Email" v-model="form.value"></v-text-field>
             </template>
+            <template v-else-if="form.communication_type === 'Phone'">
+              <v-text-field dense outlined :rules="emailRules" label="Номер телефона"
+                            v-mask="'+#(###)###-##-##'"
+                            v-model="form.value"></v-text-field>
+            </template>
             <template v-else>
-              <v-textarea dense outlined :rules="addressRules" label="Почтовый адрес" rows="2" v-model="form.value"></v-textarea>
+              <v-textarea dense outlined :rules="addressRules" label="Почтовый адрес" rows="2"
+                          v-model="form.value"></v-textarea>
             </template>
           </v-col>
         </v-row>
-        <v-row justify="start">
+        <v-row justify="start" v-if="form.communication_type !== 'Phone'">
           <v-checkbox v-model="form.is_main" dense label="Является основным"></v-checkbox>
+        </v-row>
+        <v-row justify="start" v-else>
+          <v-checkbox v-model="form.is_main_phone" dense label="Является основным телефоном"></v-checkbox>
         </v-row>
       </v-card-text>
       <v-card-actions class="flex justify-end">
@@ -70,7 +79,8 @@ export default {
       value: null,
       legal: null,
       person: null,
-      is_main: false
+      is_main: false,
+      is_main_phone: false
     }
   }),
   methods: {

@@ -170,7 +170,7 @@ export default {
                     url: customConst.PAPERFLOW_API + 'post-detail/' + pk
                 }).then(res => {
                     commit('syncSinglePost', res.data.data.data)
-                    resolve()
+                    resolve(res.data.data.data)
                 }).catch(err => {
                     reject(err)
                 })

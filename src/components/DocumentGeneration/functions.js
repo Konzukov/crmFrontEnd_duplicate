@@ -101,7 +101,7 @@ export async function compareFields(fields, data) {
                 break
             // ... остальные case остаются без изменений
             case "CURT":
-                compare[field['value']] = data['court']?.name || '';
+                compare[field['value']] = data['legal_court']?.name || '';
                 break
             case "REPORT_DATE":
                 compare[field['value']] = data['report_date'] || '';
@@ -118,7 +118,7 @@ export async function compareFields(fields, data) {
                 compare[field['value']] = act?.url || '';
                 break
             case "CURT_ADDRESS":
-                compare[field['value']] = data['court']?.address || '';
+                compare[field['value']] = data['legal_court']?.legal_address || data['legal_court']?.postal_address ||'';
                 break
             case "JUDGE":
                 compare[field['value']] = data['judge']?.full_name || '';

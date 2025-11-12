@@ -99,6 +99,12 @@
               Файлы
             </v-card>
           </v-item>
+<!--          <v-item v-slot="{ active, toggle }">-->
+<!--            <v-card :to="{name: 'creditor-view'}" class="text-center nav-btn"-->
+<!--                    @click="toggle">-->
+<!--              Кредиторы-->
+<!--            </v-card>-->
+<!--          </v-item>-->
           <v-item v-slot="{ active, toggle }">
             <v-card :to="{name: 'project-questionnaire'}" class="text-center nav-btn"
                     @click="toggle">
@@ -129,7 +135,7 @@
         </v-btn>
       </v-row>
     </v-item-group>
-    <router-view :project="projectPK" :collapsed="collapse" :act="projectDetail.act" :freePart="projectFreePart"
+    <router-view :project="projectPK"  :debtor="projectDetail.physical_contractor || projectDetail.legal_contractor" :collapsed="collapse" :act="projectDetail.act" :freePart="projectFreePart"
                  class="main-content">
 
     </router-view>

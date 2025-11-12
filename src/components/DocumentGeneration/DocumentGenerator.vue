@@ -42,6 +42,7 @@
                 return-object
                 @change="getCreditOrganizationDetail"
             ></v-autocomplete>
+            <v-checkbox v-model="useFacsimile" label="Использовать отдельный файл с факсимиле"></v-checkbox>
             <v-radio-group row dense v-model="docType">
               <v-radio
                   label="DOCX"
@@ -437,6 +438,27 @@
                     </v-list>
                   </v-expansion-panel-content>
                 </v-expansion-panel>
+                <v-expansion-panel v-if="managerFields.length > 0">
+                  <v-expansion-panel-header>Данные управляющего</v-expansion-panel-header>
+                  <v-expansion-panel-content>
+                    <v-list class="field__list" v-for="field in managerFields" :key="field.id">
+                      <template v-if="field['selected']">
+                        <!--                        AY_CORRESPONDENCE-->
+                        <v-row v-if="field.value ==='AY_CORRESPONDENCE'" justify="start">
+                          <v-col cols="12">
+                            <v-autocomplete outlined dense :label="field.name"
+                                            :items="participatorCommunication"
+                                            item-text="value"
+                                            item-value="value"
+                                            :rules="rules.required"
+                                            v-model="templateFields[field.value]">
+                            </v-autocomplete>
+                          </v-col>
+                        </v-row>
+                      </template>
+                    </v-list>
+                  </v-expansion-panel-content>
+                </v-expansion-panel>
                 <v-expansion-panel>
                   <v-expansion-panel-header>Данные процедуры</v-expansion-panel-header>
                   <v-expansion-panel-content>
@@ -444,7 +466,8 @@
                       <template v-if="field['selected']">
                         <v-row v-if="field.value ==='MANAGER_OR_REPRESENTATIVE'" justify="start">
                           <v-col cols="12">
-                            <v-autocomplete outlined dense :label="field.name" :items="allSystemUsersList" item-value="id"
+                            <v-autocomplete outlined dense :label="field.name" :items="allSystemUsersList"
+                                            item-value="id"
                                             v-model="templateFields[field.value]"
                                             item-text="fullName"></v-autocomplete>
                           </v-col>
@@ -522,7 +545,9 @@
                                             item-text="name"
                                             item-value="id"
                                             :rules="rules.required"
-                                            multiple
+                                            append-outer-icon="mdi-plus"
+                                            @click:append-outer="addCreditorClaim"
+                                            @change="setCreditor"
                                             v-model="receivedCreditorClaim">
 
                               <template v-slot:selection="data">
@@ -535,6 +560,33 @@
                                   <v-list-item-title>{{ data.item.basis }} от {{
                                       data.item.date_origin
                                     }}
+                                  </v-list-item-title>
+                                </v-list-item-content>
+                              </template>
+                            </v-autocomplete>
+                          </v-col>
+                        </v-row>
+                        <!--CREDITOR_CLAIM_REGISTER-->
+                        <v-row v-if="field.value ==='CREDITOR_CLAIM_REGISTER'" justify="start">
+                          <v-col cols="12">
+                            <v-autocomplete outlined dense :label="field.name"
+                                            :items="creditorClaimRegisterList"
+                                            item-text="name"
+                                            item-value="id"
+                                            :rules="rules.required"
+                                            append-outer-icon="mdi-plus"
+                                            @click:append-outer="addCreditorClaimRegister"
+                                            @change="setRegisterCreditor"
+                                            v-model="registerCreditorClaim">
+
+                              <template v-slot:selection="data">
+                                <v-chip close>
+                                  {{ data.item | creditor }} - {{ data.item.claim_amount }}
+                                </v-chip>
+                              </template>
+                              <template v-slot:item="data">
+                                <v-list-item-content>
+                                  <v-list-item-title>{{ data.item | creditor }} - {{ data.item.claim_amount }}
                                   </v-list-item-title>
                                 </v-list-item-content>
                               </template>
@@ -794,6 +846,7 @@
                             </template>
                           </v-autocomplete>
                         </v-row>
+
                       </template>
                       <template v-else-if="field['is_date']">
                         <v-text-field type="date" :rules="field.required? rules.required: []"
@@ -813,7 +866,7 @@
                                       dense outlined v-model="dataFile" :label="field.name"></v-file-input>
                       </template>
                       <template v-else-if="field['is_textarea']">
-                        <label>{{field.name}}</label>
+                        <label>{{ field.name }}</label>
                         <VueEditor v-model="templateFields[field.value]"></VueEditor>
                       </template>
                       <template v-else-if="field['value']==='DEBT_OFF'">
@@ -1226,7 +1279,6 @@
           </v-card-text>
         </v-card>
       </v-dialog>
-
     </v-card>
     <CreatePostMail></CreatePostMail>
     <ContractorCreateModal></ContractorCreateModal>
@@ -1267,7 +1319,7 @@
         <v-card-actions>
           <v-row justify="space-around" class="mb-0">
             <v-col cols="auto">
-              <v-btn small color="error" @click="confirmSave=!confirmSave">Отмена</v-btn>
+              <v-btn small color="error" @click="cancel">Отмена</v-btn>
             </v-col>
             <v-col cols="auto">
               <v-btn small color="success" :disabled="!confirmData" @click="download()">
@@ -1286,13 +1338,42 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <v-dialog v-model="komPreFormat" width="60vw">
+      <v-card>
+        <v-card-text style="overflow: hidden;">
+          <v-textarea v-model="templateFields['preMessage']" rows="10">
+
+          </v-textarea>
+        </v-card-text>
+        <v-card-actions>
+          <v-row justify="center" class="ma-0">
+            <v-col cols="auto">
+              <v-btn @click="confirmPreMessage">Сформировать</v-btn>
+            </v-col>
+            <v-col cols="auto">
+              <v-btn @click="sendMailKommersant">Отправить в коммерсант</v-btn>
+            </v-col>
+
+          </v-row>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     <SystemMessage :state.sync="state" :project="project"/>
     <PhysicalPersonModalFormView></PhysicalPersonModalFormView>
+    <!--    <CreateCreditorClaimNew></CreateCreditorClaimNew>-->
+    <BasicCreditorClaimCreate @updateBasicCreditorClaim="updateBasicCreditorClaim"></BasicCreditorClaimCreate>
+    <v-dialog persistent scrollable v-model="showCreditorClaimCreate" width="700">
+      <v-card v-if="projectData">
+        <creditor-claim-create :project="projectData.pk" @updateCreditorClaimList="updateCreditorClaimList"
+                               @close="showCreditorClaimCreate = false"></creditor-claim-create>
+      </v-card>
+
+    </v-dialog>
   </v-container>
 </template>
 
 <script>
-import {mapGetters} from 'vuex'
+import {mapActions, mapGetters} from 'vuex'
 import {compareFields} from './functions'
 import customConst from "@/const/customConst";
 import {saveAs} from 'file-saver';
@@ -1300,10 +1381,12 @@ import CreatePostMail from "@/components/PostMail/CreatePostMail";
 import ContractorCreateModal from "@/components/referenceBook/ContractorCreateModal";
 import LegalEntityCreateModal from "@/components/referenceBook/LegalEntity/LegalEntityCreateModal.vue";
 import SystemMessage from "@/components/UI/SystemMessage.vue";
-
 import {ProcedureType} from "@/const/dataTypes";
 import {VueEditor} from "vue2-editor";
 import PhysicalPersonModalFormView from "@/views/PhysicalPersonV2/PhysicalPersonModalFormView.vue";
+import BasicCreditorClaimCreate from "@/components/referenceBook/Project/Creditor/BasicCreditorClaimCreate.vue";
+import CreditorClaimCreate from "@/components/referenceBook/Project/Creditor/CreditorClaimCreate.vue";
+
 
 let vueStore = {
   valid: false
@@ -1318,6 +1401,10 @@ export default {
     }
   },
   data: () => ({
+    showCreditorClaimCreate: false,
+    participator: null,
+    useFacsimile: false,
+    komPreFormat: false,
     duplicatError: false,
     showEditor: false,
     docErrors: null,
@@ -1358,6 +1445,7 @@ export default {
     kio: null,
     dizo: null,
     receivedCreditorClaim: null,
+    registerCreditorClaim: null,
     addressDesk: null,
     docId: null,
     legalContractor: null,
@@ -1394,9 +1482,11 @@ export default {
       activeProjectList: 'activeProjectListData',
       regionList: 'regionListData',
       participantDetail: 'participantFullDetail',
+      participatorList: 'participatorList',
       currentUser: 'authUserData',
       allRefList: 'allRefData',
       allSystemUsersList: 'allSystemUsersData',
+      currentUserData: 'currentUserData',
       legalList: 'legalEntityData',
       creditOrganizationList: 'creditOrganizationListData',
       fnsList: 'fnsListData',
@@ -1415,7 +1505,8 @@ export default {
       btiList: 'btiListData',
       kioList: 'kioListData',
       dizoList: 'dizoListData',
-      basicCreditorClaimLIst: 'basicCreditorClaimData'
+      basicCreditorClaimLIst: 'basicCreditorClaimData',
+      creditorClaimRegisterList: 'creditorClaimRegisterData'
     }),
     debtorFields() {
       return this.template.fields.filter(obj => obj['field_type'] === "Debtor")
@@ -1423,8 +1514,22 @@ export default {
     procedureFields() {
       return this.template.fields.filter(obj => obj['field_type'] === "Procedure")
     },
+    managerFields() {
+      return this.template.fields.filter(obj => obj['field_type'] === "AY")
+    },
     otherFields() {
       return this.template.fields.filter(obj => !obj['field_type'])
+    },
+    participatorCommunication() {
+      if (this.projectData) {
+        console.log(this.projectData)
+        return this.projectData.participant.participator.communication.filter(obj => obj.communication_type !== 'Email' && obj.communication_type !== "Phone")
+      } else if (this.participatorList.length > 0) {
+        console.log(this.participatorList)
+        return this.participatorList[0].participator.communication.filter(obj => obj.communication_type !== 'Email' && obj.communication_type !== "Phone")
+      } else {
+        return []
+      }
     }
   },
   watch: {
@@ -1445,15 +1550,57 @@ export default {
     }
   },
   methods: {
-    getDocs(){
+    ...mapActions({
+      getCreditorClaim: "getCreditorClaim"
+    }),
+    cancel() {
+      this.confirmSave = false
+      this.templateFields['preMessage'] = ''
+    },
+    updateCreditorClaimList() {
+      this.getCreditorClaim(this.projectData.pk)
+      this.showCreditorClaimCreate = false
+    },
+    confirmPreMessage() {
+      this.komPreFormat = false
+      this.generateDocument()
+    },
+    updateBasicCreditorClaim() {
+      this.$store.dispatch('getBasicCreditorClaim', this.projectData.id).then(res => {
+        this.receivedCreditorClaim = res.at(-1)['id']
+        this.setCreditor(res.at(-1)['id'])
+      })
+    },
+    setCreditor(item) {
+      const creditorClaim = this.basicCreditorClaimLIst.find(obj => obj.id === item)
+      if (creditorClaim && creditorClaim.legal_creditor) {
+        this.creditor = creditorClaim.legal_creditor
+      } else if (creditorClaim && creditorClaim.physical_creditor) {
+        this.creditor = creditorClaim.physical_creditor
+      }
+    },
+    setRegisterCreditor(item) {
+      const creditorClaim = this.creditorClaimRegisterList.find(obj => obj.id === item)
+      if (creditorClaim && creditorClaim.legal_creditor) {
+        this.creditor = creditorClaim.legal_creditor
+      } else if (creditorClaim && creditorClaim.physical_creditor) {
+        this.creditor = creditorClaim.physical_creditor
+      }
+    },
+    getDocs() {
 
     },
     openModal({objType, id}) {
-      console.log(objType, id)
+      let item;
+      if (objType === 'LegalEntity') {
+        item = this.allRefList.filter(obj => obj.id === id)[0]
+      }
       switch (objType) {
         case 'PhysicalPerson':
           this.$emit('showModalPerson', id)
-
+          break
+        case 'LegalEntity':
+          this.$emit('legalEntityModal', item)
       }
     },
     update(item) {
@@ -1535,7 +1682,9 @@ export default {
     getProjectDetail(item) {
       this.$store.dispatch('getProjectDetail', item).then(data => {
         this.projectData = data
-        this.$store.dispatch('getBasicCreditorClaim', this.projectData.pk)
+        this.participator = data.participant.participator
+        console.log(this.projectData)
+        this.$store.dispatch('getBasicCreditorClaim', this.projectData.id)
         if (data.legal_contractor) {
           this.legalContractor = data.legal_contractor
           this.sendEmailAddress = data.legal_contractor.contact_email
@@ -1543,6 +1692,7 @@ export default {
           this.legalContractor = null
           this.sendEmailAddress = null
         }
+        console.log(data)
         this.$store.dispatch('getOrganizationBankAccount', data.participant.participator.uuid).then(bankAccount => {
           this.bankAccountList = bankAccount
         })
@@ -1560,6 +1710,7 @@ export default {
         this.$store.dispatch('getProjectPost', this.projectData.pk).then(res => {
           this.postList = [...res]
         })
+        this.getCreditorClaim(this.projectData.pk)
         this.$refs.generator.validate()
       })
     },
@@ -1568,38 +1719,22 @@ export default {
         if (item.type === "LegalEntity") {
           return !item.legal_address;
         }
-        // else {
-        //   let personDomicile = null;
-        //   let personPostcode = null;
-        //   const russianCitizenship = item.citizenships?.find(c => c.country.id === 1);
-        //   const citizenshipId = russianCitizenship?.id ||
-        //       (item.citizenships?.length > 0 ? item.citizenships[0].id : null);
-        //   // Получаем регистрацию для выбранного гражданства
-        //   if (item.registration && item.registration.length > 0) {
-        //     const registration = citizenshipId ?
-        //         item.registration.find(reg => reg.citizenship === citizenshipId) :
-        //         item.registration[0];
-        //
-        //     if (registration) {
-        //       personDomicile = registration.address;
-        //       personPostcode = registration.postcode;
-        //     }
-        //     if (personPostcode) {
-        //       this.creditor.address = `${personPostcode}, ${personDomicile}`
-        //     } else {
-        //       this.creditor.address = `${personDomicile}`
-        //     }
-        //     return false
-        //   } else {
-        //     return true
-        //   }
-        // }
       }
     },
     getCreditOrganizationDetail(item) {
-      this.project = 36
+      console.log('this.currentUserData', this.currentUserData)
+      let db = 36
+      if (this.currentUserData.length > 0) {
+        let db_name = this.currentUserData[0].db_name
+        if (db_name === 'test-tkachenko' || db_name === 'crm_tkachenko') {
+          db = 23
+        } else if (db_name === 'test-gushcha' || db_name === 'crm_gushcha') {
+          db = 35
+        }
+      }
+      this.project = db
       this.bank = item
-      this.$store.dispatch('getProjectDetail', 36).then(data => {
+      this.$store.dispatch('getProjectDetail', db).then(data => {
         this.projectData = data
         compareFields(this.template.fields, data).then(async (data) => {
           this.templateFields = data
@@ -1609,11 +1744,15 @@ export default {
     },
     setFormData() {
       let formData = new FormData()
+      if (this.templateFields['preMessage']) {
+        formData.append('project', this.templateFields['preMessage'])
+      }
+      formData.append('useFacsimile', this.useFacsimile)
       formData.append('template', this.template.id)
       formData.append('project', this.project)
       formData.append('docType', this.docType)
       formData.append('sendMailAddress', this.sendEmailAddress)
-      formData.append('filename', `${this.template.name}_${this.fileName}_${this.currentUser.id}`)
+      formData.append('filename', `${this.template.name}_${this.fileName}`)
       if (this.contract) {
         formData.append('contract', this.contract.pk)
       }
@@ -1627,7 +1766,10 @@ export default {
         formData.append('EMPLOYMENT_SERVICE', this.employmentService.id)
       }
       if (this.receivedCreditorClaim) {
-        this.receivedCreditorClaim.forEach(item => formData.append('received_claim', item))
+        formData.append('received_claim', this.receivedCreditorClaim)
+      }
+      if (this.registerCreditorClaim) {
+        formData.append('register_creditor_claim', this.registerCreditorClaim)
       }
       if (this.marriageService) {
         formData.append('MARRIAGE_SERVICE', this.marriageService.id)
@@ -1676,14 +1818,14 @@ export default {
       }
       if (this.creditor) {
         if (this.creditor.type === 'LegalEntity') {
+          console.log(this.creditor)
           formData.append('CREDITOR', this.creditor.name)
           formData.append('CREDITOR_UUID', this.creditor.uuid)
-          formData.append('CREDITOR_INN', this.creditor?.inn)
-          formData.append('CREDITOR_OGRN', this.creditor?.ogrn)
-          formData.append('CREDITOR_ADDRESS', this.templateFields['CREDITOR_POST_ADDRESS'])
+          formData.append('CREDITOR_ADDRESS', this.creditor?.legal_address || this.creditor?.postal_address)
         } else {
           formData.append('CREDITOR_UUID', this.creditor.uuid)
           formData.append('CREDITOR', this.creditor.fullName)
+          console.log(this.creditor)
           const russianCitizenship = this.creditor.citizenships?.find(c => c.country.id === 1);
           const citizenshipId = russianCitizenship?.id ||
               (this.creditor.citizenships?.length > 0 ? this.creditor.citizenships[0].id : null);
@@ -1692,7 +1834,10 @@ export default {
             const identifierBlock = citizenshipId
                 ? this.creditor.identifiers.find(block => block.citizenship === citizenshipId)
                 : this.creditor.identifiers[0];
-
+            const registrationBlock = citizenshipId
+                ? this.creditor.registration.find(block => block.citizenship === citizenshipId)
+                : this.creditor.registration[0];
+            console.log(registrationBlock)
             if (identifierBlock?.identifier) {
               // Ищем конкретные идентификаторы внутри блока
               const innIdentifier = identifierBlock.identifier.find(id => id.type === 'INN');
@@ -1700,8 +1845,17 @@ export default {
               formData.append('CREDITOR_INN', innIdentifier?.value || null)
               formData.append('CREDITOR_OGRN', snilsIdentifier?.value || null)
             }
+            if (registrationBlock) {
+              let address = registrationBlock.address
+              if (registrationBlock?.postcode) {
+                address = registrationBlock?.postcode + ', ' + address
+              }
+              formData.append('CREDITOR_ADDRESS', address)
+            } else {
+              formData.append('CREDITOR_ADDRESS', " ")
+            }
           }
-          formData.append('CREDITOR_ADDRESS', this.templateFields['CREDITOR_POST_ADDRESS'])
+          // formData.append('CREDITOR_ADDRESS', this.templateFields['CREDITOR_POST_ADDRESS'])
         }
 
       }
@@ -1729,42 +1883,61 @@ export default {
       this.overlay = true
       this.loading = true
       let formData = this.setFormData()
+      let responseType = 'blob'
+      if (!this.templateFields['preMessage']) {
+        if (this.template.name === 'Публикация "Коммерсант"') {
+          formData.append('preRenderMessage', true)
+          responseType = 'json'
+        }
+      }
       this.$http({
         method: "POST",
         url: customConst.GENERATOR + 'document-template/generate/',
         data: formData,
-        responseType: 'blob'
+        responseType: responseType
       }).then(res => {
-        let fileExtension = this.docType === 'docx' ? '.docx' : '.pdf';
-        let fileName;
-        if (this.template.category === "Судебное делопроизводство") {
-          fileName = `${this.projectData.code}_${this.getDocumentNumber()}_${this.template.name.replace(/\s+/g, '_')}`
-          const pageCount = res.headers['x-page-count'] || '';
-          if (pageCount) {
-            fileName += `_${pageCount}л`;
-          }
-        } else if (this.template.name.startsWith('Промежуточный отчет')) {
-          let contractorName;
-          if (this.projectData.physical_contractor) {
-            contractorName = this.projectData.physical_contractor.last_name
-          } else {
-            contractorName = this.projectData.legal_contractor.full_name
-          }
-          fileName = `${this.projectData.code}_${contractorName.replace(/\s+/g, '_')}_${"Промежуточный отчет".replace(/\s+/g, '_')}`
+        console.log(res.headers)
+        if (responseType === 'json') {
+          this.templateFields['preMessage'] = res.data.data.message
+          this.confirmSave = false
+          this.komPreFormat = true
         } else {
-          if (this.template.name.startsWith('Счет') || this.template.name.startsWith('Акт')) {
-            fileName = `${this.fileName}_${this.template.name.replaceAll(' ', '_')}-${this.getDocumentNumber()}`
-          } else {
-            fileName = `${this.projectData.code}-${this.getDocumentNumber()}`
+          let fileExtension = this.docType === 'docx' ? '.docx' : '.pdf';
+          if (res.headers['content-type'] === 'application/zip') {
+            fileExtension = '.zip'
           }
+          let fileName;
+          if (this.template.category === "Судебное делопроизводство") {
+            fileName = `${this.projectData.code}-${this.getDocumentNumber()}_${this.template.name.replace(/\s+/g, '_')}`
+            const pageCount = res.headers['x-page-count'] || '';
+            if (pageCount) {
+              fileName += `_${pageCount}л`;
+            }
+          } else if (this.template.name.startsWith('Промежуточный отчет')) {
+            let contractorName;
+            if (this.projectData.physical_contractor) {
+              contractorName = this.projectData.physical_contractor.last_name
+            } else {
+              contractorName = this.projectData.legal_contractor.full_name
+            }
+            fileName = `${this.projectData.code}_${contractorName.replace(/\s+/g, '_')}_${"Промежуточный отчет".replace(/\s+/g, '_')}`
+          } else {
+            if (this.template.name.startsWith('Счет') || this.template.name.startsWith('Акт')) {
+              fileName = `${this.fileName}_${this.template.name.replaceAll(' ', '_')}-${this.getDocumentNumber()}`
+            } else {
+              fileName = `${this.projectData.code}-${this.getDocumentNumber()}`
+            }
+          }
+          fileName += fileExtension;
+          saveAs(res.data, fileName)
         }
-        fileName += fileExtension;
-        saveAs(res.data, fileName)
         this.overlay = false
         this.loading = false
       }).then(() => {
-        this.confirmSave = true
-        if (!this.template.name.includes('ЕФРСБ')) {
+        if (responseType !== 'json') {
+          this.confirmSave = true
+        }
+        if (!this.template.name.includes('ЕФРСБ') && responseType !== 'json') {
           this.confirmSave = true
         }
       }).catch(async (err) => {
@@ -1799,6 +1972,9 @@ export default {
         responseType: 'blob'
       }).then(async res => {
         let fileExtension = this.docType === 'docx' ? '.docx' : '.pdf';
+        if (res.headers['content-type'] === 'application/zip') {
+          fileExtension = '.zip'
+        }
         let fileName;
         if (this.template.category === "Судебное делопроизводство") {
           fileName = `${this.projectData.code}_${this.getDocumentNumber()}_${this.template.name.replace(/\s+/g, '_')}`
@@ -1828,7 +2004,6 @@ export default {
       })
     },
     async saveDoc(readyToSend = false, postOrder = false) {
-
       this.overlay = true
       this.loading = true
       let formData = this.setFormData()
@@ -1988,8 +2163,9 @@ export default {
       })
     },
     editContractor(item) {
+      console.log(item)
       if (item) {
-        if (item.type === "LegalEntity") {
+        if (item.type !== "PhysicalPerson") {
           this.$emit('legalEntityModal', item)
         } else {
           this.$emit('showModals')
@@ -1997,8 +2173,13 @@ export default {
       } else {
         this.$emit('addContractor')
       }
+    },
+    addCreditorClaim() {
+      this.$emit('createBasicCreditorClaim', this.projectData)
+    },
+    addCreditorClaimRegister() {
+      this.showCreditorClaimCreate = true
     }
-    ,
   },
   filters: {
     getProcedure(item) {
@@ -2019,22 +2200,28 @@ export default {
       } else if (legalVal) {
         return legalVal.text
       }
+    },
+    creditor(item) {
+      return item.legal_creditor ? item.legal_creditor.name : item.physical_creditor.fullName
     }
   },
   async created() {
-    await this.$store.dispatch('getCreditorOrganization')
+    await this.$store.dispatch('allSystemUser')
+    await this.$store.dispatch('getBasicCreditorClaim')
     await this.$store.dispatch('getParticipator')
+    await this.$store.dispatch('getCreditorOrganization')
     await this.$store.dispatch('getProjectList')
     await this.$store.dispatch('getRegion')
     // await this.$store.dispatch('getBailiffs')
     await this.$store.dispatch('getContractList')
     await this.$store.dispatch('fetchPhysicalPersons')
     await this.$store.dispatch('getLegalEntity')
-    await this.$store.dispatch('allSystemUser')
-
 
   },
   components: {
+    CreditorClaimCreate,
+    BasicCreditorClaimCreate,
+    // CreateCreditorClaimNew,
     SystemMessage,
     CreatePostMail,
     ContractorCreateModal,

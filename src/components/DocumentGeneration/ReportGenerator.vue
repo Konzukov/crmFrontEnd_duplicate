@@ -18,7 +18,6 @@
                 {{ item | gerCreditor }}
               </v-list-item-content>
             </template>
-
           </v-list-item>
         </v-list-item-group>
       </v-card-text>
@@ -94,7 +93,6 @@ export default {
           this.creditorId.push(Number(this.creditorList[item]['id']))
         }
       }
-
     },
     async getCreditorList() {
       await this.$http({

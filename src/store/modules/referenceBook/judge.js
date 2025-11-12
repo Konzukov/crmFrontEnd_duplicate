@@ -24,9 +24,6 @@ export default {
         syncJudicialCategories(state, judicialCategoriesList) {
             state.judicialCategories = judicialCategoriesList
         },
-        syncCourt(state, courts){
-            state.courtList = courts
-        }
 
     },
     actions: {
@@ -71,29 +68,19 @@ export default {
             })
 
         },
-        getCourtList({commit}){
-            return new Promise((resolve, reject) => {
-                axios({
-                    method: "GET",
-                    url: customConst.REFERENCE_BOOK_API + 'court'
-                }).then(res=>{
-                    commit('syncCourt', res.data.data.data)
-                    resolve()
-                }).catch(err=>{
-                    reject(err)
-                })
-            })
-        }
     },
     getters: {
         judgeListData(state) {
             return state.judgeList
         },
-        judicialCategoriesData(state){
+        judicialCategoriesData(state) {
             return state.judicialCategories
         },
-        courtListData(state){
-            return state.courtList
+        courtListData(state, getters) {
+            const allowedTypes = ["ARBCR", "ACA", "ACC", "SCRF", "GEJRD", "CGJA", "CGJC", "MGSCR", "AC", "MOSC"];
+            return getters.legalEntityData.filter(obj =>
+                allowedTypes.includes(obj.legal_type)
+            );
         }
     }
 }

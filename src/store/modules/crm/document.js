@@ -4,6 +4,7 @@ import VueCookies from 'vue-cookies'
 import customConst from "../../../const/customConst";
 import {eventBus} from "../../../bus";
 import {saveAs} from 'file-saver'
+import {fileUploadUtils} from "@/utils/main";
 
 Vue.use(VueCookies)
 
@@ -113,35 +114,40 @@ export default {
                 state.docSendQueue.splice(index, 1);
             }
         },
-        syncCert(state, certList){
+        syncCert(state, certList) {
             state.certList = [...certList]
         }
     },
     actions: {
         async saveDocument({commit}, {formData, template, file, force}) {
             return await new Promise(async (resolve, reject) => {
-                setTimeout(async () => {
-                    await axios({
-                        method: 'POST',
-                        url: customConst.PAPERFLOW_API + 'document-create',
-                        data: formData,
-                        params: {
-                            template: template.id,
-                            force: force
-                        },
-                        onUploadProgress: (progressEvent) => {
+                try {
+                    // Проверяем размер файла
+                    if (file && !fileUploadUtils.checkFileSize(file, 100)) {
+                        console.warn('Большой файл может загружаться медленно')
+                    }
+
+                    const config = fileUploadUtils.createUploadConfig(
+                        customConst.PAPERFLOW_API + 'document-create',
+                        formData,
+                        (progressEvent) => {
                             let progress = String(Math.round((progressEvent.loaded / progressEvent.total) * 100))
                             eventBus.$emit('updateProgress', {progress, file})
                         }
+                    )
 
-                    }).then(async (response) => {
-                        commit('addDocument', response.data.data.data)
-                        await resolve(response.data.data.data)
-                    }).catch(async (error) => {
-                        await reject(error)
-                    })
-                }, 1000)
+                    // Добавляем параметры запроса
+                    config.params = {
+                        template: template.id,
+                        force: force
+                    }
 
+                    const response = await axios(config)
+                    commit('addDocument', response.data.data.data)
+                    resolve(response.data.data.data)
+                } catch (error) {
+                    reject(error)
+                }
             })
         },
         editDocument({commit}, obj) {
@@ -231,14 +237,18 @@ export default {
             })
 
         },
-        getProjectDocument({commit}, project) {
+        getProjectDocument({commit}, {project, departure_date, from_type, from_uuid}) {
             console.log(project)
+            console.log(departure_date)
             return new Promise((resolve, reject) => {
                 axios({
                     method: "GET",
                     url: customConst.PAPERFLOW_API + 'project-document-list',
                     params: {
                         project: project,
+                        departure_date: departure_date,
+                        from_type: from_type,
+                        from_uuid: from_uuid,
                     }
                 }).then((response) => {
                     commit('syncProjectDocument', response.data.data.data)
@@ -261,13 +271,6 @@ export default {
                 },
             }).then((response) => {
                 saveAs(response.data, fileName)
-                // console.log(response.request.getResponseHeader('filename'))
-                // const url = window.URL.createObjectURL(new Blob([response.data]));
-                // const link = document.createElement('a');
-                // link.href = url;
-                // link.setAttribute('download', fileName); //or any other extension
-                // document.body.appendChild(link);
-                // link.click();
             })
         },
         addTrashDocument({commit}, {pk, formData}) {
@@ -494,6 +497,28 @@ export default {
                 })
             })
         },
+        async jsonPostProcessing({commit}, {formData, file,  processingContent}) {
+            return await new Promise((resolve, reject) => {
+                const urlMap = {
+                    'post': customConst.PAPERFLOW_API + "processing-json-post",
+                    'bank_account': customConst.PAPERFLOW_API + "processing-json-bank-account"
+                };
+                const url = urlMap[processingContent];
+                axios({
+                    method: "POST",
+                    url: url,
+                    data: formData,
+                    onUploadProgress: (progressEvent) => {
+                        let progress = String(Math.round((progressEvent.loaded / progressEvent.total) * 100))
+                        eventBus.$emit('updateProgress', {progress, file})
+                    }
+                }).then(res => {
+                    resolve(res.data.data.data)
+                }).catch(err => {
+                    reject(err)
+                })
+            })
+        },
         getEmailConf({commit}) {
             return new Promise((resolve, reject) => {
                 axios({
@@ -512,10 +537,23 @@ export default {
                     method: "GET",
                     url: customConst.PAPERFLOW_API + "get-cert",
                     // url: 'http://192.168.1.108:9893/api/paper-flow/get-cert',
-                }).then(res=>{
+                }).then(res => {
                     commit('syncCert', res.data.data.data)
                     resolve()
-                }).catch(err=>{
+                }).catch(err => {
+                    reject(err)
+                })
+            })
+        },
+        async uploadQuarterReport({commit}, formData) {
+            return new Promise((resolve, reject) => {
+                axios({
+                    method: "POST",
+                    url: customConst.PAPERFLOW_API + 'upload-quarter-report',
+                    data: formData
+                }).then(res => {
+                    resolve(res.data.data.data)
+                }).catch(err => {
                     reject(err)
                 })
             })
@@ -550,7 +588,7 @@ export default {
         docQueueData(state) {
             return state.docSendQueue
         },
-        certListData(state){
+        certListData(state) {
             return state.certList
         }
     }

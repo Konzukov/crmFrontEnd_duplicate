@@ -10,7 +10,7 @@
             </v-btn>
           </v-card-title>
           <v-card-text>
-            <v-list >
+            <v-list>
               <v-list-group
                   :value="false"
                   no-action
@@ -24,8 +24,8 @@
                     <v-list-item-title>{{ key }}</v-list-item-title>
                   </v-list-item-content>
                 </template>
-
                 <v-list-item
+                    :disabled="!item.show"
                     v-for="item in value"
                     :key="item.id"
                     @click="selectTemplate(item)"
@@ -38,14 +38,14 @@
           </v-card-text>
         </v-card>
       </v-col>
-      <v-col cols="8" v-if="currentTemplate && currentTemplate.name !== 'Сопровод к отчетам'">
-        <DocumentGenerator v-if="currentTemplate" :template="currentTemplate"></DocumentGenerator>
-      </v-col>
-      <v-col cols="8" v-else-if="currentTemplate && currentTemplate.name === 'Сопровод к отчетам'">
+      <v-col cols="8" v-if="currentTemplate && currentTemplate.name === 'Сопровод к отчетам'">
         <ReportGenerator :template="currentTemplate"></ReportGenerator>
       </v-col>
-      <v-col col="8" v-else-if="currentTemplate && currentTemplate.name === 'Сводный запрос в кредитную организацию'">
-
+      <v-col cols="8" v-else-if="currentTemplate && currentTemplate.name === 'Квартальный отчет'">
+        <QuarterReport :template="currentTemplate"></QuarterReport>
+      </v-col>
+      <v-col cols="8" v-else>
+        <DocumentGenerator v-if="currentTemplate" :template="currentTemplate"></DocumentGenerator>
       </v-col>
     </v-row>
 
@@ -56,6 +56,7 @@
 import DocumentGenerator from "@/components/DocumentGeneration/DocumentGenerator";
 import {mapGetters} from 'vuex'
 import ReportGenerator from "@/components/DocumentGeneration/ReportGenerator.vue";
+import QuarterReport from "@/components/DocumentGeneration/QuarterReport.vue";
 
 export default {
   name: "DocumentList",
@@ -73,6 +74,7 @@ export default {
 
     },
     selectTemplate(item) {
+      console.log(item)
       this.currentTemplate = null
       setTimeout(() => {
         this.currentTemplate = item
@@ -82,8 +84,10 @@ export default {
   },
   async created() {
     await this.$store.dispatch('getDocTemplate')
+    await this.$store.dispatch('allSystemUser')
   },
   components: {
+    QuarterReport,
     ReportGenerator,
     DocumentGenerator
   }
@@ -95,9 +99,11 @@ export default {
   max-height: 85vh;
   overflow: auto;
 }
->>>.v-list-group__header {
+
+>>> .v-list-group__header {
   padding-left: 10px !important;
 }
+
 .v-application--is-ltr .v-list-group--no-action.v-list-group--sub-group > .v-list-group__items > .v-list-item {
   padding-left: 50px;
 }

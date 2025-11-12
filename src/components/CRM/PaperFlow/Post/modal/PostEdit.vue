@@ -14,7 +14,7 @@
             size="64"
         ></v-progress-circular>
       </v-overlay>
-      <v-card>
+      <v-card style="overflow-y: scroll">
         <v-toolbar dark color="primary" max-height="60">
           <v-toolbar-title>{{ postForm['pk'] ? "Редактирование почты" : "Создать почту" }}</v-toolbar-title>
           <v-spacer></v-spacer>
@@ -534,6 +534,7 @@ export default {
           .then((_) => {
             this.drawer = false;
             Object.assign(this.$data, this.$options.data());
+            this.$emit('postUpdated')
           })
           .catch((_) => {
           });
@@ -595,6 +596,7 @@ export default {
           this.snackbar.text = "Успешно";
         }).finally(() => {
           this.saving = false;
+          this.$emit('postUpdated')
           setTimeout(() => {
             this.snackbar.show = false
           }, 1500)
@@ -646,7 +648,8 @@ export default {
     loadPostData(pk) {
       this.getPostDetail(pk).then(() => {
         this.postForm = Object.assign({}, this.postDetail);
-        console.log(this.postForm)
+        console.log(this.postDetail)
+        // this.$set(this.postForm.to)
         this.postForm["departure_date"] = moment(
             this.postForm["departure_date"]
         ).format("YYYY-MM-DDThh:mm");
@@ -668,6 +671,7 @@ export default {
       this.overlay = true
       this.action = 'edit'
       this.loadPostData(pk)
+
     });
     this.$parent.$on('createSingleOutPost', (item) => {
       if (item) {

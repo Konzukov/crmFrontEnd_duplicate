@@ -34,14 +34,18 @@ import documentStorage from "@/store/modules/documentStorage/documentStorage.js"
 import postOrder from "@/store/modules/crm/postOrder";
 import notify from "@/store/modules/notify/notify";
 import physicalPersonNew from "@/store/modules/referenceBook/physicalPerson/physicalPerson"
+import wiki from '@/store/modules/Wiki/wiki'
+import documentFlow from "@/store/modules/crm/documentFlow";
+import downloads from "@/store/modules/download";
+import creditorClaims from "@/store/modules/referenceBook/creditor/creditorClaims";
+import snackbar from "@/store/snackbar";
+
 
 Vue.use(Vuex)
 
 export default new Vuex.Store({
     modules: {
-        //new
         physicalPersonNew,
-        //end new
         auth,
         participant,
         contract,
@@ -74,6 +78,11 @@ export default new Vuex.Store({
         regularInvoice,
         postOrder,
         notify,
-        accountOpening
+        accountOpening,
+        wiki,
+        documentFlow,
+        downloads,
+        creditorClaims,
+        snackbar
     }
 })

@@ -107,7 +107,6 @@ export default {
         hasError: false
       }
     },
-
     templateError: false,
     errorMessage: '',
   }),

@@ -45,6 +45,20 @@
                                 hint="Если оставить пустым, номер будет получен автоматически"
                                 v-model="form.out_number"></v-text-field>
                 </v-col>
+                <template v-if="form.correspondence_type">
+                  <v-col cols="6" v-if="form.correspondence_type['name'] === 'Квартальный отчет'">
+                    <v-autocomplete
+                        outlined
+                        dense
+                        label="Квартал и год"
+                        :items="quarterYearOptions"
+                        item-text="text"
+                        item-value="value"
+                        v-model="selectedQuarterYear"
+                        @change="updateQuarterYear"
+                    ></v-autocomplete>
+                  </v-col>
+                </template>
               </v-row>
               <v-row justify="start">
                 <v-col md="12" sm="12кк ">
@@ -165,40 +179,165 @@ export default {
   name: "editDocument",
   data() {
     return {
+      selectedQuarterYear: null,
+      quarterYearOptions: [],
       overlay: false,
       dialog: false,
       loading: true,
       from: '',
       route: true,
       form: {},
-      existTags: null
+      existTags: null,
+      dataLoaded: {
+        participator: false,
+        legalEntity: false,
+        physicalPersons: false,
+        projects: false,
+        systemUsers: false,
+        correspondenceType: false
+      }
     }
   },
   methods: {
-    open() {
-      this.dialog = true
-      this.overlay = true
-      this.$store.dispatch('getParticipator').then(() => {
-        this.$store.dispatch('getLegalEntity').then(() => {
-          this.$store.dispatch('fetchPhysicalPersons').then(() => {
-            this.$store.dispatch('getProjectList').then(() => {
-              this.$store.dispatch('allSystemUser').then(() => {
-                this.$store.dispatch('getProjectList').then(() => {
-                  this.$store.dispatch('getCorrespondenceType').then(() => {
-                    this.overlay = false
-                  })
-                })
-              })
-            })
-          })
-        })
-      })
+    generateQuarterYearOptions() {
+      const currentYear = new Date().getFullYear();
+      const years = [currentYear - 1, currentYear];
+      const quarters = [1, 2, 3, 4];
+
+      this.quarterYearOptions = [];
+
+      years.forEach(year => {
+        quarters.forEach(quarter => {
+          this.quarterYearOptions.push({
+            text: `${year} год, ${quarter} квартал`,
+            value: `${year}-${quarter}`,
+            year: year,
+            quarter: quarter
+          });
+        });
+      });
+    },
+    setCurrentQuarterYear() {
+      const currentDate = new Date();
+      const currentYear = currentDate.getFullYear();
+      const currentMonth = currentDate.getMonth() + 1;
+
+      // Определяем текущий квартал
+      let currentQuarter = 1;
+      if (currentMonth >= 4 && currentMonth <= 6) currentQuarter = 2;
+      else if (currentMonth >= 7 && currentMonth <= 9) currentQuarter = 3;
+      else if (currentMonth >= 10 && currentMonth <= 12) currentQuarter = 4;
+
+      this.selectedQuarterYear = `${currentYear}-${currentQuarter}`;
+      this.form.quarter_year = currentYear;
+      this.form.quarter = currentQuarter;
+    },
+    updateQuarterYear() {
+      if (this.selectedQuarterYear) {
+        const [year, quarter] = this.selectedQuarterYear.split('-');
+        this.form.quarter_year = parseInt(year);
+        this.form.quarter = parseInt(quarter);
+      } else {
+        this.form.quarter_year = null;
+        this.form.quarter = null;
+      }
+    },
+    setQuarter(item) {
+      console.log(item)
+      if (item.name === "Квартальный отчет") {
+        this.generateQuarterYearOptions()
+        this.setCurrentQuarterYear()
+        // const currentMonth = new Date().getMonth() + 1; // Месяцы от 1 до 12
+        // const currentYear = new Date().getFullYear()
+        // if (currentMonth >= 1 && currentMonth <= 3) {
+        //   this.form.quarter = 1;
+        // } else if (currentMonth >= 4 && currentMonth <= 6) {
+        //   this.form.quarter = 2;
+        // } else if (currentMonth >= 7 && currentMonth <= 9) {
+        //   this.form.quarter = 3;
+        // } else {
+        //   this.form.quarter = 4;
+        // }
+        // this.form.quarter_year = currentYear
+      }
+    },
+    async open() {
+      this.dialog = true;
+      this.overlay = true;
+
+      try {
+        // Создаем массив промисов для загрузки недостающих данных
+        const loadPromises = [];
+
+        // Проверяем и загружаем данные только если они отсутствуют
+        if (!this.participatorList.length) {
+          loadPromises.push(this.loadParticipator());
+        }
+
+        if (!this.contractorList.length) {
+          loadPromises.push(this.loadContractorData());
+        } else {
+          // Если данные уже есть, отмечаем их как загруженные
+          this.dataLoaded.legalEntity = true;
+          this.dataLoaded.physicalPersons = true;
+        }
+
+        if (!this.projectList.length) {
+          loadPromises.push(this.loadProjects());
+        }
+
+        if (!this.systemUser.length) {
+          loadPromises.push(this.loadSystemUsers());
+        }
+
+        if (!this.correspondenceType.length) {
+          loadPromises.push(this.loadCorrespondenceType());
+        }
+
+        // Ожидаем завершения всех загрузок
+        await Promise.all(loadPromises);
+        this.overlay = false;
+      } catch (error) {
+        console.error('Ошибка загрузки данных:', error);
+        this.overlay = false;
+      }
+    },
+
+    async loadParticipator() {
+      await this.$store.dispatch('getParticipator');
+      this.dataLoaded.participator = true;
+    },
+
+    async loadContractorData() {
+      await Promise.all([
+        this.$store.dispatch('getLegalEntity'),
+        this.$store.dispatch('fetchPhysicalPersons')
+      ]);
+      this.dataLoaded.legalEntity = true;
+      this.dataLoaded.physicalPersons = true;
+    },
+
+    async loadProjects() {
+      await this.$store.dispatch('getProjectList');
+      this.dataLoaded.projects = true;
+    },
+
+    async loadSystemUsers() {
+      await this.$store.dispatch('allSystemUser');
+      this.dataLoaded.systemUsers = true;
+    },
+
+    async loadCorrespondenceType() {
+      await this.$store.dispatch('getCorrespondenceType');
+      this.dataLoaded.correspondenceType = true;
     },
     close() {
-      this.dialog = false
-      this.form = Object.assign({}, '')
-      this.loading = true
-      this.$refs.tagsList.clear()
+      this.dialog = false;
+      this.form = Object.assign({}, '');
+      this.loading = true;
+      if (this.$refs.tagsList) {
+        this.$refs.tagsList.clear();
+      }
     },
     save() {
       let formData = new FormData()
@@ -293,7 +432,7 @@ export default {
         if (this.$store.getters.allSystemUsersData) {
           return this.$store.getters.allSystemUsersData
         }
-        return new Array()
+        return []
       }
     },
     participatorList: {
@@ -328,11 +467,15 @@ export default {
     }
   },
   mixins: [filter],
+
   mounted() {
     this.$parent.$on('editDoc', (pk) => {
       this.open()
       this.$store.dispatch('getDocumentDetail', pk).then(() => {
         let doc = this.$store.getters.singleDocumentData
+        if (doc?.correspondence_type && doc.correspondence_type['name'] === 'Квартальный отчет'){
+          this.generateQuarterYearOptions()
+        }
         Object.keys(doc).forEach(key => {
           if (key === 'fromWho') {
             this.from = doc[key]

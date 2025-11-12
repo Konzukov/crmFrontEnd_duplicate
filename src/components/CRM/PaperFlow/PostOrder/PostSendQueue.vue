@@ -16,7 +16,14 @@
               ></v-checkbox>
             </v-col>
             <v-col cols="1">
-              {{ item | postNumber }}
+              <v-row justify="start" no-gutters>
+                <v-col cols="12">
+                  {{ item | postNumber }}
+                </v-col>
+                <v-col cols="12" v-if="item.page_count" style="font-size: 12px; color: #00a6ee">
+                  {{ item.page_count }} стр. | {{ item.document.size }}
+                </v-col>
+              </v-row>
             </v-col>
             <v-col cols="1">
               <template v-if="item.document.fromWho['main_communication']">
@@ -25,7 +32,7 @@
                     <template v-slot:activator="{ on, attrs }">
                       <v-icon v-bind="attrs" v-on="on">mdi-email-outline</v-icon>
                     </template>
-                    <span>Бумажное письмо</span>
+                    <span>Электронное письмо (ЭЗП)</span>
                   </v-tooltip>
                 </template>
                 <template v-else-if="item.document.fromWho['main_communication']['communication_type'] ==='PaperMail'">
@@ -48,9 +55,9 @@
             </v-col>
             <v-col cols="3">
               <v-row justify="start">
-                <v-col cols="12" class="pb-0">{{ item.document.project[0].name }}</v-col>
+                <v-col cols="12" class="pb-0">{{ item.document.project | getProjectName }}</v-col>
                 <v-col cols="12" style="font-size: 12px; color: #00a6ee">
-                  {{ item.document.project[0].procedure | getProcedure }}
+                  {{ item.document.project[0] | getProcedure }}
                 </v-col>
               </v-row>
             </v-col>
@@ -143,9 +150,26 @@
                 <v-checkbox label="Добавить судебный акт к документам" v-model="enableAct"></v-checkbox>
               </v-col>
             </v-row>
-            <v-row v-if="selectedDocument[0].document.fromWho['main_communication']['communication_type'] === 'Email'"
-                   justify="start"
-                   align="center" class="mt-0">
+            <v-row
+                v-if="selectedDocument[0].document.fromWho['main_communication']['communication_type'] === 'PaperMail'"
+                justify="start"
+                align="center" class="mt-0">
+              <v-col cols="12" class="pa-0">
+                <v-checkbox v-model="enableEnvelope"
+                            label="Сформировать конверт"></v-checkbox>
+              </v-col>
+            </v-row>
+            <v-row justify="start" v-if="enableEnvelope">
+              <v-col cols="12">
+                <v-select :items="envelopeType" item-value="value" item-text="text" v-model="envelope" outlined
+                          label="Выбрать конверт">
+                </v-select>
+              </v-col>
+            </v-row>
+            <v-row
+                v-if="['Email', 'ElectronicMail'].includes(selectedDocument[0].document.fromWho.main_communication.communication_type)"
+                justify="start"
+                align="center" class="mt-0">
               <v-col cols="12" class="pa-0">
                 <v-checkbox v-model="enableCert"
                             label="Подписать с помощью ЭЦП (будет добавлен p7s)"></v-checkbox>
@@ -177,9 +201,10 @@
                 <!--                <v-btn small color="primary" :disabled="!enableCert" @click="choiceCert">Выбрать сертификат</v-btn>-->
               </v-col>
             </v-row>
-            <v-row v-if="selectedDocument[0].document.fromWho['main_communication']['communication_type'] === 'Email'"
-                   justify="start"
-                   align="center">
+            <v-row
+                v-if="selectedDocument[0].document.fromWho['main_communication']['communication_type'] === 'Email'"
+                justify="start"
+                align="center">
               <v-select dense outlined label="Укажите почту для отправки" :items="emailConf"
                         item-value="id" item-text="username"
                         :rules="rules.required"
@@ -188,7 +213,8 @@
               >
               </v-select>
             </v-row>
-            <v-row v-if="selectedDocument[0].document.fromWho['main_communication']['communication_type'] !== 'Email'">
+            <v-row
+                v-if="selectedDocument[0].document.fromWho['main_communication']['communication_type'] !== 'Email'">
               <v-radio-group
                   v-model="pageCount"
                   row
@@ -213,10 +239,12 @@
             <v-col cols="5">
               <template v-if="selectedDocument.length > 0">
                 <v-btn
+                    :loading="loading"
                     v-if="selectedDocument[0].document.fromWho['main_communication']['communication_type'] === 'Email'"
                     color="success" @click="send" :disabled="(enableCert && cert===null) || !emailSetting">Отправить
                 </v-btn>
                 <v-btn v-else
+                       :loading="loading"
                        color="success" @click="send">Отправить
                 </v-btn>
               </template>
@@ -251,13 +279,20 @@ import {isObject} from "lodash";
 export default {
   name: "PostSendQueue",
   data: () => ({
+    loading: false,
     sortItem: [
       {text: 'По умолчанию', value: null},
       {text: 'Проект', value: 'project'},
       {text: 'Категория', value: 'category'},
       {text: 'Получатель', value: 'recipient'},
     ],
+    envelopeType: [
+      {'value': 'C5', text: 'Конверт С5 - средний'},
+      {'value': 'DL', text: 'Конверт DL - узкий'},
+    ],
     enableCert: false,
+    enableEnvelope: false,
+    envelope: null,
     cert: null,
     emailSetting: null,
     emailConf: [],
@@ -336,6 +371,7 @@ export default {
       }
     },
     send() {
+      this.loading = true
       let formData = new FormData()
       const sendMethod = this.selectedDocument[0].document.fromWho['main_communication']
       let sendMethodValue = null
@@ -345,12 +381,17 @@ export default {
       } else {
         sendMethodValue = sendMethod
       }
-      if (sendMethodValue === 'Email') {
-        formData.append('emailConf', this.emailSetting)
+      if (['Email', 'ElectronicMail'].includes(sendMethodValue)) {
+        if (sendMethodValue === 'Email') {
+          formData.append('emailConf', this.emailSetting)
+        }
         if (this.enableCert) {
           formData.append('cert', this.cert.index)
           formData.append('enableCert', this.enableCert)
         }
+      }
+      if (sendMethodValue === 'PaperMail') {
+        formData.append('envelope', this.envelope)
       }
       formData.append('sendMethod', sendMethodValue)
       formData.append('pageCount', this.pageCount)
@@ -359,12 +400,14 @@ export default {
         formData.append('sendItem', obj.id)
       })
       this.$store.dispatch('sendDocumentQueue', {formData: formData, sendMethod: sendMethodValue}).then((res) => {
+        this.loading = false
         this.update()
         if (sendMethodValue === "Email") {
           this.state = 'success'
           this.$emit('showSystemMessage', {response: res, state: this.state, send: true})
         }
       }).catch(err => {
+        this.loading = false
         this.state = 'error'
         this.$emit('showSystemMessage', {response: err, state: this.state, send: false})
       })
@@ -456,30 +499,37 @@ export default {
           .replace(/""/g, '"');
     },
     postNumber(item) {
-      let codeStr = ''
-      for (let project of item.document.project) {
-        codeStr += `${project.code}-${item.document.out_number}`
+      console.log(item);
+      return item.document.project
+          .map(project => `${project.code}-${item.document.out_number}`)
+          .join('_');
+    },
+    getProjectName(item) {
+      if (item && item.length > 0) {
+        return item.map(obj => obj.name).join(', ')
       }
-      return codeStr
     },
     getProcedure(item) {
       let legal = ProcedureType.Legal
       let physical = ProcedureType.Physical
-      let physicalVal = physical.filter(obj => {
-        if (obj.value === item) {
-          return obj
+      if (item) {
+        let physicalVal = physical.find(obj => {
+          if (obj.value === item?.procedure) {
+            return obj
+          }
+        })
+        let legalVal = legal.find(obj => {
+          if (obj.value === item?.procedure) {
+            return obj
+          }
+        })
+        if (physicalVal) {
+          return physicalVal.text
+        } else if (legalVal) {
+          return legalVal.text
         }
-      })[0]
-      let legalVal = legal.filter(obj => {
-        if (obj.value === item) {
-          return obj
-        }
-      })[0]
-      if (physicalVal) {
-        return physicalVal.text
-      } else if (legalVal) {
-        return legalVal.text
       }
+
     },
     getEmail(item) {
       if (item.type === "LegalEntity") {

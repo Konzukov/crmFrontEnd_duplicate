@@ -164,6 +164,19 @@ export default {
                     reject(err)
                 })
             })
+        },
+        getProjectByQuarter({commit}, data){
+            return new Promise((resolve, reject) => {
+                axios({
+                    method: "POST",
+                    url: customConst.REFERENCE_BOOK_API + "filter-by-quarter-report/",
+                    data: data
+                }).then(res=>{
+                    resolve(res.data.data.data)
+                }).catch(err=>{
+                    reject(err)
+                })
+            })
         }
     },
     getters: {

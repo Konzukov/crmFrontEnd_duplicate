@@ -134,7 +134,7 @@ export default {
     judgesList() {
       const judgeListData = this.$store.getters.judgeListData
       if (this.separateDispute.court) {
-        return judgeListData.filter(obj => obj.court?.id === this.separateDispute.court)
+        return judgeListData.filter(obj => obj.legal?.id === this.separateDispute.legal)
       }
       return judgeListData
     }
@@ -146,8 +146,6 @@ export default {
     }
   },
   async mounted() {
-    await this.$store.dispatch('getJudgeList')
-    await this.$store.dispatch('getCourtList')
     await this.updateData()
 
   },

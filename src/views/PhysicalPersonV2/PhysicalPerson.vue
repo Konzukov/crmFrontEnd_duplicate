@@ -14,6 +14,7 @@
                               :show-action-button="true"
                               :show-snackbar="true"
                               style="height: 90vh; overflow-y: scroll"
+                              @duplicate-selected="handleSelect"
                               @cancel="handleCancel"/>
       </v-col>
     </v-row>

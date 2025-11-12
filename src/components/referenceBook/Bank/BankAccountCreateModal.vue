@@ -173,6 +173,7 @@ export default {
       this.form.id = item.id
       this.form.account = item.account
       this.form.bank = item.bank.id
+      this.form.account_type = item.account_type
       this.form.opening_date = moment(item.opening_date, 'DD.MM.YYYY').format('YYYY-MM-DD')
       if (item.closing_date){
         this.form.closing_date = moment(item.closing_date, 'DD.MM.YYYY').format('YYYY-MM-DD')

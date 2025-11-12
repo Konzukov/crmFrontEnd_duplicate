@@ -58,7 +58,7 @@ export default {
       this.legalData = null
       setTimeout(()=>{
         this.legalData = Object.assign({}, item)
-        this.dialog = !this.dialog
+        this.dialog = true
       }, 300)
     })
   }

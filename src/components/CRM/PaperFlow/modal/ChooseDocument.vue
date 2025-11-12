@@ -17,12 +17,16 @@
     <v-card v-else>
       <v-card-title>Доступные документы</v-card-title>
       <v-card-text style="height: 40%;">
+        <v-autocomplete outlined dense :items='allRefData' item-value="uuid" item-text="fullName" return-object
+                        v-model="refFilter" clearable label="Фильтр по отправителю"></v-autocomplete>
         <v-list-item-group>
-          <v-list-item v-for="(doc, i) in projectDocumentList" :key="i">
+          <v-list-item v-for="(doc, i) in filteredDocuments" :key="i">
             <v-list-item-action>
-              <v-checkbox v-model="selectedDoc" :value="doc.id"
-                          :disabled="existDoc.includes(doc.id) || !multiply"
-                          @change="appendToChose(doc)"></v-checkbox>
+              <v-checkbox
+                  :input-value="isDocSelected(doc.id)"
+                  @change="toggleDocSelection(doc)"
+                  :disabled="existDoc.includes(doc.id) || !multiply"
+              ></v-checkbox>
             </v-list-item-action>
             <v-list-item-content>
               <v-list-item-title>{{ doc.correspondence_type }}</v-list-item-title>
@@ -53,6 +57,7 @@ export default {
   props: ['taskPk', 'eventPk', 'solo'],
   name: "ChooseDocument",
   data: () => ({
+    refFilter: null,
     dialog: false,
     loading: false,
     existDoc: [],
@@ -62,33 +67,80 @@ export default {
   }),
   computed: {
     ...mapGetters({
-      projectDocumentList: 'projectDocumentListData'
-    })
+      projectDocumentList: 'projectDocumentListData',
+      allRefData: 'allRefData'
+    }),
+    filteredDocuments() {
+      if (!this.refFilter) {
+        return this.projectDocumentList;
+      }
+      return this.projectDocumentList.filter(doc => {
+        return !!(doc.fromWho && doc.fromWho.uuid === this.refFilter.uuid);
+      });
+    }
   },
   methods: {
-    async open(project, existDoc) {
+    isDocSelected(docId) {
+      return this.selectedDoc.includes(docId);
+    },
+
+    toggleDocSelection(doc) {
+      const docId = doc.id;
+      const isCurrentlySelected = this.isDocSelected(docId);
+
+      if (isCurrentlySelected) {
+        // Удаляем документ из выбранных
+        this.selectedDoc = this.selectedDoc.filter(id => id !== docId);
+        this.choosedDocs = this.choosedDocs.filter(d => d.id !== docId);
+      } else {
+        // Добавляем документ в выбранные
+        this.selectedDoc.push(docId);
+        this.choosedDocs.push(doc);
+      }
+
+      // Обновляем состояние multiply в зависимости от количества выбранных документов
+      if (this.solo && this.selectedDoc.length >= 1) {
+        this.multiply = false;
+      } else {
+        this.multiply = true;
+      }
+    },
+
+    async open(project, existDoc, departure_date, from_who) {
+      this.refFilter = null;
+      this.selectedDoc = [];
+      this.choosedDocs = [];
+
       if (Array.isArray(project)) {
         project = project.toString()
       }
       this.dialog = true
+      this.loading = true
       if (project) {
-        this.loading = true
-        await this.$store.dispatch('getProjectDocument', project).then(() => {
-          if (existDoc){
+        console.log(project)
+        await this.$store.dispatch('getProjectDocument', {project}).then(() => {
+          if (existDoc) {
+            this.existDoc = existDoc
+          }
+          this.loading = false
+        })
+      } else {
+        await this.$store.dispatch('getProjectDocument',
+            {project, departure_date, from_type: from_who?.type, from_uuid: from_who?.uuid}
+        ).then(() => {
+          if (existDoc) {
             this.existDoc = existDoc
           }
           this.loading = false
         })
       }
-
     },
+
     close() {
       this.dialog = false;
       Object.assign(this.$data, this.$options.data())
     },
-    appendToChose(doc) {
-      this.choosedDocs.push(doc)
-    },
+
     addDocs() {
       let formData = new FormData()
       for (let doc of this.selectedDoc) {
@@ -106,21 +158,14 @@ export default {
           this.$emit('successAdded')
           this.close()
         })
-      }
-      else {
+      } else {
         this.$emit('chooseDocs', {formData, "chooseDocs": this.choosedDocs})
         this.close()
       }
-
     }
   },
   watch: {
-    choosedDocs(val){
-      console.log(val)
-      if (this.solo && val.length >= 1){
-        this.multiply = false
-      }
-    }
+    // Убираем старый watcher для choosedDocs, так как теперь управляем multiply в toggleDocSelection
   },
   filters: {
     nameFilter(obj) {
@@ -133,12 +178,11 @@ export default {
     }
   },
   created() {
-    this.$parent.$on('chooseDocs', ({project, existDoc}) => {
-      this.open(project, existDoc)
+    this.$parent.$on('chooseDocs', ({project, existDoc, departure_date, from_who}) => {
+      console.log(project, existDoc, departure_date, from_who)
+      this.open(project, existDoc, departure_date, from_who)
     })
-
   }
-
 }
 </script>
 
