@@ -21,7 +21,7 @@
           </v-tab>
           <v-tabs-items v-model="formType">
             <v-tab-item >
-              <PhysicalPersonDetail @closeModal="updateAndClose"               :showActionButton="true"
+              <PhysicalPersonDetail @closeModal="updateAndClose" :showActionButton="true"
               class="v-card--flat"></PhysicalPersonDetail>
             </v-tab-item>
             <v-tab-item>
