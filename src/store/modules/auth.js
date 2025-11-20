@@ -28,8 +28,8 @@ export default {
             state.user = user
         },
         logout(state) {
-            state.status = '',
-                state.token = '',
+            state.status = ''
+                state.token = ''
                 state.user = ''
         },
     },

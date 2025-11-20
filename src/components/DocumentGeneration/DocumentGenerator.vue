@@ -1888,6 +1888,9 @@ export default {
         if (this.template.name === 'Публикация "Коммерсант"') {
           formData.append('preRenderMessage', true)
           responseType = 'json'
+        } else if (this.template.name === 'Публикация "Коммерсант" - реструктуризация') {
+          formData.append('preRenderMessage', true)
+          responseType = 'json'
         }
       }
       this.$http({

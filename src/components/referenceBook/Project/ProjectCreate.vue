@@ -58,6 +58,7 @@
           </v-row>
           <v-row justify="start">
             <v-col cols="4" class="mr-3">
+              {{contractor}}
               <v-autocomplete dense outlined label="Вид процедуры" :items="ProcedureType(contractor.type)"
                               item-value="value"
                               item-text="text"
