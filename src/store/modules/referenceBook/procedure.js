@@ -192,7 +192,7 @@ export default {
             return new Promise((resolve, reject) => {
                 axios({
                     method: "GET",
-                    url: customConst.REFERENCE_BOOK_API + 'bankruptcy-estate/' + project + '/list',
+                    url: customConst.REFERENCE_BOOK_API + 'bankruptcy-estate/' + project + '/list/',
                 }).then(res => {
                     resolve(res.data.data.data)
                 }).catch(err => {
