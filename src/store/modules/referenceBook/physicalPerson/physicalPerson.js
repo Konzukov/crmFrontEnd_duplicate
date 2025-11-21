@@ -5,40 +5,6 @@ import axios from "axios";
 
 Vue.use(VueCookies)
 
-// function deepRemoveEmpty(obj) {
-//   if (Array.isArray(obj)) {
-//     return obj
-//       .map(deepRemoveEmpty)
-//       .filter(item => item !== null && item !== undefined);
-//   }
-//
-//   if (typeof obj === 'object' && obj !== null) {
-//     return Object.entries(obj).reduce((acc, [key, value]) => {
-//       const processedValue = deepRemoveEmpty(value);
-//
-//       // Удаляем ключ если значение стало null/undefined после обработки
-//       if (processedValue === null || processedValue === undefined) {
-//         return acc;
-//       }
-//
-//       // Удаляем ключ если значение пустая строка, пустой объект или пустой массив
-//       if (
-//         processedValue === '' ||
-//         (typeof processedValue === 'object' && Object.keys(processedValue).length === 0)
-//       ) {
-//         return acc;
-//       }
-//
-//       return {
-//         ...acc,
-//         [key]: processedValue
-//       };
-//     }, {});
-//   }
-//
-//   return obj;
-// }
-
 export default {
     state: {
         physicalPersonList: []
@@ -46,7 +12,10 @@ export default {
     mutations: {
         SET_PHYSICAL_PERSONS(state, data) {
             state.physicalPersonList = [...data]
-        }
+        },
+        ADD_PHYSICAL_PERSONS(state, data) {
+            state.physicalPersonList.push(data)
+        },
     },
     actions: {
         async fetchPhysicalPersons({commit}) {
@@ -100,7 +69,7 @@ export default {
                         'Content-Type': 'application/json'
                     }
                 }).then(res => {
-                    console.log(res.data.data.data)
+                    commit('ADD_PHYSICAL_PERSONS', res.data.data.data)
                     resolve(res.data.data.data)
                 }).catch(err => {
                     reject(err)

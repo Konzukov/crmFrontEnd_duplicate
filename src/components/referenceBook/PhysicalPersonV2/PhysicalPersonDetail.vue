@@ -1632,6 +1632,7 @@ export default {
             const savedPerson = await this.$store.dispatch('savePerson', dataToSave)
             this.showNotificationMessage('Данные успешно сохранены', 'success');
             this.$emit('save', savedPerson);
+            this.$emit('closeModal', savedPerson);
             resolve(savedPerson)
           } catch (error) {
             console.error('Ошибка сохранения:', error);

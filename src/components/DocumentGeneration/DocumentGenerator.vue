@@ -464,6 +464,20 @@
                   <v-expansion-panel-content>
                     <v-list class="field__list" v-for="field in procedureFields" :key="field.id">
                       <template v-if="field['selected']">
+
+                        <v-row v-if="field.value === 'COOWNER'">
+                          <v-autocomplete outlined dense :label="field.name" :items="allRefList" item-value="uuid"
+                                          :append-outer-icon="!creditor? 'mdi-plus': 'mdi-pencil'"
+                                          @click:append-outer="editContractor(coowner)"
+                                          :error-messages="!creditorErrorMessage(coowner)? '': 'Необходимо заполнить данные'"
+                                          item-text="fullName" return-object v-model="coowner"></v-autocomplete>
+                        </v-row>
+
+                        <v-row v-if="field.value === 'DEBTOR_ESTATE'">
+                          <v-autocomplete outlined dense :label="field.name" :items="debtorEstate" item-value="id"
+                                          item-text="goods_name" v-model="templateFields[field.value]"></v-autocomplete>
+                        </v-row>
+
                         <v-row v-if="field.value ==='MANAGER_OR_REPRESENTATIVE'" justify="start">
                           <v-col cols="12">
                             <v-autocomplete outlined dense :label="field.name" :items="allSystemUsersList"
@@ -1428,6 +1442,7 @@ export default {
     fileName: null,
     contract: null,
     creditor: null,
+    coowner: null,
     bank: null,
     fns: null,
     employmentService: null,
@@ -1455,6 +1470,7 @@ export default {
     bankAccount: null,
     bankCard: [],
     postList: [],
+    debtorEstate: [],
     contractList: null,
     state: '',
     rules: {
@@ -1699,6 +1715,9 @@ export default {
         this.$store.dispatch('getBankCardList', data.id).then(cardList => {
           this.bankCardList = cardList
         })
+        this.$store.dispatch('getBankruptcyEstate', data.id).then(res=>{
+          this.debtorEstate = [...res]
+        })
         this.contractList = data.contract
         this.fileName = data['name'].split(' ')[0]
         this.$store.dispatch('getProjectAct', data['id']).then(res => {
@@ -1742,6 +1761,60 @@ export default {
       })
 
     },
+    fillPartyData(formData, party, prefix) {
+  if (party.type === 'LegalEntity') {
+    console.log(party)
+    formData.append(prefix, party.name)
+    formData.append(`${prefix}_UUID`, party.uuid)
+    formData.append(`${prefix}_ADDRESS`, party?.legal_address || party?.postal_address)
+  } else {
+    formData.append(`${prefix}_UUID`, party.uuid)
+    formData.append(prefix, party.fullName)
+    console.log(party)
+
+    const russianCitizenship = party.citizenships?.find(c => c.country.id === 1);
+    const citizenshipId = russianCitizenship?.id ||
+        (party.citizenships?.length > 0 ? party.citizenships[0].id : null);
+
+    // Обработка идентификаторов (если они есть)
+    if (party?.identifiers?.length > 0) {
+      const identifierBlock = citizenshipId
+          ? party.identifiers.find(block => block.citizenship === citizenshipId)
+          : party.identifiers[0];
+
+      if (identifierBlock?.identifier) {
+        const innIdentifier = identifierBlock.identifier.find(id => id.type === 'INN');
+        const snilsIdentifier = identifierBlock.identifier.find(id => id.type === 'SNILS');
+        formData.append(`${prefix}_INN`, innIdentifier?.value || null)
+        formData.append(`${prefix}_OGRN`, snilsIdentifier?.value || null)
+      }
+    } else {
+      // Если идентификаторов нет, добавляем пустые значения
+      formData.append(`${prefix}_INN`, null)
+      formData.append(`${prefix}_OGRN`, null)
+    }
+
+    // Обработка регистрационных данных (независимо от наличия идентификаторов)
+    let registrationBlock = null;
+    if (party?.registration?.length > 0) {
+      registrationBlock = citizenshipId
+          ? party.registration.find(block => block.citizenship === citizenshipId)
+          : party.registration[0];
+    }
+
+    console.log(registrationBlock)
+
+    if (registrationBlock) {
+      let address = registrationBlock.address
+      if (registrationBlock?.postcode) {
+        address = registrationBlock?.postcode + ', ' + address
+      }
+      formData.append(`${prefix}_ADDRESS`, address)
+    } else {
+      formData.append(`${prefix}_ADDRESS`, " ")
+    }
+  }
+},
     setFormData() {
       let formData = new FormData()
       if (this.templateFields['preMessage']) {
@@ -1817,47 +1890,12 @@ export default {
         formData.append('BANK_ACCOUNT', this.bankAccount.account)
       }
       if (this.creditor) {
-        if (this.creditor.type === 'LegalEntity') {
-          console.log(this.creditor)
-          formData.append('CREDITOR', this.creditor.name)
-          formData.append('CREDITOR_UUID', this.creditor.uuid)
-          formData.append('CREDITOR_ADDRESS', this.creditor?.legal_address || this.creditor?.postal_address)
-        } else {
-          formData.append('CREDITOR_UUID', this.creditor.uuid)
-          formData.append('CREDITOR', this.creditor.fullName)
-          console.log(this.creditor)
-          const russianCitizenship = this.creditor.citizenships?.find(c => c.country.id === 1);
-          const citizenshipId = russianCitizenship?.id ||
-              (this.creditor.citizenships?.length > 0 ? this.creditor.citizenships[0].id : null);
-          if (this.creditor?.identifiers?.length > 0) {
-            // Находим блок идентификаторов для нужного гражданства
-            const identifierBlock = citizenshipId
-                ? this.creditor.identifiers.find(block => block.citizenship === citizenshipId)
-                : this.creditor.identifiers[0];
-            const registrationBlock = citizenshipId
-                ? this.creditor.registration.find(block => block.citizenship === citizenshipId)
-                : this.creditor.registration[0];
-            console.log(registrationBlock)
-            if (identifierBlock?.identifier) {
-              // Ищем конкретные идентификаторы внутри блока
-              const innIdentifier = identifierBlock.identifier.find(id => id.type === 'INN');
-              const snilsIdentifier = identifierBlock.identifier.find(id => id.type === 'SNILS');
-              formData.append('CREDITOR_INN', innIdentifier?.value || null)
-              formData.append('CREDITOR_OGRN', snilsIdentifier?.value || null)
-            }
-            if (registrationBlock) {
-              let address = registrationBlock.address
-              if (registrationBlock?.postcode) {
-                address = registrationBlock?.postcode + ', ' + address
-              }
-              formData.append('CREDITOR_ADDRESS', address)
-            } else {
-              formData.append('CREDITOR_ADDRESS', " ")
-            }
-          }
-          // formData.append('CREDITOR_ADDRESS', this.templateFields['CREDITOR_POST_ADDRESS'])
-        }
+        this.fillPartyData(formData, this.creditor, 'CREDITOR')
+      }
 
+      // Добавляем данные созаемщика
+      if (this.coowner) {
+        this.fillPartyData(formData, this.coowner, 'COOWNER')
       }
       if (this.bank) {
         formData.append('BANK', this.bank.name)

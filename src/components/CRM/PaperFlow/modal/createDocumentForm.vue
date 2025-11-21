@@ -304,18 +304,6 @@ export default {
       if (item.name === "Квартальный отчет") {
         this.generateQuarterYearOptions()
         this.setCurrentQuarterYear()
-        // const currentMonth = new Date().getMonth() + 1; // Месяцы от 1 до 12
-        // const currentYear = new Date().getFullYear()
-        // if (currentMonth >= 1 && currentMonth <= 3) {
-        //   this.form.quarter = 1;
-        // } else if (currentMonth >= 4 && currentMonth <= 6) {
-        //   this.form.quarter = 2;
-        // } else if (currentMonth >= 7 && currentMonth <= 9) {
-        //   this.form.quarter = 3;
-        // } else {
-        //   this.form.quarter = 4;
-        // }
-        // this.form.quarter_year = currentYear
       }
     },
     async save(force = false) {
