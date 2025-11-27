@@ -16,6 +16,7 @@
           <v-tab>Коммуникация</v-tab>
           <v-tab>Семья</v-tab>
           <v-tab>Спец. статусы</v-tab>
+          <v-tab>Имущество</v-tab>
         </v-tabs>
         <v-tabs-items v-model="tab" class="mt-4">
           <v-tab-item>
@@ -660,6 +661,17 @@
                 </v-btn>
               </v-card-text>
             </v-card>
+          </v-tab-item>
+          <v-tab-item>
+            <v-card v-for="(asset, index) in editedItem.assets"
+                    :key="index" class="mb-4">
+              <v-card-text class="citizenship-content">
+                {{ asset }}
+              </v-card-text>
+            </v-card>
+            <v-btn @click="addAsset" color="primary" class="mt-4">
+              Добавить имущество
+            </v-btn>
           </v-tab-item>
         </v-tabs-items>
       </v-form>
@@ -1309,6 +1321,7 @@ export default {
         communication: [],
         family_members: [],
         special_statuses: [],
+        assets: []
       }
     },
     getCurrentCitizenshipValue(item) {
@@ -1486,6 +1499,16 @@ export default {
 
       this.editedItem.special_statuses.push(newStatus);
 
+    },
+    addAsset() {
+      const newAsset = {
+        asset_id: "",
+        category: "",
+        acquisition_date: null,
+        disposal_date: null,
+        status: "active",
+      }
+      this.editedItem.assets.push(newAsset)
     },
     addInsurance(contentId, index) {
       const insurance = {

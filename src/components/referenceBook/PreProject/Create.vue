@@ -333,16 +333,50 @@ export default {
         console.log(err)
       })
     },
-    syncCaseDataNew() {
-      this.caseHistory = new Array()
+async determineServerUrl() {
+      // const devServer = "http://127.0.0.1:8000";
+      const localServer = 'http://192.168.1.112:8000';
+      const remoteServer = 'http://80.254.125.196:9563';
+
+      try {
+        // Проверка доступности локального сервера
+        const isAvailable = await this.checkServerAvailability(localServer);
+        return isAvailable ? localServer : remoteServer;
+      } catch (error) {
+        return remoteServer; // Возвращаем удаленный сервер при ошибке
+      }
+    },
+    async checkServerAvailability(url) {
+      const controller = new AbortController();
+      const timeout = 500; // Таймаут 500 мс
+
+      const timeoutId = setTimeout(
+          () => controller.abort(),
+          timeout
+      );
+
+      try {
+        await fetch(`${url}/ping`, {
+          method: 'GET',
+          mode: 'no-cors',
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        return true;
+      } catch (error) {
+        clearTimeout(timeoutId);
+        return false;
+      }
+    },
+    async syncCaseDataNew() {
+      this.caseHistory = []
+      const baseUrl = await this.determineServerUrl();
+      const url = `${baseUrl}/parse?case_number=${this.form.case_number}`;
       return new Promise((resolve, reject) => {
         this.overlay = true
         this.$http({
           method: "GET",
-          // url: customConst.REFERENCE_BOOK_API + 'get-case-from-arbitr',
-          url: `http://80.254.125.196:9563/parse?case_number=${this.form.case_number}`,
-          // url: `http://127.0.0.1:8000/parse?case_number=${this.form.case_number}`,
-          // params: {'case-number': this.form.case_number}
+          url: url,
         }).then(res => {
           console.log(res.data)
           this.caseHistory = res.data.data
