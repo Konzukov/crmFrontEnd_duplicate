@@ -18,7 +18,7 @@
                     mdi-alert-circle-outline
                   </v-icon>
                 </template>
-                <span>{{ uploadProcess.errors.message }}</span>
+                <span>Ошибка обработки файла</span>
               </v-tooltip>
             </v-btn>
             <v-progress-circular
@@ -41,12 +41,9 @@
       <v-expansion-panel-content>
         <v-container>
           <v-card>
-            <v-card-text v-if="processedData.length === 0">
-              Данные будут отображены после обработки файла
-            </v-card-text>
-            <v-card-text v-else>
+            <v-card-text v-if="!uploadProcess.errors.hasError">
               <v-data-table
-                  v-if="templateType === 'post'"
+                  v-if="templateType === 'post' && processedData.length > 0"
                   dense :items="processedData"
                   :headers="postHeaders"
                   :item-class="(item) => rowClass(item)"
@@ -70,7 +67,7 @@
                 </template>
               </v-data-table>
               <v-data-table
-                  v-else-if="templateType === 'bank_account'"
+                  v-else-if="templateType === 'bank_account' && processedData.length > 0"
                   dense
                   :items="processedData"
                   :headers="bankAccountHeaders"
@@ -84,7 +81,43 @@
                   </v-btn>
                 </template>
               </v-data-table>
+              <div v-else-if="processedData.length === 0 && !uploadProcess.uploading">
+                Данные будут отображены после обработки файла
+              </div>
             </v-card-text>
+
+            <!-- Блок для отображения ошибок валидации -->
+            <v-card-text v-if="uploadProcess.errors.hasError">
+              <v-alert
+                  type="error"
+                  dense
+                  outlined
+                  class="mb-4"
+              >
+                <strong>{{ uploadProcess.errors.message }}</strong>
+                <div v-if="uploadProcess.errors.details" class="mt-2">
+                  <div v-if="Array.isArray(uploadProcess.errors.details)">
+                    <v-list dense class="py-0">
+                      <v-list-item
+                          v-for="(detail, index) in uploadProcess.errors.details"
+                          :key="index"
+                          class="py-1"
+                      >
+                        <v-list-item-content class="py-0">
+                          <v-list-item-title class="text-caption">
+                            • {{ detail }}
+                          </v-list-item-title>
+                        </v-list-item-content>
+                      </v-list-item>
+                    </v-list>
+                  </div>
+                  <div v-else>
+                    {{ uploadProcess.errors.details }}
+                  </div>
+                </div>
+              </v-alert>
+            </v-card-text>
+
             <v-card-actions>
               <v-row justify="end">
                 <v-col md="auto" sm="auto">
@@ -93,7 +126,11 @@
                   </v-btn>
                 </v-col>
                 <v-col md="auto" sm="auto">
-                  <v-btn color="success" @click.native.stop="processJsonPost">
+                  <v-btn
+                    color="success"
+                    @click.native.stop="processJsonPost"
+                    :disabled="uploadProcess.uploading"
+                  >
                     Обработать
                   </v-btn>
                 </v-col>
@@ -116,11 +153,10 @@ import postEdit from "@/components/CRM/PaperFlow/Post/modal/PostEdit.vue";
 import ChooseDocument from "@/components/CRM/PaperFlow/modal/ChooseDocument.vue";
 import BankAccountCreateModal from "@/components/referenceBook/Bank/BankAccountCreateModal.vue";
 
-
 export default {
   props: {
     uploadFile: File,
-    templateType: { // Добавляем prop для определения типа шаблона
+    templateType: {
       type: String,
       required: true,
       validator: value => ['post', 'bank_account'].includes(value)
@@ -136,7 +172,6 @@ export default {
       {text: 'Проект', value: 'project'},
       {text: 'Действия', value: 'actions'},
     ],
-    // Заголовки для банковских счетов
     bankAccountHeaders: [
       {text: 'Номер счета', value: 'account'},
       {text: 'Банк', value: 'bank.name'},
@@ -148,6 +183,7 @@ export default {
       progress: '0',
       errors: {
         message: '',
+        details: null, // Может быть строкой или массивом
         hasError: false
       }
     },
@@ -164,7 +200,7 @@ export default {
       }
     },
     updateAccountList(item) {
-      this.processedBankAccount = this.processedBankAccount.map(obj => {
+      this.processedData = this.processedData.map(obj => {
         if (obj.account === item.account) {
           return item;
         }
@@ -187,7 +223,6 @@ export default {
         console.log('Обновленные данные:', updatedData);
       });
 
-      // Сбрасываем currentItem после обработки
       this.currentItem = null;
     },
     async chooseDocs(data) {
@@ -230,36 +265,75 @@ export default {
       this.uploadProcess.uploaded = true
     },
     async processJsonPost() {
-      this.uploadProcess.uploading = true
-      let formData = new FormData()
-      formData.set('file', this.uploadFile)
-      formData.set('processingType', 'json')
+      // Сброс ошибок перед новой обработкой
+      this.uploadProcess.errors = {
+        message: '',
+        details: null,
+        hasError: false
+      };
+
+      this.uploadProcess.uploading = true;
+      let formData = new FormData();
+      formData.set('file', this.uploadFile);
+      formData.set('processingType', 'json');
+
       try {
         let data;
         if (this.templateType === 'post') {
-          formData.set('processingContent', 'post')
+          formData.set('processingContent', 'post');
           data = await this.$store.dispatch('jsonPostProcessing', {
             formData,
             'file': this.uploadFile,
             'processingContent': 'post'
-          })
+          });
         } else if (this.templateType === 'bank_account') {
-          formData.set('processingContent', 'bank_account')
+          formData.set('processingContent', 'bank_account');
           data = await this.$store.dispatch('jsonPostProcessing', {
             formData,
             'file': this.uploadFile,
             'processingContent': 'bank_account'
-          })
+          });
         }
-        this.uploadProcess.uploading = false
-        this.uploadProcess.uploaded = true
-        this.processedData = [...data]
+
+        this.uploadProcess.uploading = false;
+        this.uploadProcess.uploaded = true;
+        this.processedData = [...data];
+
       } catch (err) {
-        console.log(err.response)
-        this.uploadProcess.errors.hasError = true
-        this.uploadProcess.errors.message = err.response.data.errors.error
-        this.uploadProcess.uploading = false
-        this.uploadProcess.uploaded = false
+        console.error('Ошибка обработки JSON:', err);
+
+        this.uploadProcess.uploading = false;
+        this.uploadProcess.uploaded = false;
+        this.uploadProcess.errors.hasError = true;
+
+        // Обработка различных форматов ошибок от бэкенда
+        if (err.response && err.response.data) {
+          const errorData = err.response.data;
+
+          // Формат 1: { error: 'message', details: [...] }
+          if (errorData.error && errorData.details) {
+            this.uploadProcess.errors.message = errorData.error;
+            this.uploadProcess.errors.details = errorData.details;
+          }
+          // Формат 2: { errors: { error: 'message', details: '...' } }
+          else if (errorData.errors) {
+            this.uploadProcess.errors.message = errorData.errors.error || 'Неизвестная ошибка';
+            this.uploadProcess.errors.details = errorData.errors.details || errorData.errors;
+          }
+          // Формат 3: { error: 'message' }
+          else if (errorData.error) {
+            this.uploadProcess.errors.message = errorData.error;
+            this.uploadProcess.errors.details = errorData.details || null;
+          }
+          // Формат 4: строка или другой формат
+          else {
+            this.uploadProcess.errors.message = 'Ошибка обработки файла';
+            this.uploadProcess.errors.details = typeof errorData === 'string' ? errorData : JSON.stringify(errorData);
+          }
+        } else {
+          this.uploadProcess.errors.message = 'Ошибка соединения с сервером';
+          this.uploadProcess.errors.details = err.message || 'Неизвестная ошибка';
+        }
       }
     },
     rowClass(item) {
@@ -281,9 +355,23 @@ export default {
 }
 </script>
 
-
 <style scoped>
 >>> .created-false {
   background-color: #c1020226;
+}
+
+.error-message {
+  font-size: 0.875rem;
+  max-width: 300px;
+  word-break: break-word;
+}
+
+.v-alert {
+  margin-bottom: 16px;
+}
+
+.v-list-item__title {
+  font-size: 0.75rem !important;
+  line-height: 1.2 !important;
 }
 </style>

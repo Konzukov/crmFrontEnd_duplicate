@@ -662,16 +662,112 @@
               </v-card-text>
             </v-card>
           </v-tab-item>
+          <!-- Имущество -->
           <v-tab-item>
-            <v-card v-for="(asset, index) in editedItem.assets"
-                    :key="index" class="mb-4">
-              <v-card-text class="citizenship-content">
-                {{ asset }}
+            <v-card>
+              <v-card-text>
+                <v-expansion-panels multiple v-model="expandedAssetPanels" flat class="identifier-panel">
+                  <v-expansion-panel v-for="(asset, index) in editedItem.assets" :key="index">
+                    <v-expansion-panel-header disable-icon-rotate>
+                      {{ getAssetTitle(asset) }}
+                      <template v-slot:actions>
+                        <v-btn icon small style="color: #ff5252 !important" @click.stop="removeAsset(index)">
+                          <v-icon color="error">mdi-delete</v-icon>
+                        </v-btn>
+                      </template>
+                    </v-expansion-panel-header>
+
+                    <v-expansion-panel-content>
+                      <v-container>
+                        <v-row>
+                          <v-col cols="12" md="5">
+                            <v-autocomplete
+                                hide-details
+                                outlined dense
+                                v-model="asset.category"
+                                :items="assetCategories"
+                                label="Категория*"
+                                :rules="requiredRules"
+                            />
+                          </v-col>
+
+                          <v-col cols="12" md="5">
+                            <v-autocomplete
+                                hide-details
+                                outlined dense
+                                v-model="asset.asset_type"
+                                :items="assetTypes"
+                                label="Тип*"
+                                :rules="requiredRules"
+                                @change="onAssetTypeChange(asset)"
+                            />
+                          </v-col>
+
+
+                          <v-col cols="12" md="4">
+                            <DatePicker
+                                hide-details
+                                v-model="asset.acquisition_date"
+                                value-type="format"
+                                format="DD.MM.YYYY"
+                                placeholder="Дата приобретения"
+                                :clearable="false"
+                            />
+                          </v-col>
+
+                          <v-col cols="12" md="4">
+                            <DatePicker
+                                hide-details
+                                v-model="asset.disposal_date"
+                                value-type="format"
+                                format="DD.MM.YYYY"
+                                placeholder="Дата выбытия"
+                                :clearable="false"
+                            />
+                          </v-col>
+
+                          <v-col cols="12" md="4">
+                            <v-autocomplete
+                                hide-details
+                                outlined dense
+                                v-model="asset.status"
+                                :items="assetStatuses"
+                                label="Статус*"
+                                :rules="requiredRules"
+                            />
+                          </v-col>
+                        </v-row>
+
+                        <!-- ДИНАМИЧЕСКИЕ ПОЛЯ ПО JSON СХЕМЕ -->
+                        <v-divider class="my-4" v-if="asset.asset_type && getSchemaFields(asset)"></v-divider>
+                        <strong v-if="asset.asset_type && getSchemaFields(asset)">Характеристики</strong>
+
+                        <v-row class="mt-2" v-if="asset.asset_type && getSchemaFields(asset)">
+                          <v-col cols="12" :md="field.type === 'boolean' ? 12 : 6"
+                                 v-for="(field, key) in getSchemaFields(asset)" :key="key">
+                            <component
+                                hide-details
+                                :is="resolveFieldComponent(field)"
+                                v-model="asset.details[key]"
+                                :label="field.label"
+                                :rules="field.required ? requiredRules : []"
+                                :type="field.type === 'number' || field.type === 'integer' ? 'number' : 'text'"
+                                :items="field.enum || []"
+                                outlined dense
+                            />
+                          </v-col>
+                        </v-row>
+                      </v-container>
+                    </v-expansion-panel-content>
+                  </v-expansion-panel>
+                </v-expansion-panels>
+
+                <v-btn @click="addAsset" color="primary" class="mt-4">
+                  <v-icon left>mdi-plus</v-icon>
+                  Добавить имущество
+                </v-btn>
               </v-card-text>
             </v-card>
-            <v-btn @click="addAsset" color="primary" class="mt-4">
-              Добавить имущество
-            </v-btn>
           </v-tab-item>
         </v-tabs-items>
       </v-form>
@@ -733,7 +829,7 @@ import {mapGetters} from "vuex";
 import {uuid} from "vue-uuid";
 import {cloneDeep, debounce} from "lodash";
 import moment from "moment";
-// import {VueMaskFilter} from 'v-mask'
+import {AssetSchemas} from '@/const/dataTypes'
 
 export default {
   props: {
@@ -744,6 +840,24 @@ export default {
     yaml: Object,
   },
   data: () => ({
+    assetCategories: [
+      "недвижимое имущество",
+      "движимое имущество",
+      "денежные средства",
+      "дебиторская задолженность",
+      "ценные бумаги",
+      "акции и иное участие",
+      "иное имущество"
+    ],
+    assetTypes: Object.keys(AssetSchemas),
+    assetStatuses: [
+      {value: "active", text: "Активный"},
+      {value: "inactive", text: "Неактивный"},
+      {value: "disputed", text: "Оспаривается"},
+      {value: "leased", text: "В аренде"},
+      {value: "under repair", text: "На ремонте"},
+      {value: "outstanding", text: "Просрочен"}
+    ],
     duplicateDialog: false,
     duplicates: [],
     duplicateHeaders: [
@@ -800,6 +914,7 @@ export default {
       {text: 'Другой родственник', value: 'other'}
     ],
     expandedStatusPanels: [],
+    expandedAssetPanels: [],
     specialStatusTypes: [
       {text: 'Арбитражный управляющий', value: 'arbitration_manager'},
       {text: 'Индивидуальный предприниматель', value: 'individual_entrepreneur'},
@@ -1323,6 +1438,11 @@ export default {
         special_statuses: [],
         assets: []
       }
+      if (this.person && this.person.assets) {
+        this.person.assets.forEach(asset => {
+          this.initAssetDetails(asset);
+        });
+      }
     },
     getCurrentCitizenshipValue(item) {
       // Возвращаем текущее гражданство (новое или существующее)
@@ -1500,15 +1620,105 @@ export default {
       this.editedItem.special_statuses.push(newStatus);
 
     },
+    getAssetTitle(asset) {
+      if (!asset) return "Имущество";
+
+      const category = asset.category ? `${asset.category}` : "Без категории";
+      const type = asset.asset_type ? `${asset.asset_type}` : "Без типа";
+
+      return `${category} - ${type}`;
+    },
     addAsset() {
       const newAsset = {
-        asset_id: "",
+        id: "",
         category: "",
+        asset_type: "",
         acquisition_date: null,
         disposal_date: null,
         status: "active",
+        details: {}
+      };
+      this.editedItem.assets.push(newAsset);
+
+      // Автоматически разворачиваем новую панель
+      this.expandedAssetPanels.push(this.editedItem.assets.length - 1);
+    },
+    onAssetTypeChange(asset) {
+      // Очищаем существующие детали
+      asset.details = {};
+
+      // Получаем схему для выбранного типа
+      const schema = AssetSchemas[asset.asset_type];
+      if (schema && schema.properties) {
+        // Инициализируем каждое поле значением по умолчанию или пустой строкой
+        Object.keys(schema.properties).forEach(key => {
+          const field = schema.properties[key];
+          // Устанавливаем значение по умолчанию в зависимости от типа
+          if (field.type === 'boolean') {
+            asset.details[key] = false;
+          } else if (field.type === 'number' || field.type === 'integer') {
+            asset.details[key] = 0;
+          } else if (field.type === 'string') {
+            asset.details[key] = '';
+          } else {
+            asset.details[key] = null;
+          }
+        });
       }
-      this.editedItem.assets.push(newAsset)
+    },
+    removeAsset(index) {
+      this.editedItem.assets.splice(index, 1);
+      this.expandedAssetPanels = this.expandedAssetPanels
+          .map(i => i > index ? i - 1 : i)
+          .filter(i => i !== index);
+    },
+    getSchemaFields(asset) {
+      if (!asset.asset_type || !AssetSchemas[asset.asset_type]) {
+        return {};
+      }
+      // AssetSchemas содержит объекты с полем properties
+      const schema = AssetSchemas[asset.asset_type];
+      return schema?.properties || {};
+    },
+    resolveFieldComponent(field) {
+      switch (field.type) {
+        case "boolean":
+          return "v-checkbox";
+        case "date":
+          return "DatePicker";
+        case "string":
+          if (field.enum && field.enum.length > 0) {
+            return "v-autocomplete";
+          }
+          return "v-text-field";
+        case "integer":
+        case "number":
+          return "v-text-field";
+        default:
+          return "v-text-field";
+      }
+    },
+    initAssetDetails(asset) {
+      if (asset.asset_type && AssetSchemas[asset.asset_type]) {
+        const schema = AssetSchemas[asset.asset_type];
+        if (!asset.details) asset.details = {};
+
+        // Инициализируем только те поля, которые есть в схеме
+        if (schema.properties) {
+          Object.keys(schema.properties).forEach(key => {
+            if (asset.details[key] === undefined) {
+              const field = schema.properties[key];
+              if (field.type === 'boolean') {
+                asset.details[key] = false;
+              } else if (field.type === 'number' || field.type === 'integer') {
+                asset.details[key] = 0;
+              } else if (field.type === 'string') {
+                asset.details[key] = '';
+              }
+            }
+          });
+        }
+      }
     },
     addInsurance(contentId, index) {
       const insurance = {
@@ -1731,11 +1941,6 @@ export default {
   max-height: 75%;
 }
 
-/*
-.v-card.mb-4 {
-  max-height: 250px;
-}
-*/
 >>> .required.v-input--is-focused.error--text fieldset {
   border: 0.15em solid;
   color: rgb(167, 25, 25);
@@ -1763,6 +1968,21 @@ export default {
 
 .v-expansion-panel-content >>> .v-expansion-panel-content__wrap {
   padding: 8px 16px 16px;
+}
+
+
+.identifier-panel {
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+}
+
+/* Стили для панелей имущества */
+.v-expansion-panel-header--active .asset-title {
+  font-weight: 600;
+}
+
+.v-expansion-panel-content__wrap {
+  padding: 16px;
 }
 
 /* Адаптивные стили */

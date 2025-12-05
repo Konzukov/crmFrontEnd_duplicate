@@ -1763,15 +1763,13 @@ export default {
     },
     fillPartyData(formData, party, prefix) {
   if (party.type === 'LegalEntity') {
-    console.log(party)
     formData.append(prefix, party.name)
     formData.append(`${prefix}_UUID`, party.uuid)
     formData.append(`${prefix}_ADDRESS`, party?.legal_address || party?.postal_address)
+    formData.append(`${prefix}_POSTAL_ADDRESS`,party?.postal_address || 'Адрес не указан')
   } else {
     formData.append(`${prefix}_UUID`, party.uuid)
     formData.append(prefix, party.fullName)
-    console.log(party)
-
     const russianCitizenship = party.citizenships?.find(c => c.country.id === 1);
     const citizenshipId = russianCitizenship?.id ||
         (party.citizenships?.length > 0 ? party.citizenships[0].id : null);
