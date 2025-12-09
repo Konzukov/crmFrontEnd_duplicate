@@ -356,6 +356,19 @@
                           <v-icon>mdi-delete</v-icon>
                         </v-btn>
                       </v-col>
+                      <template v-if="member.relation_type==='spouse'">
+                        <v-col cols="12" md="6">
+                          <DatePicker v-model="member.date_start" value-type="format" format="DD.MM.YYYY"
+                                      placeholder="Дата заключения брака"
+                                      :clearable="false"></DatePicker>
+                        </v-col>
+                        <v-col cols="12" md="6">
+                          <DatePicker v-model="member.date_end" value-type="format" format="DD.MM.YYYY"
+                                      placeholder="Дата прекращения брака"
+                                      :clearable="false"></DatePicker>
+                        </v-col>
+                      </template>
+
                     </v-row>
                   </v-card-text>
                 </v-card>
@@ -746,13 +759,11 @@
                           <v-col cols="12" :md="field.type === 'boolean' ? 12 : 6"
                                  v-for="(field, key) in getSchemaFields(asset)" :key="key">
                             <component
-                                hide-details
-                                :is="resolveFieldComponent(field)"
+                                :is="resolveFieldComponent(field, key)"
                                 v-model="asset.details[key]"
                                 :label="field.label"
-                                :rules="field.required ? requiredRules : []"
-                                :type="field.type === 'number' || field.type === 'integer' ? 'number' : 'text'"
-                                :items="field.enum || []"
+                                :rules="getFieldRules(field)"
+                                v-bind="getFieldAttrs(field, key)"
                                 outlined dense
                             />
                           </v-col>
@@ -766,6 +777,17 @@
                   <v-icon left>mdi-plus</v-icon>
                   Добавить имущество
                 </v-btn>
+                <v-btn @click="triggerJsonUpload" color="primary" class="mt-4 ml-4">
+                  <v-icon left>mdi-file-upload</v-icon>
+                  Загрузить из JSON
+                </v-btn>
+                <input
+                    type="file"
+                    ref="jsonFileInput"
+                    accept=".json"
+                    style="display: none"
+                    @change="handleJsonFileUpload"
+                />
               </v-card-text>
             </v-card>
           </v-tab-item>
@@ -841,13 +863,13 @@ export default {
   },
   data: () => ({
     assetCategories: [
-      "недвижимое имущество",
-      "движимое имущество",
-      "денежные средства",
-      "дебиторская задолженность",
-      "ценные бумаги",
-      "акции и иное участие",
-      "иное имущество"
+      "Недвижимое имущество",
+      "Движимое имущество",
+      "Денежные средства",
+      "Дебиторская задолженность",
+      "Ценные бумаги",
+      "Акции и участие",
+      "Иное имущество"
     ],
     assetTypes: Object.keys(AssetSchemas),
     assetStatuses: [
@@ -1551,6 +1573,8 @@ export default {
       this.editedItem.family_members.push({
         relative: null,
         relation_type: null,
+        date_start: null,
+        date_end: null
       });
     },
     removeFamilyMember(index) {
@@ -1630,7 +1654,7 @@ export default {
     },
     addAsset() {
       const newAsset = {
-        id: "",
+        id: null,
         category: "",
         asset_type: "",
         acquisition_date: null,
@@ -1653,18 +1677,22 @@ export default {
         // Инициализируем каждое поле значением по умолчанию или пустой строкой
         Object.keys(schema.properties).forEach(key => {
           const field = schema.properties[key];
+
           // Устанавливаем значение по умолчанию в зависимости от типа
           if (field.type === 'boolean') {
-            asset.details[key] = false;
+            asset.details[key] = field.default !== undefined ? field.default : false;
           } else if (field.type === 'number' || field.type === 'integer') {
-            asset.details[key] = 0;
+            asset.details[key] = field.default !== undefined ? field.default : 0;
           } else if (field.type === 'string') {
-            asset.details[key] = '';
+            asset.details[key] = field.default !== undefined ? field.default : '';
           } else {
             asset.details[key] = null;
           }
         });
       }
+
+      // Обновляем массив для реактивности
+      this.$set(this.editedItem.assets, this.editedItem.assets.indexOf(asset), asset);
     },
     removeAsset(index) {
       this.editedItem.assets.splice(index, 1);
@@ -1698,6 +1726,122 @@ export default {
           return "v-text-field";
       }
     },
+    getFieldRules(field, fieldKey) {
+      const rules = [];
+
+      // Обязательное поле
+      if (field.required) {
+        rules.push(v => !!v || 'Обязательное поле');
+      }
+
+      // Валидация для строковых полей
+      if (field.type === 'string') {
+        // Проверка минимальной длины
+        if (field.minLength !== undefined) {
+          rules.push(v => !v || v.length >= field.minLength ||
+              `Минимальная длина: ${field.minLength} символов`);
+        }
+
+        // Проверка максимальной длины
+        if (field.maxLength !== undefined) {
+          rules.push(v => !v || v.length <= field.maxLength ||
+              `Максимальная длина: ${field.maxLength} символов`);
+        }
+
+        // Проверка паттерна (регулярного выражения)
+        if (field.pattern) {
+          const regex = new RegExp(field.pattern);
+          rules.push(v => !v || regex.test(v) ||
+              `Неверный формат. Пример: ${field.patternDescription || field.pattern}`);
+        }
+      }
+
+      // Валидация для числовых полей
+      if (field.type === 'number' || field.type === 'integer') {
+        // Минимальное значение
+        if (field.minimum !== undefined) {
+          rules.push(v => v === '' || v === null || v >= field.minimum ||
+              `Минимальное значение: ${field.minimum}`);
+        }
+
+        // Максимальное значение
+        if (field.maximum !== undefined) {
+          rules.push(v => v === '' || v === null || v <= field.maximum ||
+              `Максимальное значение: ${field.maximum}`);
+        }
+
+        // Проверка на целое число для integer
+        if (field.type === 'integer') {
+          rules.push(v => v === '' || v === null || Number.isInteger(Number(v)) ||
+              'Должно быть целое число');
+        }
+      }
+
+      // Специальная валидация для VIN (17 символов)
+      if (fieldKey === 'vin') {
+        rules.push(v => !v || v.length === 17 ||
+            'VIN номер должен содержать ровно 17 символов');
+      }
+
+      return rules;
+    },
+    getFieldAttrs(field, fieldKey) {
+      const attrs = {};
+
+      // Плейсхолдер
+      if (field.placeholder) {
+        attrs.placeholder = field.placeholder;
+      }
+
+      // Для текстовых полей
+      if (field.type === 'string') {
+        if (field.maxLength !== undefined) {
+          attrs.counter = field.maxLength;
+        }
+
+        // Маска для VIN номера
+        if (fieldKey === 'vin') {
+          attrs.mask = 'XXXXXXXXXXXXXXXXX';
+          attrs.hint = 'Введите 17-значный VIN номер';
+          attrs.persistentHint = true;
+        }
+      }
+
+      // Для числовых полей
+      if (field.type === 'number' || field.type === 'integer') {
+        attrs.type = 'number';
+
+        // Атрибуты min/max для HTML5 валидации
+        if (field.minimum !== undefined) {
+          attrs.min = field.minimum;
+        }
+        if (field.maximum !== undefined) {
+          attrs.max = field.maximum;
+        }
+
+        // Шаг для числовых полей
+        if (field.type === 'integer') {
+          attrs.step = 1;
+        }
+      }
+
+      // Для полей с перечислением
+      if (field.enum && field.enum.length > 0) {
+        attrs.items = field.enum;
+      }
+
+      // Для булевых полей
+      if (field.type === 'boolean') {
+        attrs.dense = true;
+      }
+
+      // Для полей с форматом даты
+      if (field.format === 'date' || field.type === 'date') {
+        attrs.valueType = 'format';
+        attrs.format = 'DD.MM.YYYY';
+      }
+      return attrs;
+    },
     initAssetDetails(asset) {
       if (asset.asset_type && AssetSchemas[asset.asset_type]) {
         const schema = AssetSchemas[asset.asset_type];
@@ -1719,6 +1863,165 @@ export default {
           });
         }
       }
+    },
+    triggerJsonUpload() {
+      this.$refs.jsonFileInput.click();
+    },
+
+    async handleJsonFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      try {
+        const jsonData = await this.readJsonFile(file);
+        await this.processJsonAssets(jsonData);
+        this.showNotificationMessage('Имущество успешно загружено из JSON', 'success');
+      } catch (error) {
+        console.error('Ошибка при загрузке JSON:', error);
+        this.showNotificationMessage(`Ошибка при загрузке JSON: ${error.message}`, 'error');
+      } finally {
+        // Сброс input для возможности повторной загрузки
+        event.target.value = '';
+      }
+    },
+
+    readJsonFile(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+          try {
+            const jsonData = JSON.parse(e.target.result);
+            resolve(jsonData);
+          } catch (error) {
+            reject(new Error('Неверный формат JSON файла'));
+          }
+        };
+
+        reader.onerror = () => {
+          reject(new Error('Ошибка чтения файла'));
+        };
+
+        reader.readAsText(file);
+      });
+    },
+
+    processJsonAssets(jsonData) {
+      if (!jsonData.assets || !Array.isArray(jsonData.assets)) {
+        throw new Error('В JSON отсутствует массив assets');
+      }
+
+      const processedAssets = jsonData.assets.map((jsonAsset, index) => {
+        // Преобразование JSON актива в формат компонента
+        const asset = this.transformJsonAsset(jsonAsset);
+
+        // Добавляем индекс к заголовку для удобства
+        asset.originalIndex = index;
+
+        return asset;
+      });
+
+      // Добавляем все обработанные активы
+      const startIndex = this.editedItem.assets.length;
+      this.editedItem.assets.push(...processedAssets);
+
+      // Разворачиваем панели для новых активов
+      processedAssets.forEach((_, i) => {
+        this.expandedAssetPanels.push(startIndex + i);
+      });
+
+      return processedAssets.length;
+    },
+
+    transformJsonAsset(jsonAsset) {
+      // Сопоставление категорий из JSON с категориями в компоненте
+      const categoryMapping = {
+        'движимое имущество': 'Движимое имущество',
+        'недвижимое имущество': 'Недвижимое имущество',
+        'денежные средства': 'Денежные средства',
+        'иное имущество': 'Иное имущество'
+      };
+
+      // Сопоставление статусов
+      const statusMapping = {
+        'active': 'active',
+        'inactive': 'inactive',
+        'leased': 'leased'
+      };
+
+      // Проверяем и преобразуем тип актива
+      let assetType = jsonAsset.type;
+      if (!AssetSchemas[assetType]) {
+        // Пытаемся найти похожий тип
+        const similarType = Object.keys(AssetSchemas).find(key =>
+            key.toLowerCase() === assetType.toLowerCase()
+        );
+        if (similarType) {
+          assetType = similarType;
+        } else {
+          throw new Error(`Неизвестный тип имущества: ${assetType}`);
+        }
+      }
+
+      // Преобразование дат в формат DD.MM.YYYY
+      const formatDate = (dateString) => {
+        if (!dateString) return null;
+        try {
+          return moment(dateString, 'YYYY-MM-DD').format('DD.MM.YYYY');
+        } catch (error) {
+          return dateString; // Возвращаем как есть, если не удалось преобразовать
+        }
+      };
+
+      // Создаем объект актива в формате компонента
+      const asset = {
+        id: null,
+        category: categoryMapping[jsonAsset.category] || jsonAsset.category,
+        asset_type: assetType,
+        acquisition_date: formatDate(jsonAsset.acquisition_date),
+        disposal_date: formatDate(jsonAsset.disposal_date),
+        status: statusMapping[jsonAsset.status] || jsonAsset.status,
+        details: {}
+      };
+
+      // Обрабатываем детали
+      if (jsonAsset.details) {
+        const schema = AssetSchemas[assetType];
+
+        // Преобразуем все поля из JSON в соответствии со схемой
+        Object.keys(jsonAsset.details).forEach(key => {
+          const value = jsonAsset.details[key];
+
+          // Если есть схема для этого поля, используем правильный тип
+          if (schema.properties && schema.properties[key]) {
+            const fieldSchema = schema.properties[key];
+
+            // Преобразование значений в зависимости от типа
+            switch (fieldSchema.type) {
+              case 'boolean':
+                asset.details[key] = Boolean(value);
+                break;
+              case 'number':
+              case 'integer':
+                asset.details[key] = Number(value) || 0;
+                break;
+              case 'string':
+                asset.details[key] = String(value);
+                break;
+              default:
+                asset.details[key] = value;
+            }
+          } else {
+            // Для полей, не описанных в схеме, сохраняем как есть
+            asset.details[key] = value;
+          }
+        });
+      }
+
+      // Инициализируем детали по схеме (заполняем недостающие поля значениями по умолчанию)
+      this.initAssetDetails(asset);
+
+      return asset;
     },
     addInsurance(contentId, index) {
       const insurance = {
@@ -1813,8 +2116,9 @@ export default {
         'last_name': 'Фамилия',
         'first_name': 'Имя',
         'birthday': 'Дата рождения',
-        "special_statuses": 'Ошибка спец статуса'
-        // Добавьте другие поля по мере необходимости
+        "special_statuses": 'Ошибка спец статуса',
+        "assets": 'Имущество'
+        // Другие поля по мере необходимости
       };
 
       if (error.isValidationError) {
@@ -1823,10 +2127,43 @@ export default {
       if (error.response?.data?.errors) {
         const errors = error.response.data.errors;
         const messages = [];
-        for (const [field, errorsList] of Object.entries(errors)) {
-          const fieldName = fieldLabels[field] || field;
-          const fieldErrors = Array.isArray(errorsList) ? errorsList.join(', ') : errorsList;
-          messages.push(`<b>${fieldName}</b>: ${fieldErrors}`);
+
+        const processErrors = (errorObj, prefix = '') => {
+          if (Array.isArray(errorObj)) {
+            errorObj.forEach((item, index) => {
+              if (typeof item === 'string') {
+                messages.push(`<b>${prefix}</b>: ${item}`);
+              } else if (typeof item === 'object' && item !== null) {
+                // Обрабатываем вложенные объекты
+                processErrors(item, `${prefix}[${index}]`);
+              }
+            });
+          } else if (typeof errorObj === 'object' && errorObj !== null) {
+            for (const [field, errorsList] of Object.entries(errorObj)) {
+              const fieldName = fieldLabels[field] || field;
+              const fullPath = prefix ? `${prefix}.${fieldName}` : fieldName;
+
+              if (Array.isArray(errorsList)) {
+                errorsList.forEach(errorMsg => {
+                  if (typeof errorMsg === 'string') {
+                    messages.push(`<b>${fullPath}</b>: ${errorMsg}`);
+                  } else if (typeof errorMsg === 'object' && errorMsg !== null) {
+                    // Рекурсивная обработка вложенных объектов
+                    processErrors(errorMsg, fullPath);
+                  }
+                });
+              } else if (typeof errorsList === 'string') {
+                messages.push(`<b>${fullPath}</b>: ${errorsList}`);
+              }
+            }
+          }
+        };
+
+        processErrors(errors);
+
+        if (messages.length === 0) {
+          // Если не удалось извлечь сообщения стандартным способом
+          return 'Произошла ошибка при сохранении';
         }
 
         return `Обнаружены ошибки в форме:<br>${messages.join('<br>')}`;
@@ -1859,6 +2196,8 @@ export default {
                 id: member.id,
                 relative: member.relative.id,
                 relation_type: member.relation_type,
+                date_start: member.date_start,
+                date_end: member.date_end,
               })),
               user: this.editedItem.user?.id
             };

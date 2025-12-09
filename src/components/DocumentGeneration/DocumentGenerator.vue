@@ -162,6 +162,7 @@
                         <!--RECEIVED_CREDITOR_CLAIM-->
                         <v-row v-if="field.value ==='RECEIVED_CREDITOR_CLAIM'" justify="start">
                           <v-col cols="12">
+
                             <v-autocomplete outlined dense :label="field.name"
                                             :items="basicCreditorClaimLIst"
                                             item-text="name"
@@ -553,12 +554,13 @@
                         </v-row>
                         <!--RECEIVED_CREDITOR_CLAIM-->
                         <v-row v-if="field.value ==='RECEIVED_CREDITOR_CLAIM'" justify="start">
+
                           <v-col cols="12">
                             <v-autocomplete outlined dense :label="field.name"
                                             :items="basicCreditorClaimLIst"
                                             item-text="name"
                                             item-value="id"
-                                            :rules="rules.required"
+                                            :rules="field.required ? rules.required : ''"
                                             append-outer-icon="mdi-plus"
                                             @click:append-outer="addCreditorClaim"
                                             @change="setCreditor"
