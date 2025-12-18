@@ -388,6 +388,13 @@ export default {
       if (!this.$store.getters.physicalPersonListDataV2?.length) {
         promises.push(this.$store.dispatch('fetchPhysicalPersons'));
       }
+      if (!this.$store.getters.courtListData?.length) {
+        promises.push(this.$store.dispatch('getCourtList'));
+      }
+
+      if (!this.$store.getters.judgeListData?.length) {
+        promises.push(this.$store.dispatch('getJudgeList'));
+      }
 
       // Загружаем только необходимые справочники
       if (promises.length > 0) {
@@ -401,9 +408,6 @@ export default {
       // Загружаем остальные справочники только при необходимости
       const additionalPromises = [];
 
-      if (!this.$store.getters.courtListData?.length) {
-        additionalPromises.push(this.$store.dispatch('getCourtList'));
-      }
 
       if (!this.$store.getters.allSystemUsersData?.length) {
         additionalPromises.push(this.$store.dispatch('allSystemUser'));
@@ -411,7 +415,7 @@ export default {
 
       if (additionalPromises.length > 0) {
         // Загружаем в фоне, не блокируя основной интерфейс
-        Promise.all(additionalPromises);
+        await Promise.all(additionalPromises);
       }
     },
     processProjectData(projectData, actResponse) {

@@ -11,12 +11,23 @@ export default {
              return await new Promise((resolve, reject)=>{
                  axios({
                      method: "POST",
-                     url: customConst.REFERENCE_BOOK_API + 'asset/',
-                     data
+                     url: customConst.REFERENCE_BOOK_API + 'asset/bulk-create/', // Используем новый endpoint
+                     data: data // Отправляем массив активов
                  }).then(res=>{
-                     resolve(res.data.data.data)
+                     if (res.data.success) {
+                         resolve(res.data.data)
+                     } else {
+                         reject(new Error(res.data.error || 'Ошибка сохранения'))
+                     }
                  }).catch(err=>{
-                     reject(err)
+                     if (err.response && err.response.data) {
+                         const error = new Error(err.response.data.errors?.error || 'Ошибка сохранения');
+                         error.response = err.response;
+                         error.data = err.response.data;
+                         reject(error);
+                     } else {
+                         reject(err);
+                     }
                  })
              })
         }

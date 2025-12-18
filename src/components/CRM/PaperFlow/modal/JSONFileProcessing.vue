@@ -1239,141 +1239,288 @@ export default {
       return attrs;
     },
 
+    formatDateForCompare(dateStr) {
+      if (!dateStr) return null;
+      try {
+        return moment(dateStr, 'DD.MM.YYYY').format('YYYY-MM-DD');
+      } catch (e) {
+        return dateStr;
+      }
+    },
+
     // Сохранение имущества
     async saveAssets() {
-      if (!this.selectedPersonId) {
-        this.uploadProcess.errors = {
-          message: 'Выберите физ. лицо для привязки имущества',
-          hasError: true,
-          details: null
-        };
-        return;
+  if (!this.selectedPersonId) {
+    this.uploadProcess.errors = {
+      message: 'Выберите физ. лицо для привязки имущества',
+      hasError: true,
+      details: null
+    };
+    return;
+  }
+
+  try {
+    this.uploadProcess.uploading = true;
+    this.uploadProcess.errors.hasError = false;
+    this.uploadProcess.errors.message = '';
+    this.uploadProcess.errors.details = null;
+
+    // Сбрасываем флаги дубликатов перед сохранением
+    this.processedData.forEach(asset => {
+      this.$set(asset, 'isDuplicate', false);
+      this.$set(asset, 'duplicateInfo', null);
+    });
+
+    const assetsToSave = this.processedData.map(asset => ({
+      ...asset,
+      owner: this.selectedPersonId
+    }));
+
+    const result = await this.$store.dispatch('savePersonAssets', assetsToSave);
+
+    console.log('Результат сохранения:', result);
+
+    // Обрабатываем сохраненные активы (должны быть зелеными)
+    if (result.saved_assets && Array.isArray(result.saved_assets)) {
+      result.saved_assets.forEach(savedAsset => {
+        // Находим соответствующий актив в processedData
+        const index = this.processedData.findIndex(asset => {
+          // Сравниваем по уникальным идентификаторам
+          if (savedAsset.details) {
+            // Для недвижимости - кадастровый номер
+            if (savedAsset.details.cadastre_number &&
+                asset.details?.cadastre_number === savedAsset.details.cadastre_number) {
+              return true;
+            }
+            // Для автомобилей - VIN или регистрационный номер
+            if (savedAsset.details.vin &&
+                asset.details?.vin === savedAsset.details.vin) {
+              return true;
+            }
+            if (savedAsset.details.registration_number &&
+                asset.details?.registration_number === savedAsset.details.registration_number) {
+              return true;
+            }
+          }
+
+          // Fallback: сравниваем по основным полям
+          return asset.category === savedAsset.category &&
+                 asset.asset_type === savedAsset.asset_type &&
+                 this.formatDateForCompare(asset.acquisition_date) ===
+                 this.formatDateForCompare(savedAsset.acquisition_date) &&
+                 asset.details?.address === savedAsset.details?.address;
+        });
+
+        if (index !== -1) {
+          // Обновляем ID сохраненного актива
+          this.$set(this.processedData[index], 'id', savedAsset.id);
+          this.$set(this.processedData[index], 'isDuplicate', false);
+          this.$set(this.processedData[index], 'duplicateInfo', null);
+
+          // Принудительно обновляем классы, развернув панель
+          if (!this.expandedAssetPanels.includes(index)) {
+            this.expandedAssetPanels.push(index);
+          }
+        }
+      });
+    }
+
+    // Обрабатываем дубликаты (должны быть синими)
+    if (result.duplicates && Array.isArray(result.duplicates)) {
+      console.log('Найдены дубликаты:', result.duplicates);
+      this.processDuplicates(result.duplicates);
+    }
+
+    this.uploadProcess.uploading = false;
+
+    // Проверяем статус всех активов
+    console.log('Статус активов после сохранения:', this.processedData.map(a => ({
+      category: a.category,
+      id: a.id,
+      isDuplicate: a.isDuplicate,
+      hasId: !!a.id
+    })));
+
+    // Проверяем, все ли активы обработаны
+    const allProcessed = this.processedData.every(asset =>
+      asset.id || asset.isDuplicate
+    );
+
+    if (allProcessed) {
+      this.uploadProcess.uploaded = true;
+      this.$emit('assetsSaved', {
+        personId: this.selectedPersonId,
+        savedCount: result.saved_assets ? result.saved_assets.length : 0,
+        duplicateCount: result.duplicates ? result.duplicates.length : 0,
+        fileName: this.uploadFile.name
+      });
+    }
+
+  } catch (error) {
+    console.error('Ошибка сохранения имущества:', error);
+    this.uploadProcess.uploading = false;
+    this.uploadProcess.uploaded = false;
+
+    if (error.response && error.response.data) {
+      const errorData = error.response.data;
+      console.log('Данные ошибки:', errorData);
+
+      // Проверяем наличие дубликатов в ответе
+      let duplicates = [];
+
+      if (errorData.data && errorData.data.duplicates) {
+        duplicates = errorData.data.duplicates;
+      } else if (errorData.duplicates) {
+        duplicates = errorData.duplicates;
       }
 
-      try {
-        this.uploadProcess.uploading = true;
-        this.uploadProcess.errors.hasError = false;
-        this.uploadProcess.errors.message = '';
-        this.uploadProcess.errors.details = null;
+      if (duplicates.length > 0) {
+        console.log('Найдены дубликаты в ошибке:', duplicates);
+        this.processDuplicates(duplicates);
 
-        // Сбрасываем флаги дубликатов перед сохранением
-        this.processedData.forEach(asset => {
-          this.$set(asset, 'isDuplicate', false);
-          this.$set(asset, 'duplicateInfo', null);
-        });
-
-        const assetsToSave = this.processedData.map(asset => ({
-          ...asset,
-          owner: this.selectedPersonId
-        }));
-
-        const savedAssets = await this.$store.dispatch('savePersonAssets', assetsToSave);
-
-        // Обновляем id в processedData
-        savedAssets.forEach((savedAsset, index) => {
-          if (this.processedData[index]) {
-            this.processedData[index].id = savedAsset.id;
-            Object.keys(savedAsset).forEach(key => {
-              if (key !== 'id' && savedAsset[key] !== undefined) {
-                this.$set(this.processedData[index], key, savedAsset[key]);
+        // Проверяем, есть ли сохраненные активы
+        if (errorData.data && errorData.data.saved_assets &&
+            errorData.data.saved_assets.length > 0) {
+          // Обновляем сохраненные активы из ошибки
+          errorData.data.saved_assets.forEach(savedAsset => {
+            const index = this.processedData.findIndex(asset => {
+              if (savedAsset.details) {
+                if (savedAsset.details.cadastre_number &&
+                    asset.details?.cadastre_number === savedAsset.details.cadastre_number) {
+                  return true;
+                }
+                if (savedAsset.details.vin &&
+                    asset.details?.vin === savedAsset.details.vin) {
+                  return true;
+                }
               }
+              return false;
             });
-          }
-        });
 
-        this.uploadProcess.uploading = false;
-
-        const allSaved = this.processedData.every(asset => asset.id);
-
-        if (allSaved) {
-          this.uploadProcess.uploaded = true;
-          this.$emit('assetsSaved', {
-            personId: this.selectedPersonId,
-            count: savedAssets.length,
-            fileName: this.uploadFile.name
+            if (index !== -1) {
+              this.$set(this.processedData[index], 'id', savedAsset.id);
+              this.$set(this.processedData[index], 'isDuplicate', false);
+            }
           });
         }
+      }
 
-      } catch (error) {
-        console.error('Ошибка сохранения имущества:', error);
-        this.uploadProcess.uploading = false;
-        this.uploadProcess.uploaded = false;
+      // Показываем ошибку, только если нет сохраненных активов
+      const hasSavedAssets = this.processedData.some(asset => asset.id);
+      if (!hasSavedAssets) {
+        this.uploadProcess.errors.hasError = true;
+        this.uploadProcess.errors.message = errorData.errors?.error || 'Ошибка сохранения имущества';
+        this.uploadProcess.errors.details = errorData.errors?.details || null;
+      }
+    } else {
+      this.uploadProcess.errors.hasError = true;
+      this.uploadProcess.errors.message = error.message || 'Ошибка соединения с сервером';
+    }
+  }
+},
 
-        // Для дубликатов не показываем ошибку, только логируем
-        if (error.response && error.response.data) {
-          const errorData = error.response.data;
+    processDuplicates(duplicates) {
+  console.log('Обработка дубликатов:', duplicates);
 
-          if (errorData.error && (errorData.error.includes('дубликаты') || errorData.duplicates || errorData.duplicate_count > 0)) {
-            console.log('Обнаружены существующие активы:', errorData);
+  // Сначала сбрасываем все дубликаты
+  this.processedData.forEach(asset => {
+    this.$set(asset, 'isDuplicate', false);
+    this.$set(asset, 'duplicateInfo', null);
+  });
 
-            if (errorData.duplicates && Array.isArray(errorData.duplicates)) {
-              this.processDuplicates(errorData.duplicates);
-            } else if (errorData.details && Array.isArray(errorData.details)) {
-              const duplicates = this.extractDuplicatesFromDetails(errorData.details);
-              if (duplicates.length > 0) {
-                this.processDuplicates(duplicates);
-              }
-            }
-          } else {
-            // Для других ошибок показываем сообщение
-            this.uploadProcess.errors.hasError = true;
-            if (errorData.errors) {
-              this.uploadProcess.errors.message = 'Ошибка валидации данных';
-              this.uploadProcess.errors.details = errorData.errors;
-            } else if (errorData.error) {
-              this.uploadProcess.errors.message = errorData.error;
-              this.uploadProcess.errors.details = errorData.details || null;
-            } else {
-              this.uploadProcess.errors.message = 'Ошибка сохранения имущества';
-              this.uploadProcess.errors.details = error.message || 'Неизвестная ошибка';
-            }
+  // Для каждого дубликата из ответа сервера
+  duplicates.forEach(duplicate => {
+    const duplicateData = duplicate.data || {};
+
+    // Ищем соответствующий актив в processedData
+    const assetIndex = this.processedData.findIndex(asset => {
+      // Сравниваем основные поля
+      if (asset.category !== duplicateData.category) return false;
+      if (asset.asset_type !== duplicateData.asset_type) return false;
+
+      // Сравниваем поля из details
+      if (duplicate.fields && Array.isArray(duplicate.fields)) {
+        return duplicate.fields.every(field => {
+          const assetValue = asset.details?.[field.field];
+          const duplicateValue = field.value;
+
+          // Приводим к строке для сравнения
+          return String(assetValue) === String(duplicateValue);
+        });
+      }
+
+      // Fallback: сравниваем по уникальным полям
+      const uniqueFields = ['cadastre_number', 'vin', 'registration_number', 'serial_number'];
+      for (const field of uniqueFields) {
+        if (duplicateData.details && duplicateData.details[field]) {
+          if (asset.details?.[field] === duplicateData.details[field]) {
+            return true;
           }
         }
       }
-    },
 
-    processDuplicates(duplicates) {
-      this.processedData.forEach(asset => {
-        asset.isDuplicate = false;
-        asset.duplicateInfo = null;
-      });
+      return false;
+    });
 
-      duplicates.forEach(duplicate => {
-        const duplicateData = duplicate.data || {};
-        const assetIndex = this.processedData.findIndex(asset => {
-          if (asset.category !== duplicateData.category) return false;
-          if (asset.asset_type !== duplicateData.asset_type) return false;
+    if (assetIndex !== -1) {
+      const asset = this.processedData[assetIndex];
+      console.log('Найден дубликат актива:', asset);
 
-          if (duplicate.fields && Array.isArray(duplicate.fields)) {
-            return duplicate.fields.every(field => {
-              return asset.details?.[field.field] === field.value;
-            });
-          }
-          return true;
+      this.$set(asset, 'isDuplicate', true);
+      this.$set(asset, 'duplicateInfo', duplicate);
+      this.$set(asset, 'id', null); // Убеждаемся, что у дубликата нет ID
+
+      // Раскрываем панель с дубликатом
+      if (!this.expandedAssetPanels.includes(assetIndex)) {
+        this.expandedAssetPanels.push(assetIndex);
+      }
+    } else {
+      console.warn('Не найден соответствующий актив для дубликата:', duplicate);
+
+      // Альтернативный поиск
+      if (duplicate.fields && Array.isArray(duplicate.fields)) {
+        const fallbackIndex = this.processedData.findIndex(asset => {
+          return duplicate.fields.some(field => {
+            const assetValue = asset.details?.[field.field];
+            const duplicateValue = field.value;
+            return String(assetValue) === String(duplicateValue);
+          });
         });
 
-        if (assetIndex !== -1) {
-          const asset = this.processedData[assetIndex];
+        if (fallbackIndex !== -1) {
+          const asset = this.processedData[fallbackIndex];
+          console.log('Найден дубликат актива (альтернативный поиск):', asset);
+
           this.$set(asset, 'isDuplicate', true);
           this.$set(asset, 'duplicateInfo', duplicate);
-          if (!this.expandedAssetPanels.includes(assetIndex)) {
-            this.expandedAssetPanels.push(assetIndex);
+          this.$set(asset, 'id', null);
+
+          if (!this.expandedAssetPanels.includes(fallbackIndex)) {
+            this.expandedAssetPanels.push(fallbackIndex);
           }
         }
-      });
-    },
+      }
+    }
+  });
+
+  console.log('Итоговый processedData:', this.processedData);
+},
 
     extractDuplicatesFromDetails(details) {
       const duplicates = [];
+
+      if (!Array.isArray(details)) return duplicates;
+
       details.forEach(detail => {
         if (detail.errors && Array.isArray(detail.errors)) {
           detail.errors.forEach(error => {
-            if (error.duplicate) {
+            if (error.duplicate || error.type === 'duplicate') {
               duplicates.push(error);
             }
           });
         }
       });
+
       return duplicates;
     },
 
