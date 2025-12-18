@@ -16,6 +16,13 @@ export default {
         ADD_PHYSICAL_PERSONS(state, data) {
             state.physicalPersonList.push(data)
         },
+        UPDATE_PHYSICAL_PERSON(state, updatedPerson) {
+            const index = state.physicalPersonList.findIndex(p => p.id === updatedPerson.id)
+            if (index !== -1) {
+                // Используем Vue.set для реактивного обновления
+                Vue.set(state.physicalPersonList, index, updatedPerson)
+            }
+        }
     },
     actions: {
         async fetchPhysicalPersons({commit}) {
@@ -69,7 +76,11 @@ export default {
                         'Content-Type': 'application/json'
                     }
                 }).then(res => {
-                    commit('ADD_PHYSICAL_PERSONS', res.data.data.data)
+                    if (person.id) {
+                        commit('UPDATE_PHYSICAL_PERSON', res.data.data.data)
+                    } else {
+                        commit('ADD_PHYSICAL_PERSONS', res.data.data.data)
+                    }
                     resolve(res.data.data.data)
                 }).catch(err => {
                     reject(err)

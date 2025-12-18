@@ -74,11 +74,24 @@ export default {
     formsData: [],
   }),
   methods: {
-    dispatchData() {
-      this.$store.dispatch('getParticipator');
-      this.$store.dispatch('getLegalEntity');
-      this.$store.dispatch('fetchPhysicalPersons');
-      this.$store.dispatch('getProjectList');
+    async dispatchData() {
+      const promises = [];
+      if (!this.$store.getters.participatorList?.length) {
+        promises.push(this.$store.dispatch('getParticipator'));
+      }
+      if (!this.$store.getters.legalEntityDetailData?.length) {
+        promises.push(this.$store.dispatch('getLegalEntity'));
+      }
+      if (!this.$store.getters.physicalPersonListDataV2?.length) {
+        promises.push(this.$store.dispatch('fetchPhysicalPersons'));
+      }
+      if (!this.$store.getters.projectListData?.length) {
+        promises.push(this.$store.dispatch('getProjectList'));
+      }
+      if (promises.length > 0) {
+        await Promise.all(promises);
+      }
+
       this.$store.dispatch('getUploadingTemplates')
       this.$store.dispatch('getDocType')
       this.$store.dispatch('getCorrespondenceType')

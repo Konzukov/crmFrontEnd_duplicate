@@ -1,6 +1,6 @@
 <template>
   <v-card flat class="questionnaire mt-4"
-          :style="collapsed? 'height: 73vh; overflow: hidden': 'height: 45vh; overflow: hidden'">
+          :style="collapsed? 'height: 72vh; overflow: hidden': 'height: 45vh; overflow: hidden'">
     <v-row justify="start" style="height: 96%; overflow: hidden">
       <v-col cols="6">
         <v-card-text class="physical-person" v-if="contractor"

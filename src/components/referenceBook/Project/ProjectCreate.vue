@@ -58,7 +58,6 @@
           </v-row>
           <v-row justify="start">
             <v-col cols="4" class="mr-3">
-              {{contractor}}
               <v-autocomplete dense outlined label="Вид процедуры" :items="ProcedureType(contractor.type)"
                               item-value="value"
                               item-text="text"
@@ -223,7 +222,6 @@ export default {
       type: Object
     }
   },
-
   name: "ProjectCreate",
   data: () => ({
     valid: false,
@@ -376,26 +374,100 @@ export default {
       else return ProcedureType.Physical
     },
     async loadData() {
+      // Используем кэширование - загружаем только если данные отсутствуют
+      const promises = [];
 
-      if (!this.$store.getters.participatorList || this.$store.getters.participatorList.length === 0) {
-        await this.$store.dispatch('getParticipator')
-      }
-      if (!this.$store.getters.legalEntityDetailData || this.$store.getters.legalEntityDetailData.length === 0) {
-        await this.$store.dispatch('getLegalEntity')
-      }
-      if (!this.$store.getters.physicalPersonListDataV2 || this.$store.getters.physicalPersonListDataV2.length === 0) {
-        await this.$store.dispatch('fetchPhysicalPersons')
-      }
-      if (!this.$store.getters.courtListData || this.$store.getters.courtListData.length === 0) {
-        await this.$store.dispatch('getCourtList')
-      }
-      if (!this.$store.getters.judgeListData || this.$store.getters.judgeListData.length === 0) {
-        await this.$store.dispatch('getJudgeList')
-      }
-      if (!this.$store.getters.allSystemUsersData || this.$store.getters.allSystemUsersData.length === 0) {
-        await this.$store.dispatch('allSystemUser')
+      if (!this.$store.getters.participatorList?.length) {
+        promises.push(this.$store.dispatch('getParticipator'));
       }
 
+      if (!this.$store.getters.legalEntityDetailData?.length) {
+        promises.push(this.$store.dispatch('getLegalEntity'));
+      }
+
+      if (!this.$store.getters.physicalPersonListDataV2?.length) {
+        promises.push(this.$store.dispatch('fetchPhysicalPersons'));
+      }
+
+      // Загружаем только необходимые справочники
+      if (promises.length > 0) {
+        await Promise.all(promises);
+      }
+
+      // Остальные справочники загружаем по требованию
+      // или отдельным методом при необходимости
+    },
+    async loadAdditionalData() {
+      // Загружаем остальные справочники только при необходимости
+      const additionalPromises = [];
+
+      if (!this.$store.getters.courtListData?.length) {
+        additionalPromises.push(this.$store.dispatch('getCourtList'));
+      }
+
+      if (!this.$store.getters.allSystemUsersData?.length) {
+        additionalPromises.push(this.$store.dispatch('allSystemUser'));
+      }
+
+      if (additionalPromises.length > 0) {
+        // Загружаем в фоне, не блокируя основной интерфейс
+        Promise.all(additionalPromises);
+      }
+    },
+    processProjectData(projectData, actResponse) {
+      // Обрабатываем данные проекта
+      Object.keys(this.project).forEach(key => {
+        if (typeof projectData[key] === 'object') {
+          if (projectData[key]) {
+            this.project[key] = projectData[key]['id'];
+          } else {
+            this.project[key] = '';
+          }
+        } else {
+          if (key === 'court_document') {
+            try {
+              this.project.court_document = JSON.parse(projectData[key]);
+            } catch (err) {
+              console.log(err);
+            }
+          } else {
+            this.project[key] = projectData[key];
+          }
+        }
+      });
+
+      // Обрабатываем судебные акты
+      if (actResponse?.data?.data?.data?.length > 0) {
+        actResponse.data.data.data.forEach((obj, index) => {
+          this.judicialActCount.push({
+            index,
+            ref: `judicialActComponent${index}`,
+            data: obj
+          });
+        });
+      }
+
+      // Устанавливаем контрагента и агента
+      this.setContractorAndAgent(projectData);
+    },
+    setContractorAndAgent(projectData) {
+      // Устанавливаем агента
+      if (projectData.legal_agent) {
+        this.agent = this.$store.getters.legalEntityData?.find(
+            obj => obj.pk === projectData.legal_agent
+        );
+      } else if (projectData.physical_agent) {
+        this.agent = this.$store.getters.physicalPersonData?.find(
+            obj => obj.pk === projectData.physical_agent
+        );
+      }
+
+      // Устанавливаем контрагента
+      if (projectData.legal_contractor) {
+        this.contractor = projectData.legal_contractor;
+      } else if (projectData.physical_contractor) {
+        this.contractor = projectData.physical_contractor;
+      }
     },
     close() {
       Object.assign(this.$data, this.$options.data())
@@ -440,55 +512,21 @@ export default {
       });
       return Promise.all(promises);
     },
-    updateData() {
-      console.log('updateData', this.project)
-      this.$store.dispatch('getProjectDetail', this.project.pk).then(res => {
-        let data = res
-        this.$store.dispatch('getProjectAct', res['pk']).then(res => {
-          let act = res.data.data.data
-          if (act.length > 0) {
-            act.forEach((obj, index) => {
-              this.judicialActCount.push({index, ref: `judicialActComponent${index}`, data: obj})
-            })
-          }
-        }).catch(err => {
-          console.log(err)
-        })
-        Object.keys(this.project).forEach(key => {
-          if (typeof res[key] === 'object') {
-            if (res[key]) {
-              this.project[key] = res[key]['id']
-            } else {
-              this.project[key] = ''
-            }
-          } else {
-            if (key === 'court_document') {
-              try {
-                this.project.court_document = JSON.parse(res[key])
-              } catch (err) {
-                console.log(err)
-              }
-            } else {
-              this.project[key] = res[key]
-            }
+    async updateData() {
+      // Оптимизируем загрузку данных проекта
+      if (this.project.pk) {
+        try {
+          // Загружаем проект и судебные акты параллельно
+          const [projectData, actData] = await Promise.all([
+            this.$store.dispatch('getProjectDetail', this.project.pk),
+            this.$store.dispatch('getProjectAct', this.project.pk)
+          ]);
 
-          }
-        })
-        if (this.project.legal_agent) {
-          this.agent = this.$store.getters.legalEntityData.filter(obj => {
-            return obj.pk === this.project.legal_agent
-          })[0]
-        } else if (this.project.physical_agent) {
-          this.agent = this.$store.getters.physicalPersonData.filter(obj => {
-            return obj.pk === this.project.physical_agent
-          })[0]
+          this.processProjectData(projectData, actData);
+        } catch (error) {
+          console.error('Ошибка загрузки данных:', error);
         }
-        if (this.project.legal_contractor) {
-          this.contractor = data.legal_contractor
-        } else if (this.project.physical_contractor) {
-          this.contractor = data.physical_contractor
-        }
-      })
+      }
     },
     setCurt(item) {
       if (item) {
@@ -539,7 +577,7 @@ export default {
       this.save()
     },
     addJudge(curt) {
-      const curtData = this.courtList.find(obj=>obj.pk === curt)
+      const curtData = this.courtList.find(obj => obj.pk === curt)
       this.$emit('createJudge', {
         court: curtData
       })
@@ -589,7 +627,7 @@ export default {
       formData.append('project', this.project.pk)
       this.$http({
         method: "POST",
-          url: customConst.PAPERFLOW_API + 'create-document-act',
+        url: customConst.PAPERFLOW_API + 'create-document-act',
         data: formData
       }).then(res => {
         this.$refs.docInArbitr.close()
@@ -679,12 +717,15 @@ export default {
     },
   },
   async created() {
-    await this.loadData()
+    await this.loadData();
+    await this.loadAdditionalData();
     if (this.rectifiedProject) {
-      this.project.pk = this.rectifiedProject.pk
-      this.updateData()
+      this.project.pk = this.rectifiedProject.pk;
+      await this.updateData();
     } else {
-      this.project.participant = this.participatorList[0]['pk']
+      if (this.participatorList?.length) {
+        this.project.participant = this.participatorList[0]?.pk;
+      }
     }
   },
   components: {

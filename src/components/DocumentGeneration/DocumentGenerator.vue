@@ -42,23 +42,15 @@
                 return-object
                 @change="getCreditOrganizationDetail"
             ></v-autocomplete>
-            <v-checkbox v-model="useFacsimile" label="Использовать отдельный файл с факсимиле"></v-checkbox>
-            <v-radio-group row dense v-model="docType">
-              <v-radio
-                  label="DOCX"
-                  value="docx"
-              ></v-radio>
-              <v-radio
-                  :disabled="!!!template['template_f']"
-                  label="PDF"
-                  value="pdf"
-              ></v-radio>
-              <v-radio
-                  :disabled="!!!template['template_wf']"
-                  label="PDF без факсимиле"
-                  value="pdff"
-              ></v-radio>
-            </v-radio-group>
+            <v-select
+                v-model="selectedFormat"
+                :items="availableFormats"
+                item-text="text"
+                item-value="value"
+                label="Выберите формат"
+                dense
+                outlined
+            ></v-select>
             <v-btn :disabled="!vueStore.valid" @click="generateDocument">Сформировать</v-btn>
             <v-row class="mt-4">
               <v-col v-if='template.name === "Публикация \"Коммерсант\""'>
@@ -1417,6 +1409,7 @@ export default {
     }
   },
   data: () => ({
+    selectedFormat: null,
     showCreditorClaimCreate: false,
     participator: null,
     useFacsimile: false,
@@ -1548,11 +1541,65 @@ export default {
       } else {
         return []
       }
-    }
+    },
+    availableFormats() {
+      const formats = [];
+      const hasFacsimile = this.template.facsimile && this.template.facsimile !== '';
+      const hasTemplateF = this.template.template_f && this.template.template_f !== '';
+      const hasTemplateWF = this.template.template_wf && this.template.template_wf !== '';
+
+      if (hasFacsimile) {
+        // Новый подход с отдельным файлом факсимиле
+        formats.push({
+          text: 'DOCX без факсимиле',
+          value: {docType: 'docx', useFacsimile: false}
+        });
+        formats.push({
+          text: 'DOCX с факсимиле',
+          value: {docType: 'docx', useFacsimile: true}
+        });
+        if (hasTemplateF || hasTemplateWF) {
+          formats.push({
+            text: 'PDF без факсимиле',
+            value: {docType: 'pdf', useFacsimile: false}
+          });
+          formats.push({
+            text: 'PDF с факсимиле',
+            value: {docType: 'pdf', useFacsimile: true}
+          });
+        }
+      } else {
+        // Старый подход с двумя отдельными шаблонами
+        if (hasTemplateWF) {
+          formats.push({
+            text: 'DOCX без факсимиле',
+            value: {docType: 'docx', useFacsimile: false, useTemplateWF: true}
+          });
+          formats.push({
+            text: 'PDF без факсимиле',
+            value: {docType: 'pdf', useFacsimile: false, useTemplateWF: true}
+          });
+        }
+
+        if (hasTemplateF) {
+          formats.push({
+            text: 'DOCX с факсимиле',
+            value: {docType: 'docx', useFacsimile: true, useTemplateF: true}
+          });
+          formats.push({
+            text: 'PDF с факсимиле',
+            value: {docType: 'pdf', useFacsimile: true, useTemplateF: true}
+          });
+        }
+      }
+
+      return formats;
+    },
   },
   watch: {
     template() {
       this.$forceUpdate();
+      this.selectedFormat = null;
     },
     templateFields(val) {
       if ('CREDITOR_NOTICE' in val) {
@@ -1717,7 +1764,7 @@ export default {
         this.$store.dispatch('getBankCardList', data.id).then(cardList => {
           this.bankCardList = cardList
         })
-        this.$store.dispatch('getBankruptcyEstate', data.id).then(res=>{
+        this.$store.dispatch('getBankruptcyEstate', data.id).then(res => {
           this.debtorEstate = [...res]
         })
         this.contractList = data.contract
@@ -1764,66 +1811,82 @@ export default {
 
     },
     fillPartyData(formData, party, prefix) {
-  if (party.type === 'LegalEntity') {
-    formData.append(prefix, party.name)
-    formData.append(`${prefix}_UUID`, party.uuid)
-    formData.append(`${prefix}_ADDRESS`, party?.legal_address || party?.postal_address)
-    formData.append(`${prefix}_POSTAL_ADDRESS`,party?.postal_address || 'Адрес не указан')
-  } else {
-    formData.append(`${prefix}_UUID`, party.uuid)
-    formData.append(prefix, party.fullName)
-    const russianCitizenship = party.citizenships?.find(c => c.country.id === 1);
-    const citizenshipId = russianCitizenship?.id ||
-        (party.citizenships?.length > 0 ? party.citizenships[0].id : null);
+      if (party.type === 'LegalEntity') {
+        formData.append(prefix, party.name)
+        formData.append(`${prefix}_UUID`, party.uuid)
+        formData.append(`${prefix}_ADDRESS`, party?.legal_address || party?.postal_address)
+        formData.append(`${prefix}_POSTAL_ADDRESS`, party?.postal_address || 'Адрес не указан')
+      } else {
+        formData.append(`${prefix}_UUID`, party.uuid)
+        formData.append(prefix, party.fullName)
+        const russianCitizenship = party.citizenships?.find(c => c.country.id === 1);
+        const citizenshipId = russianCitizenship?.id ||
+            (party.citizenships?.length > 0 ? party.citizenships[0].id : null);
 
-    // Обработка идентификаторов (если они есть)
-    if (party?.identifiers?.length > 0) {
-      const identifierBlock = citizenshipId
-          ? party.identifiers.find(block => block.citizenship === citizenshipId)
-          : party.identifiers[0];
+        // Обработка идентификаторов (если они есть)
+        if (party?.identifiers?.length > 0) {
+          const identifierBlock = citizenshipId
+              ? party.identifiers.find(block => block.citizenship === citizenshipId)
+              : party.identifiers[0];
 
-      if (identifierBlock?.identifier) {
-        const innIdentifier = identifierBlock.identifier.find(id => id.type === 'INN');
-        const snilsIdentifier = identifierBlock.identifier.find(id => id.type === 'SNILS');
-        formData.append(`${prefix}_INN`, innIdentifier?.value || null)
-        formData.append(`${prefix}_OGRN`, snilsIdentifier?.value || null)
+          if (identifierBlock?.identifier) {
+            const innIdentifier = identifierBlock.identifier.find(id => id.type === 'INN');
+            const snilsIdentifier = identifierBlock.identifier.find(id => id.type === 'SNILS');
+            formData.append(`${prefix}_INN`, innIdentifier?.value || null)
+            formData.append(`${prefix}_OGRN`, snilsIdentifier?.value || null)
+          }
+        } else {
+          // Если идентификаторов нет, добавляем пустые значения
+          formData.append(`${prefix}_INN`, null)
+          formData.append(`${prefix}_OGRN`, null)
+        }
+
+        // Обработка регистрационных данных (независимо от наличия идентификаторов)
+        let registrationBlock = null;
+        if (party?.registration?.length > 0) {
+          registrationBlock = citizenshipId
+              ? party.registration.find(block => block.citizenship === citizenshipId)
+              : party.registration[0];
+        }
+
+        console.log(registrationBlock)
+
+        if (registrationBlock) {
+          let address = registrationBlock.address
+          if (registrationBlock?.postcode) {
+            address = registrationBlock?.postcode + ', ' + address
+          }
+          formData.append(`${prefix}_ADDRESS`, address)
+        } else {
+          formData.append(`${prefix}_ADDRESS`, " ")
+        }
       }
-    } else {
-      // Если идентификаторов нет, добавляем пустые значения
-      formData.append(`${prefix}_INN`, null)
-      formData.append(`${prefix}_OGRN`, null)
-    }
-
-    // Обработка регистрационных данных (независимо от наличия идентификаторов)
-    let registrationBlock = null;
-    if (party?.registration?.length > 0) {
-      registrationBlock = citizenshipId
-          ? party.registration.find(block => block.citizenship === citizenshipId)
-          : party.registration[0];
-    }
-
-    console.log(registrationBlock)
-
-    if (registrationBlock) {
-      let address = registrationBlock.address
-      if (registrationBlock?.postcode) {
-        address = registrationBlock?.postcode + ', ' + address
-      }
-      formData.append(`${prefix}_ADDRESS`, address)
-    } else {
-      formData.append(`${prefix}_ADDRESS`, " ")
-    }
-  }
-},
+    },
     setFormData() {
       let formData = new FormData()
+      if (this.selectedFormat) {
+        formData.append('docType', this.selectedFormat.docType);
+        formData.append('useFacsimile', this.selectedFormat.useFacsimile.toString());
+
+        // Для старых шаблонов добавляем информацию о том, какой шаблон использовать
+        if (this.selectedFormat.useTemplateWF) {
+          formData.append('useTemplateWF', 'true');
+        }
+        if (this.selectedFormat.useTemplateF) {
+          formData.append('useTemplateF', 'true');
+        }
+      } else {
+        // Значения по умолчанию
+        formData.append('docType', 'docx');
+        formData.append('useFacsimile', 'false');
+      }
+
       if (this.templateFields['preMessage']) {
         formData.append('project', this.templateFields['preMessage'])
       }
-      formData.append('useFacsimile', this.useFacsimile)
+
       formData.append('template', this.template.id)
       formData.append('project', this.project)
-      formData.append('docType', this.docType)
       formData.append('sendMailAddress', this.sendEmailAddress)
       formData.append('filename', `${this.template.name}_${this.fileName}`)
       if (this.contract) {
@@ -1943,7 +2006,7 @@ export default {
           this.confirmSave = false
           this.komPreFormat = true
         } else {
-          let fileExtension = this.docType === 'docx' ? '.docx' : '.pdf';
+          let fileExtension = this.selectedFormat.docType === 'docx' ? '.docx' : '.pdf';
           if (res.headers['content-type'] === 'application/zip') {
             fileExtension = '.zip'
           }
@@ -2012,7 +2075,7 @@ export default {
         data: formData,
         responseType: 'blob'
       }).then(async res => {
-        let fileExtension = this.docType === 'docx' ? '.docx' : '.pdf';
+        let fileExtension = this.selectedFormat.docType === 'docx' ? '.docx' : '.pdf';
         if (res.headers['content-type'] === 'application/zip') {
           fileExtension = '.zip'
         }
@@ -2050,7 +2113,6 @@ export default {
       let formData = this.setFormData()
       formData.append('project', this.project)
       formData.append('confirmSave', this.confirmData)
-      formData.append('docType', this.docType)
       formData.append('docSend', readyToSend.toString())
       return new Promise((resolve, reject) => {
         this.$http({
@@ -2247,6 +2309,9 @@ export default {
     }
   },
   async created() {
+    if (this.availableFormats.length > 0) {
+      this.selectedFormat = this.availableFormats[0].value;
+    }
     await this.$store.dispatch('allSystemUser')
     await this.$store.dispatch('getBasicCreditorClaim')
     await this.$store.dispatch('getParticipator')

@@ -39,6 +39,7 @@ import documentFlow from "@/store/modules/crm/documentFlow";
 import downloads from "@/store/modules/download";
 import creditorClaims from "@/store/modules/referenceBook/creditor/creditorClaims";
 import snackbar from "@/store/snackbar";
+import asset from "@/store/modules/referenceBook/asset";
 
 
 Vue.use(Vuex)
@@ -46,6 +47,7 @@ Vue.use(Vuex)
 export default new Vuex.Store({
     modules: {
         physicalPersonNew,
+        asset,
         auth,
         participant,
         contract,

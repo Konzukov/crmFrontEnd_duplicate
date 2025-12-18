@@ -90,6 +90,16 @@
                 >
                 </JSONFileProcessing>
               </v-expansion-panels>
+              <v-expansion-panels v-else-if="template.id === 6">
+                <JSONFileProcessing
+                    v-for="(item, i) in files"
+                    :ref="`yamlForm`"
+                    :uploadFile.sync="item"
+                    :templateType="'physical_person_assets'"
+                    :key="i"
+                >
+                </JSONFileProcessing>
+              </v-expansion-panels>
               <v-expansion-panels flat focusable v-else>
                 <createDocumentForm v-for="(item, i) in files"
                                     :ref="`docForm`"

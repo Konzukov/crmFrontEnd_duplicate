@@ -142,16 +142,32 @@ export default {
         await _component.processYaml(); // Ожидаем завершения processYaml
       }));
     },
+    async loadData() {
+      const promises = [];
+      if (!this.$store.getters.participatorList?.length) {
+        promises.push(this.$store.dispatch('getParticipator'));
+      }
+      if (!this.$store.getters.legalEntityDetailData?.length) {
+        promises.push(this.$store.dispatch('getLegalEntity'));
+      }
+      if (!this.$store.getters.physicalPersonListDataV2?.length) {
+        promises.push(this.$store.dispatch('fetchPhysicalPersons'));
+      }
+      if (!this.$store.getters.projectListData?.length) {
+        promises.push(this.$store.dispatch('getProjectList'));
+      }
+      if (promises.length > 0) {
+        await Promise.all(promises);
+      }
+      await this.$store.dispatch('getProjectList');
+      await this.$store.dispatch('getUploadingTemplates')
+      await this.$store.dispatch('getDocType')
+      await this.$store.dispatch('getCorrespondenceType')
+    },
     open() {
       this.dialog = true
       this.loadingData = true
-      this.$store.dispatch('getParticipator');
-      this.$store.dispatch('getLegalEntity');
-      this.$store.dispatch('fetchPhysicalPersons');
-      this.$store.dispatch('getProjectList');
-      this.$store.dispatch('getUploadingTemplates')
-      this.$store.dispatch('getDocType')
-      this.$store.dispatch('getCorrespondenceType')
+      this.loadData()
       this.loadingData = false
     },
     close() {

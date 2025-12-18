@@ -57,6 +57,9 @@
         </v-row>
       </v-card-actions>
     </v-card>
+    <v-overlay :value="isLoading" absolute>
+      <v-progress-circular indeterminate size="64"></v-progress-circular>
+    </v-overlay>
   </v-dialog>
 </template>
 
@@ -74,6 +77,7 @@ export default {
   props: ['statement'],
   name: 'AccountStatementModal',
   data: () => ({
+    isLoading: false,
     dialog: false,
     valid: false,
     saving: false,
@@ -149,6 +153,8 @@ export default {
   },
   created() {
     this.$parent.$on('editAccountStatement', async ({statement, project}) => {
+      this.dialog = true
+      this.isLoading = true
       await this.$store.dispatch('getProjectDocument', project).then(() => {
         Object.keys(this.form).forEach(key => {
           if (key === 'date_from') {
@@ -159,15 +165,17 @@ export default {
             this.form[key] = statement[key]
           }
         })
-        this.dialog = true
+        this.isLoading = false
       })
     })
     this.$parent.$on('addAccountStatement', async ({account, project}) => {
-      await this.$store.dispatch('getProjectDocument', project).then((data) => {
-        this.loading = false
+      this.dialog = true
+      this.isLoading = true
+      await this.$store.dispatch('getProjectDocument', {project}).then((data) => {
+        this.isLoading = false
       })
       this.form.bank_account = account
-      this.dialog = true
+
     })
   },
   components: {

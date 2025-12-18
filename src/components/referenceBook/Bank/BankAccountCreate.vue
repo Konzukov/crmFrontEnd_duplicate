@@ -42,7 +42,7 @@
                   </v-btn>
                 </template>
 
-                <v-list>
+                <v-list v-if="account_statement.length > 0">
                   <v-list-item
                       @click="editStatement(item)"
                       v-for="(item, index) in account_statement"

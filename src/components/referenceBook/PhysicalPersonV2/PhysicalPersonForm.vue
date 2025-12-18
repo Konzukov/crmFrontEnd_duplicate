@@ -1,9 +1,9 @@
 <template>
-  <v-card height="100%">
+  <v-card>
     <v-card-title v-if="showActionButton">
-      <span>{{ formTitle }}</span>
+      <span>Новое физ. лицо</span>
       <v-spacer></v-spacer>
-      <v-btn icon @click="$emit('cancel')" v-if="!isCreating">
+      <v-btn icon @click="$emit('closeModal')">
         <v-icon>mdi-close</v-icon>
       </v-btn>
     </v-card-title>
@@ -14,7 +14,7 @@
           <v-tab>Гражданства</v-tab>
           <v-tab>Паспорта</v-tab>
           <v-tab>Коммуникация</v-tab>
-          <v-tab>Семья</v-tab>
+          <v-tab disabled>Семья</v-tab>
           <v-tab>Спец. статусы</v-tab>
           <v-tab>Имущество</v-tab>
         </v-tabs>
@@ -350,13 +350,11 @@
                             :rules="requiredRules"
                             return-object
                         >
-                          <template v-slot:append-outer style="margin-top: 0 !important;">
-                            <v-btn
-                                v-if="!member.relative"
-                                icon
-                                @click="openPersonFormForFamilyMember(index)"
-                                class="mt-0"
-                            >
+                          <template v-slot:append-outer class="mt-0">
+                            <v-btn icon v-if="member.relative">
+                              <v-icon>mdi-pencil</v-icon>
+                            </v-btn>
+                            <v-btn icon v-else>
                               <v-icon>mdi-plus</v-icon>
                             </v-btn>
                           </template>
@@ -880,57 +878,10 @@
     <v-card-actions v-if="showActionButton">
       <v-spacer></v-spacer>
       <v-btn color="primary" @click="save" :disabled="saving">Сохранить</v-btn>
-      <v-btn @click="$emit('cancel')">Отмена</v-btn>
+      <v-btn @click="closeModal">Отмена</v-btn>
     </v-card-actions>
-    <v-snackbar
-        v-if="showSnackbar"
-        v-model="showNotification"
-        :timeout="notificationTimeout"
-        :color="notificationType"
-        tile
-        multi-line
-    >
-      <v-icon left>
-        {{ notificationType === 'success' ? 'mdi-check-circle' : 'mdi-alert-circle' }}
-      </v-icon>
-      <div v-html="notificationMessage"></div>
-      <template v-slot:action="{ attrs }">
-        <v-btn
-            text
-            v-bind="attrs"
-            @click="showNotification = false"
-        >
-          Закрыть
-        </v-btn>
-      </template>
-    </v-snackbar>
-    <v-dialog v-model="duplicateDialog" max-width="800px">
-      <v-card>
-        <v-card-title>Найдены похожие записи</v-card-title>
-        <v-card-text>
-          <p>Обнаружены существующие записи с похожими данными:</p>
-          <v-data-table
-              :headers="duplicateHeaders"
-              :items="duplicates"
-              hide-default-footer
-              class="elevation-1"
-          >
-            <template v-slot:item.actions="{ item }">
-              <v-btn small color="primary" @click="useDuplicate(item)">Использовать</v-btn>
-            </template>
-          </v-data-table>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="primary" @click="duplicateDialog = false">Продолжить создание</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-    <v-dialog v-model="showPersonFormModal" width="800" persistent>
-      <PhysicalPersonForm showActionButton @closeModal="onPersonFormCloseModal"
-                          @save="setFamilyPerson"></PhysicalPersonForm>
-    </v-dialog>
   </v-card>
+
 </template>
 
 <script>
@@ -939,11 +890,9 @@ import {uuid} from "vue-uuid";
 import {cloneDeep, debounce} from "lodash";
 import moment from "moment";
 import {AssetSchemas} from '@/const/dataTypes'
-import PhysicalPersonForm from "@/components/referenceBook/PhysicalPersonV2/PhysicalPersonForm.vue";
 
 export default {
   name: "PhysicalPersonDetail",
-  components: {PhysicalPersonForm},
   props: {
     person: Object,
     isCreating: Boolean,
@@ -953,7 +902,6 @@ export default {
   },
   data: () => ({
     showPersonFormModal: false,
-    currentFamilyMemberIndex: null,
     assetCategories: [
       "Недвижимое имущество",
       "Движимое имущество",
@@ -1236,6 +1184,7 @@ export default {
     person: {
       immediate: true,
       handler(newVal) {
+        console.log(newVal)
         this.originalItem = cloneDeep(newVal);
         this.editedItem = cloneDeep(newVal);
       }
@@ -1245,26 +1194,6 @@ export default {
     },
   },
   methods: {
-    onPersonFormCloseModal() {
-      this.showPersonFormModal = false;
-      this.currentFamilyMemberIndex = null; // Сбрасываем индекс при закрытии
-    },
-    openPersonFormForFamilyMember(index) {
-      this.currentFamilyMemberIndex = index;
-      this.showPersonFormModal = true;
-    },
-    setFamilyPerson(item) {
-      if (this.currentFamilyMemberIndex !== null) {
-        this.editedItem.family_members[this.currentFamilyMemberIndex].relative = item;
-
-        // Также обновляем relative_id для совместимости
-        this.editedItem.family_members[this.currentFamilyMemberIndex].relative_id = item.id;
-      }
-
-      this.showPersonFormModal = false;
-      this.currentFamilyMemberIndex = null
-
-    },
     copyAddress(content_object) {
       content_object.correspondence_address = this.editedItem.communication.filter(obj => obj.is_main)[0].value
     },
@@ -1577,6 +1506,10 @@ export default {
       // Для ошибок не auto-close, только по кнопке
       this.notificationTimeout = type === 'error' ? -1 : 6000;
     },
+    closeModal(){
+      this.resetForm()
+      this.$emit('closeModal')
+    },
     resetForm() {
       this.editedItem = {
         id: null,
@@ -1600,6 +1533,7 @@ export default {
           this.initAssetDetails(asset);
         });
       }
+
     },
     getCurrentCitizenshipValue(item) {
       // Возвращаем текущее гражданство (новое или существующее)
@@ -2420,15 +2354,12 @@ export default {
         if (this.$refs.form.validate()) {
           try {
             const currentPersonId = this.editedItem.id;
-
-            // Фильтруем активы: оставляем только те, которые принадлежат текущему лицу
             const filteredAssets = this.editedItem.assets.filter(asset => {
               // Если актив новый (нет id) или принадлежит текущему лицу
               if (!asset.id) return true;
               if (asset.owner === currentPersonId) return true;
               return false;
             });
-
             const dataToSave = {
               ...this.editedItem,
               assets: filteredAssets, // Используем отфильтрованные активы
@@ -2453,11 +2384,11 @@ export default {
               })),
               user: this.editedItem.user?.id
             };
-
             const savedPerson = await this.$store.dispatch('savePerson', dataToSave)
             this.showNotificationMessage('Данные успешно сохранены', 'success');
             this.$emit('save', savedPerson);
             this.$emit('closeModal', savedPerson);
+            this.resetForm()
             resolve(savedPerson)
           } catch (error) {
             console.error('Ошибка сохранения:', error);
@@ -2511,133 +2442,5 @@ export default {
 </script>
 
 <style scoped>
->>> .v-snack__content {
-  display: flex;
-}
-
-.mx-datepicker {
-  position: relative;
-  display: inline-block;
-  width: 100%;
-}
-
-.v-card {
-  display: flex;
-  flex-direction: column;
-}
-
->>> .v-tabs-items {
-  overflow-y: auto;
-  max-height: 75%;
-}
-
->>> .required.v-input--is-focused.error--text fieldset {
-  border: 0.15em solid;
-  color: rgb(167, 25, 25);
-}
-
-.citizenship-content {
-  padding-bottom: 0;
-}
-
-.identifier-panel {
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-}
-
-.identifier-card {
-  background-color: #f5f5f5;
-  border-left: 3px solid #1976d2;
-}
-
-/* Убираем лишние отступы */
-.v-expansion-panel-header {
-  min-height: 48px;
-  padding: 0 16px;
-}
-
-.v-expansion-panel-content >>> .v-expansion-panel-content__wrap {
-  padding: 8px 16px 16px;
-}
-
-
-.identifier-panel {
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-}
-
-/* Стили для панелей имущества */
-.v-expansion-panel-header--active .asset-title {
-  font-weight: 600;
-}
-
-.v-expansion-panel-content__wrap {
-  padding: 16px;
-}
-
-.success--text {
-  color: #4caf50 !important;
-  font-weight: 500;
-}
-
-.error--text {
-  color: #f44336 !important;
-  font-weight: 500;
-}
-
-.warning--text {
-  color: #ff9800 !important;
-  font-weight: 500;
-}
-
-.info--text {
-  color: #2196f3 !important;
-  font-weight: 500;
-}
-
-/* Стили для совместного имущества */
-.joint-asset-panel {
-  border-left: 3px solid #1976d2 !important;
-}
-
-.joint-asset-panel .v-expansion-panel-header {
-  background-color: rgba(25, 118, 210, 0.04) !important;
-}
-
-/* Стили для чипсов */
-.v-chip--x-small {
-  height: 16px;
-  font-size: 10px;
-}
-
-/* Стили для фильтров */
-.v-chip-group .v-chip {
-  margin: 2px;
-}
-
->>> div.v-input__append-outer {
-  margin-top: 0 !important;
-}
-
-/* Адаптивные стили */
-@media (max-width: 960px) {
-  .identifier-card .v-col {
-    padding-top: 8px;
-    padding-bottom: 8px;
-  }
-}
-
-@media (max-width: 600px) {
-  .v-expansion-panel-header .caption {
-    flex-direction: column;
-    align-items: flex-start !important;
-  }
-
-  .v-expansion-panel-header .caption .ml-1,
-  .v-expansion-panel-header .caption .ml-2 {
-    margin-left: 0 !important;
-    margin-top: 2px;
-  }
-}
 
 </style>
