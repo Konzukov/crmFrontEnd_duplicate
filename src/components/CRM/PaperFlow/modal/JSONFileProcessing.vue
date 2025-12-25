@@ -394,6 +394,28 @@
                                         :rules="requiredRules"
                                     />
                                   </v-col>
+                                  <v-col cols="12" md="4">
+                                    <v-text-field
+                                        type="number"
+                                        step="0.1"
+                                        hide-details
+                                        outlined dense
+                                        v-model="asset.carrying_cost"
+                                        label="Балансовая стоимость"
+                                        :rules="requiredRules"
+                                    />
+                                  </v-col>
+                                  <v-col cols="12" md="4">
+                                    <v-text-field
+                                        type="number"
+                                        step="0.1"
+                                        hide-details
+                                        outlined dense
+                                        v-model="asset.market_cost"
+                                        label="Рыночная стоимость"
+                                        :rules="requiredRules"
+                                    />
+                                  </v-col>
                                 </v-row>
 
                                 <!-- ДИНАМИЧЕСКИЕ ПОЛЯ ПО JSON СХЕМЕ -->
@@ -609,7 +631,7 @@ export default {
     }
   },
   methods: {
-    // Основные методы
+
     editBankAccount(item) {
       if (item.hasOwnProperty('created')) {
         this.$emit('addBankAccount', item)
@@ -684,7 +706,6 @@ export default {
       this.uploadProcess.uploaded = true
     },
 
-    // Методы для обработки JSON
     async processJson() {
       if (this.templateType === 'physical_person_assets' && this.processedData.length > 0) {
         await this.saveAssets();
@@ -770,7 +791,6 @@ export default {
       this.processedData = [...data];
     },
 
-    // Методы для чтения JSON файла
     readJsonFile(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -789,7 +809,6 @@ export default {
       });
     },
 
-    // Обработка JSON с имуществом физ.лиц
     async processPhysicalPersonAssets() {
       try {
         const jsonData = await this.readJsonFile(this.uploadFile);
@@ -814,7 +833,6 @@ export default {
       }
     },
 
-    // Трансформация JSON актива в формат компонента
     transformJsonAsset(jsonAsset) {
       const categoryMapping = {
         'движимое имущество': 'Движимое имущество',
@@ -918,7 +936,6 @@ export default {
       }
     },
 
-    // Методы для работы с физ.лицами
     async loadPhysicalPersons() {
       this.loadingPersons = true;
       try {
@@ -936,7 +953,6 @@ export default {
       return `${last_name || ''} ${first_name || ''} ${patronymic || ''}`.trim();
     },
 
-    // Автоматический подбор физ.лица
     autoMatchPerson() {
       if (!this.ownerData || !this.physicalPersonList.length) {
         return;
@@ -1070,6 +1086,8 @@ export default {
         asset_type: "",
         acquisition_date: null,
         disposal_date: null,
+        carrying_cost: 0,
+        market_cost: 0,
         status: "active",
         details: {},
       };
@@ -1239,6 +1257,180 @@ export default {
       return attrs;
     },
 
+    async saveAssets() {
+      if (!this.selectedPersonId) {
+        this.uploadProcess.errors = {
+          message: 'Выберите физ. лицо для привязки имущества',
+          hasError: true,
+          details: null
+        };
+        return;
+      }
+
+      try {
+        this.uploadProcess.uploading = true;
+        this.uploadProcess.errors.hasError = false;
+        this.uploadProcess.errors.message = '';
+        this.uploadProcess.errors.details = null;
+
+        this.processedData.forEach(asset => {
+          this.$set(asset, 'isDuplicate', false);
+          this.$set(asset, 'duplicateInfo', null);
+        });
+
+        const assetsToSave = this.processedData.map(asset => ({
+          ...asset,
+          owner: this.selectedPersonId
+        }));
+
+        const result = await this.$store.dispatch('savePersonAssets', assetsToSave);
+
+        if (result.saved_assets && Array.isArray(result.saved_assets)) {
+
+          result.saved_assets.forEach(savedAsset => {
+            const index = this.findAssetIndex(savedAsset);
+
+            if (index !== -1) {
+              console.log(`Найден сохраненный актив на позиции ${index}:`, savedAsset.id);
+
+              this.$set(this.processedData[index], 'id', savedAsset.id);
+              this.$set(this.processedData[index], 'isDuplicate', false);
+              this.$set(this.processedData[index], 'duplicateInfo', null);
+
+            }
+          });
+        }
+
+        if (result.duplicates && Array.isArray(result.duplicates)) {
+          console.log('Обработка дубликатов:', result.duplicates.length);
+
+          result.duplicates.forEach(duplicate => {
+            const duplicateData = duplicate.data || {};
+
+            const index = this.findAssetIndex(duplicateData);
+
+            if (index !== -1) {
+              console.log(`Найден дубликат на позиции ${index}:`, duplicate.duplicates?.[0]?.duplicate_id);
+
+              const duplicateInfo = {
+                duplicate_id: duplicate.duplicates?.[0]?.duplicate_id,
+                fields: duplicate.duplicates?.[0]?.fields || [],
+                message: duplicate.duplicate || 'Дубликат актива',
+                data: duplicateData,
+                count: duplicate.count
+              };
+
+              // Помечаем как дубликат
+              this.$set(this.processedData[index], 'isDuplicate', true);
+              this.$set(this.processedData[index], 'duplicateInfo', duplicateInfo);
+              this.$set(this.processedData[index], 'id', null);
+
+            }
+          });
+        }
+
+        this.uploadProcess.uploading = false;
+
+        console.log('После сохранения:', JSON.stringify(this.processedData, null, 2));
+
+        // Проверяем, все ли активы обработаны
+        const allProcessed = this.processedData.every(asset =>
+            asset.id || asset.isDuplicate
+        );
+
+        if (allProcessed) {
+          this.uploadProcess.uploaded = true;
+          this.$emit('assetsSaved', {
+            personId: this.selectedPersonId,
+            savedCount: result.saved_assets ? result.saved_assets.length : 0,
+            duplicateCount: result.duplicates ? result.duplicates.length : 0,
+            fileName: this.uploadFile.name
+          });
+        }
+
+        // Принудительная перерисовка
+        this.$nextTick(() => {
+          this.forcePanelUpdate();
+        });
+
+      } catch (error) {
+        console.error('Ошибка сохранения имущества:', error);
+        console.error('Детали ошибки:', error.response?.data || error.message);
+
+        this.uploadProcess.uploading = false;
+        this.uploadProcess.uploaded = false;
+
+        if (error.response && error.response.data) {
+          const errorData = error.response.data;
+          console.log('Данные ошибки от сервера:', errorData);
+
+          // Пробуем извлечь данные из ошибки
+          if (errorData.data && errorData.data.data) {
+            const result = errorData.data.data;
+
+            // Обрабатываем сохраненные активы из ошибки
+            if (result.saved_assets && Array.isArray(result.saved_assets)) {
+              result.saved_assets.forEach(savedAsset => {
+                const index = this.findAssetIndex(savedAsset);
+                if (index !== -1) {
+                  this.$set(this.processedData[index], 'id', savedAsset.id);
+                  this.$set(this.processedData[index], 'isDuplicate', false);
+                }
+              });
+            }
+
+            // Обрабатываем дубликаты из ошибки
+            if (result.duplicates && Array.isArray(result.duplicates)) {
+              result.duplicates.forEach(duplicate => {
+                const duplicateData = duplicate.data || {};
+                const index = this.findAssetIndex(duplicateData);
+                if (index !== -1) {
+                  this.$set(this.processedData[index], 'isDuplicate', true);
+                  this.$set(this.processedData[index], 'id', null);
+                }
+              });
+            }
+          }
+
+          this.uploadProcess.errors.hasError = true;
+          this.uploadProcess.errors.message = errorData.errors?.error || 'Ошибка сохранения имущества';
+          this.uploadProcess.errors.details = errorData.errors?.details || null;
+        } else {
+          this.uploadProcess.errors.hasError = true;
+          this.uploadProcess.errors.message = error.message || 'Ошибка соединения с сервером';
+        }
+      }
+    },
+
+    findAssetIndex(serverAsset) {
+      return this.processedData.findIndex(localAsset => {
+
+        if (serverAsset.details) {
+          // Для недвижимости - кадастровый номер
+          if (serverAsset.details.cadastre_number &&
+              localAsset.details?.cadastre_number === serverAsset.details.cadastre_number) {
+            return true;
+          }
+          // Для автомобилей - VIN
+          if (serverAsset.details.vin &&
+              localAsset.details?.vin === serverAsset.details.vin) {
+            return true;
+          }
+          // Для автомобилей - регистрационный номер
+          if (serverAsset.details.registration_number &&
+              localAsset.details?.registration_number === serverAsset.details.registration_number) {
+            return true;
+          }
+        }
+
+        // Fallback: сравниваем по комбинации полей
+        return localAsset.category === serverAsset.category &&
+            localAsset.asset_type === serverAsset.asset_type &&
+            this.formatDateForCompare(localAsset.acquisition_date) ===
+            this.formatDateForCompare(serverAsset.acquisition_date);
+      });
+    },
+
     formatDateForCompare(dateStr) {
       if (!dateStr) return null;
       try {
@@ -1248,280 +1440,13 @@ export default {
       }
     },
 
-    // Сохранение имущества
-    async saveAssets() {
-  if (!this.selectedPersonId) {
-    this.uploadProcess.errors = {
-      message: 'Выберите физ. лицо для привязки имущества',
-      hasError: true,
-      details: null
-    };
-    return;
-  }
-
-  try {
-    this.uploadProcess.uploading = true;
-    this.uploadProcess.errors.hasError = false;
-    this.uploadProcess.errors.message = '';
-    this.uploadProcess.errors.details = null;
-
-    // Сбрасываем флаги дубликатов перед сохранением
-    this.processedData.forEach(asset => {
-      this.$set(asset, 'isDuplicate', false);
-      this.$set(asset, 'duplicateInfo', null);
-    });
-
-    const assetsToSave = this.processedData.map(asset => ({
-      ...asset,
-      owner: this.selectedPersonId
-    }));
-
-    const result = await this.$store.dispatch('savePersonAssets', assetsToSave);
-
-    console.log('Результат сохранения:', result);
-
-    // Обрабатываем сохраненные активы (должны быть зелеными)
-    if (result.saved_assets && Array.isArray(result.saved_assets)) {
-      result.saved_assets.forEach(savedAsset => {
-        // Находим соответствующий актив в processedData
-        const index = this.processedData.findIndex(asset => {
-          // Сравниваем по уникальным идентификаторам
-          if (savedAsset.details) {
-            // Для недвижимости - кадастровый номер
-            if (savedAsset.details.cadastre_number &&
-                asset.details?.cadastre_number === savedAsset.details.cadastre_number) {
-              return true;
-            }
-            // Для автомобилей - VIN или регистрационный номер
-            if (savedAsset.details.vin &&
-                asset.details?.vin === savedAsset.details.vin) {
-              return true;
-            }
-            if (savedAsset.details.registration_number &&
-                asset.details?.registration_number === savedAsset.details.registration_number) {
-              return true;
-            }
-          }
-
-          // Fallback: сравниваем по основным полям
-          return asset.category === savedAsset.category &&
-                 asset.asset_type === savedAsset.asset_type &&
-                 this.formatDateForCompare(asset.acquisition_date) ===
-                 this.formatDateForCompare(savedAsset.acquisition_date) &&
-                 asset.details?.address === savedAsset.details?.address;
-        });
-
-        if (index !== -1) {
-          // Обновляем ID сохраненного актива
-          this.$set(this.processedData[index], 'id', savedAsset.id);
-          this.$set(this.processedData[index], 'isDuplicate', false);
-          this.$set(this.processedData[index], 'duplicateInfo', null);
-
-          // Принудительно обновляем классы, развернув панель
-          if (!this.expandedAssetPanels.includes(index)) {
-            this.expandedAssetPanels.push(index);
-          }
-        }
+    forcePanelUpdate() {
+      // Принудительная перерисовка панелей
+      const temp = [...this.expandedAssetPanels];
+      this.expandedAssetPanels = [];
+      this.$nextTick(() => {
+        this.expandedAssetPanels = temp;
       });
-    }
-
-    // Обрабатываем дубликаты (должны быть синими)
-    if (result.duplicates && Array.isArray(result.duplicates)) {
-      console.log('Найдены дубликаты:', result.duplicates);
-      this.processDuplicates(result.duplicates);
-    }
-
-    this.uploadProcess.uploading = false;
-
-    // Проверяем статус всех активов
-    console.log('Статус активов после сохранения:', this.processedData.map(a => ({
-      category: a.category,
-      id: a.id,
-      isDuplicate: a.isDuplicate,
-      hasId: !!a.id
-    })));
-
-    // Проверяем, все ли активы обработаны
-    const allProcessed = this.processedData.every(asset =>
-      asset.id || asset.isDuplicate
-    );
-
-    if (allProcessed) {
-      this.uploadProcess.uploaded = true;
-      this.$emit('assetsSaved', {
-        personId: this.selectedPersonId,
-        savedCount: result.saved_assets ? result.saved_assets.length : 0,
-        duplicateCount: result.duplicates ? result.duplicates.length : 0,
-        fileName: this.uploadFile.name
-      });
-    }
-
-  } catch (error) {
-    console.error('Ошибка сохранения имущества:', error);
-    this.uploadProcess.uploading = false;
-    this.uploadProcess.uploaded = false;
-
-    if (error.response && error.response.data) {
-      const errorData = error.response.data;
-      console.log('Данные ошибки:', errorData);
-
-      // Проверяем наличие дубликатов в ответе
-      let duplicates = [];
-
-      if (errorData.data && errorData.data.duplicates) {
-        duplicates = errorData.data.duplicates;
-      } else if (errorData.duplicates) {
-        duplicates = errorData.duplicates;
-      }
-
-      if (duplicates.length > 0) {
-        console.log('Найдены дубликаты в ошибке:', duplicates);
-        this.processDuplicates(duplicates);
-
-        // Проверяем, есть ли сохраненные активы
-        if (errorData.data && errorData.data.saved_assets &&
-            errorData.data.saved_assets.length > 0) {
-          // Обновляем сохраненные активы из ошибки
-          errorData.data.saved_assets.forEach(savedAsset => {
-            const index = this.processedData.findIndex(asset => {
-              if (savedAsset.details) {
-                if (savedAsset.details.cadastre_number &&
-                    asset.details?.cadastre_number === savedAsset.details.cadastre_number) {
-                  return true;
-                }
-                if (savedAsset.details.vin &&
-                    asset.details?.vin === savedAsset.details.vin) {
-                  return true;
-                }
-              }
-              return false;
-            });
-
-            if (index !== -1) {
-              this.$set(this.processedData[index], 'id', savedAsset.id);
-              this.$set(this.processedData[index], 'isDuplicate', false);
-            }
-          });
-        }
-      }
-
-      // Показываем ошибку, только если нет сохраненных активов
-      const hasSavedAssets = this.processedData.some(asset => asset.id);
-      if (!hasSavedAssets) {
-        this.uploadProcess.errors.hasError = true;
-        this.uploadProcess.errors.message = errorData.errors?.error || 'Ошибка сохранения имущества';
-        this.uploadProcess.errors.details = errorData.errors?.details || null;
-      }
-    } else {
-      this.uploadProcess.errors.hasError = true;
-      this.uploadProcess.errors.message = error.message || 'Ошибка соединения с сервером';
-    }
-  }
-},
-
-    processDuplicates(duplicates) {
-  console.log('Обработка дубликатов:', duplicates);
-
-  // Сначала сбрасываем все дубликаты
-  this.processedData.forEach(asset => {
-    this.$set(asset, 'isDuplicate', false);
-    this.$set(asset, 'duplicateInfo', null);
-  });
-
-  // Для каждого дубликата из ответа сервера
-  duplicates.forEach(duplicate => {
-    const duplicateData = duplicate.data || {};
-
-    // Ищем соответствующий актив в processedData
-    const assetIndex = this.processedData.findIndex(asset => {
-      // Сравниваем основные поля
-      if (asset.category !== duplicateData.category) return false;
-      if (asset.asset_type !== duplicateData.asset_type) return false;
-
-      // Сравниваем поля из details
-      if (duplicate.fields && Array.isArray(duplicate.fields)) {
-        return duplicate.fields.every(field => {
-          const assetValue = asset.details?.[field.field];
-          const duplicateValue = field.value;
-
-          // Приводим к строке для сравнения
-          return String(assetValue) === String(duplicateValue);
-        });
-      }
-
-      // Fallback: сравниваем по уникальным полям
-      const uniqueFields = ['cadastre_number', 'vin', 'registration_number', 'serial_number'];
-      for (const field of uniqueFields) {
-        if (duplicateData.details && duplicateData.details[field]) {
-          if (asset.details?.[field] === duplicateData.details[field]) {
-            return true;
-          }
-        }
-      }
-
-      return false;
-    });
-
-    if (assetIndex !== -1) {
-      const asset = this.processedData[assetIndex];
-      console.log('Найден дубликат актива:', asset);
-
-      this.$set(asset, 'isDuplicate', true);
-      this.$set(asset, 'duplicateInfo', duplicate);
-      this.$set(asset, 'id', null); // Убеждаемся, что у дубликата нет ID
-
-      // Раскрываем панель с дубликатом
-      if (!this.expandedAssetPanels.includes(assetIndex)) {
-        this.expandedAssetPanels.push(assetIndex);
-      }
-    } else {
-      console.warn('Не найден соответствующий актив для дубликата:', duplicate);
-
-      // Альтернативный поиск
-      if (duplicate.fields && Array.isArray(duplicate.fields)) {
-        const fallbackIndex = this.processedData.findIndex(asset => {
-          return duplicate.fields.some(field => {
-            const assetValue = asset.details?.[field.field];
-            const duplicateValue = field.value;
-            return String(assetValue) === String(duplicateValue);
-          });
-        });
-
-        if (fallbackIndex !== -1) {
-          const asset = this.processedData[fallbackIndex];
-          console.log('Найден дубликат актива (альтернативный поиск):', asset);
-
-          this.$set(asset, 'isDuplicate', true);
-          this.$set(asset, 'duplicateInfo', duplicate);
-          this.$set(asset, 'id', null);
-
-          if (!this.expandedAssetPanels.includes(fallbackIndex)) {
-            this.expandedAssetPanels.push(fallbackIndex);
-          }
-        }
-      }
-    }
-  });
-
-  console.log('Итоговый processedData:', this.processedData);
-},
-
-    extractDuplicatesFromDetails(details) {
-      const duplicates = [];
-
-      if (!Array.isArray(details)) return duplicates;
-
-      details.forEach(detail => {
-        if (detail.errors && Array.isArray(detail.errors)) {
-          detail.errors.forEach(error => {
-            if (error.duplicate || error.type === 'duplicate') {
-              duplicates.push(error);
-            }
-          });
-        }
-      });
-
-      return duplicates;
     },
 
     rowClass(item) {

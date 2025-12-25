@@ -381,15 +381,12 @@ export default {
         promises.push(this.$store.dispatch('getParticipator'));
       }
 
-      if (!this.$store.getters.legalEntityDetailData?.length) {
+      if (!this.$store.getters.legalEntityData?.length) {
         promises.push(this.$store.dispatch('getLegalEntity'));
       }
 
       if (!this.$store.getters.physicalPersonListDataV2?.length) {
         promises.push(this.$store.dispatch('fetchPhysicalPersons'));
-      }
-      if (!this.$store.getters.courtListData?.length) {
-        promises.push(this.$store.dispatch('getCourtList'));
       }
 
       if (!this.$store.getters.judgeListData?.length) {
@@ -457,12 +454,12 @@ export default {
     setContractorAndAgent(projectData) {
       // Устанавливаем агента
       if (projectData.legal_agent) {
-        this.agent = this.$store.getters.legalEntityData?.find(
-            obj => obj.pk === projectData.legal_agent
+        this.agent = this.allRefList?.find(
+            obj => obj.uuid === projectData.legal_agent.uuid
         );
       } else if (projectData.physical_agent) {
-        this.agent = this.$store.getters.physicalPersonData?.find(
-            obj => obj.pk === projectData.physical_agent
+        this.agent = this.allRefList?.find(
+            obj => obj.uuid === projectData.physical_agent.uuid
         );
       }
 
@@ -517,7 +514,6 @@ export default {
       return Promise.all(promises);
     },
     async updateData() {
-      // Оптимизируем загрузку данных проекта
       if (this.project.pk) {
         try {
           // Загружаем проект и судебные акты параллельно
@@ -534,6 +530,7 @@ export default {
     },
     setCurt(item) {
       if (item) {
+        console.log(item)
         let curtCode = item.split("-")[0]
         let curt = this.courtList.find(item => {
           console.log(item?.additional_info?.court_code === curtCode)
@@ -543,6 +540,7 @@ export default {
       }
     },
     setAgent(item) {
+      console.log(item)
       switch (item.type) {
         case "LegalEntity":
           this.project.legal_agent = item['pk']
@@ -648,6 +646,9 @@ export default {
 
         // Основные поля проекта
         this.project.case_number = project['case_number'] || '';
+        if (project['case_number']) {
+          this.setCurt(project['case_number'])
+        }
         if (project['bankruptcy_procedure']) {
           // Определяем тип процедуры в зависимости от типа контрагента
           const procedureType = this.contractor.type === 'PhysicalPerson'
@@ -656,7 +657,6 @@ export default {
 
           // Приводим к нижнему регистру для сравнения
           const yamlProcedure = project['bankruptcy_procedure'].toLowerCase().replace('гражданина', "должника");
-          console.log(yamlProcedure)
           // Ищем совпадение в тексте процедур
           const matchedProcedure = procedureType.find(pt => {
                 console.log(pt.text.toLowerCase())

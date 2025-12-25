@@ -450,6 +450,12 @@ export default {
     this.$parent.$on('newDocument', () => {
       this.open()
     })
+    eventBus.$on('newDocument', ({useTemplate, templateId}) => {
+      console.log(useTemplate, templateId)
+      this.useTemplate = useTemplate
+      this.open()
+      this.template = this.uploadTemplates.find(item => item.id === templateId)
+    })
     this.$parent.$on('newPostDocument', (data) => {
       this.postPk = data.postPk
       this.project = data.project

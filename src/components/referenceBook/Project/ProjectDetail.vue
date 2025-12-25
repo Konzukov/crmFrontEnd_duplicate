@@ -348,15 +348,16 @@ export default {
       }
     },
     dayCount(item) {
+      console.log(item)
       if (item.act) {
         console.log(item.act)
-        let duration = moment.duration(moment(new Date()).diff(new Date(item.act)))
+        let duration = moment.duration(moment(new Date()).diff(moment(item.act, "YYYY-MM-DD")))
         return Math.floor(duration.asDays())
       }
     }
   },
   async mounted() {
-    this.load()
+    await this.load()
   },
   components: {
     ProjectDetailParts,

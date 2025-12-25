@@ -1338,7 +1338,7 @@
               <v-btn small color="success" :disabled="!confirmData" @click="saveDoc(false)">Сохранить</v-btn>
             </v-col>
             <v-col cols="12" class="d-flex justify-center">
-              <v-btn small color="success" :disabled="this.docType === 'docx' || !confirmData" @click="saveDoc(true)">
+              <v-btn small color="success" :disabled="this.selectedFormat.docType === 'docx' || !confirmData" @click="saveDoc(true)">
                 Подготовить к отправке
               </v-btn>
             </v-col>

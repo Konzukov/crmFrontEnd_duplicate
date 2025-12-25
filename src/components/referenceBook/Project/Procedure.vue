@@ -148,7 +148,7 @@
           <v-spacer></v-spacer>
           <v-tooltip top>
             <template v-slot:activator="{ on, attrs }">
-              <v-btn small icon v-bind="attrs"
+              <v-btn disabled small icon v-bind="attrs"
                      v-on="on" color="success" @click.native.stop="addEstate">
                 <v-icon>mdi-plus-thick</v-icon>
               </v-btn>
@@ -157,6 +157,98 @@
           </v-tooltip>
         </v-expansion-panel-header>
         <BankruptcyEstate :collapsed="collapsed" :project="project"></BankruptcyEstate>
+        <v-expansion-panel-content class="procedure_content" :style="collapsed? 'height: 63vh': 'height: 41vh'">
+          <v-data-table
+            :headers="assetHeaders"
+            :items="filteredAssets"
+            :search="searchQuery"
+            :loading="loadingAssets"
+            :page.sync="assetPage"
+            :items-per-page.sync="assetItemsPerPage"
+            :footer-props="{
+                                'items-per-page-options': [10, 25, 50, 100],
+                                'items-per-page-text': 'Строк на странице:',
+                                'page-text': '{0}-{1} из {2}'
+                              }"
+            class="elevation-1 assets-table"
+        >
+          <template v-slot:item.is_joint_property="{ item }">
+            <v-chip small :color="getCategoryColor(item.is_joint_property)" dark class="category-chip">
+              {{ item.is_joint_property ? "Совместное" : 'Личное' }}
+            </v-chip>
+          </template>
+
+          <template v-slot:item.asset_type="{ item }">
+            <div class="asset-type">
+              <v-icon small class="mr-1">{{ getAssetIcon(item.asset_type) }}</v-icon>
+              {{ item.asset_type }}
+            </div>
+          </template>
+
+          <template v-slot:item.status="{ item }">
+            <v-chip
+                small
+                :color="getStatusColor(item.status)"
+                text-color="white"
+                class="status-chip"
+            >
+              {{ getStatusDisplay(item.status) }}
+            </v-chip>
+          </template>
+
+          <template v-slot:item.acquisition_date="{ item }">
+            <div class="date-cell">
+              {{ item.acquisition_date || '-' }}
+            </div>
+          </template>
+
+          <template v-slot:item.owner_name="{ item }">
+            <div class="owner-info">
+              {{ item.owner_name || '-' }}
+            </div>
+          </template>
+
+          <template v-slot:item.details="{ item }">
+            <v-btn
+                small
+                icon
+                @click="showAssetDetails(item)"
+                title="Показать детали"
+                class="details-btn"
+            >
+              <v-icon small>mdi-information-outline</v-icon>
+            </v-btn>
+          </template>
+
+          <template v-slot:no-data>
+            <div class="text-center py-4">
+              <v-icon class="mb-2">mdi-package-variant</v-icon>
+              <p class="mb-2">Нет данных об имуществе</p>
+              <v-btn color="primary" @click="addAsset">
+                <v-icon left>mdi-plus</v-icon>
+                Добавить имущество
+              </v-btn>
+            </div>
+          </template>
+
+          <template v-slot:loading>
+            <v-row justify="center" align="center" class="py-4">
+              <v-progress-circular indeterminate color="primary" size="24"></v-progress-circular>
+              <span class="ml-3">Загрузка имущества...</span>
+            </v-row>
+          </template>
+
+          <template v-slot:footer>
+            <v-divider></v-divider>
+            <div class="text-center py-2">
+                          <span class="text-caption grey--text">
+                            Показано {{ getAssetPaginationInfo() }}
+                          </span>
+            </div>
+          </template>
+        </v-data-table>
+        </v-expansion-panel-content>
+
       </v-expansion-panel>
       <template v-if="procedureType === 'SDP'">
         <v-expansion-panel> <!-- реализация имущества -->
@@ -593,7 +685,7 @@
           </v-row>
         </v-expansion-panel-content>
       </v-expansion-panel>
-<!--      <ReceivedFunds :collapsed="collapsed"></ReceivedFunds>-->
+      <!--      <ReceivedFunds :collapsed="collapsed"></ReceivedFunds>-->
       <v-expansion-panel>
         <v-expansion-panel-header class="pr-5 pl-5">Исполнительные производства
         </v-expansion-panel-header>
@@ -682,8 +774,6 @@ import {VueEditor} from "vue2-editor";
 import customConst from "@/const/customConst";
 import bankAccountCreate from "@/components/referenceBook/Bank/BankAccountCreate.vue";
 import loadAccountXlsx from "@/components/referenceBook/Bank/LoadAccountXlsx.vue";
-import {isEmpty} from 'lodash'
-import {ThirdStageType} from '@/const/dataTypes'
 import SvgIcon from '@jamescoyle/vue-icon';
 import {mdilFile} from '@mdi/light-js';
 import moment from "moment";
@@ -777,13 +867,67 @@ export default {
     template: null,
     templateFields: {},
     projectFreePart: null,
+    assetPage: 1,
+    assetItemsPerPage: 10,
+    deals: [],
+    // Фильтры
+    assetFilters: [
+      {text: 'Все', value: null},
+      {text: 'Личное', value: 'personal'},
+      {text: 'Совместное', value: 'joint'},
+      {text: 'Отчужденное', value: 'disposal'},
+    ],
+
+    loadingAssets: false,
+    searchQuery: '',
+    assetHeaders: [
+      {text: 'Тип имущества', value: 'asset_type', sortable: true, width: '22%'},
+      {text: 'Доля владения', value: 'is_joint_property', sortable: true, width: '18%'},
+      {text: 'Дата приобретения', value: 'acquisition_date', sortable: true, width: '15%'},
+      {text: 'Дата отчуждения', value: 'disposal_date', sortable: true, width: '15%'},
+      {text: 'Владелец', value: 'owner_name', sortable: true, width: '22%'},
+      {text: 'Детали', value: 'details', sortable: false, align: 'center', width: '8%'},
+    ],
   }),
   computed: {
     ...mapGetters({
       currentUser: 'authUserData',
       documentTemplate: "docTemplateData",
-      basicCreditorClaim: 'basicCreditorClaimData'
+      basicCreditorClaim: 'basicCreditorClaimData',
+      assets: 'assetsList',
     }),
+    assetCategories() {
+      return [
+        "Недвижимое имущество",
+        "Движимое имущество",
+        "Денежные средства",
+        "Дебиторская задолженность",
+        "Ценные бумаги",
+        "Акции и участие",
+        "Иное имущество"
+      ]
+    },
+
+    // Отфильтрованные активы
+    filteredAssets() {
+      let filtered = [...this.assets]
+
+      // Фильтр по типу (личное/совместное)
+      if (this.assetFilter === 'personal') {
+        filtered = filtered.filter(asset => !asset.is_joint_property && asset.ownership_type === 'personal')
+      } else if (this.assetFilter === 'joint') {
+        filtered = filtered.filter(asset => asset.is_joint_property || asset.ownership_type === 'joint')
+      } else if (this.assetFilter === 'disposal') {
+        filtered = filtered.filter(asset => asset.disposal_date)
+      }
+
+      // Фильтр по категории
+      if (this.categoryFilter) {
+        filtered = filtered.filter(asset => asset.category === this.categoryFilter)
+      }
+
+      return filtered
+    },
   },
   methods: {
     saveProjectFreePart() {
@@ -803,6 +947,57 @@ export default {
     addEstate() {
       this.$emit('addEstate')
     },
+    getCategoryColor(is_joint_property) {
+      return is_joint_property ? 'success' : 'grey'
+    },
+    isJointAsset(asset) {
+      return asset.is_joint_property || asset.ownership_type === 'joint';
+    },
+    getAssetPaginationInfo() {
+      const start = (this.assetPage - 1) * this.assetItemsPerPage + 1
+      const end = Math.min(this.assetPage * this.assetItemsPerPage, this.filteredAssets.length)
+      return `${start}-${end} из ${this.filteredAssets.length}`
+    },
+    getAssetIcon(assetType) {
+      const icons = {
+        'квартира': 'mdi-home',
+        'дом': 'mdi-home-city',
+        'земельный участок': 'mdi-map-marker',
+        'гараж': 'mdi-garage',
+        'автомобиль': 'mdi-car',
+        'мотоцикл': 'mdi-motorbike',
+        'яхта': 'mdi-sail-boat',
+        'самолёт': 'mdi-airplane',
+        'акции': 'mdi-chart-line',
+        'облигации': 'mdi-chart-bar',
+        'банковский вклад': 'mdi-bank',
+        'банковский счёт': 'mdi-credit-card'
+      }
+      return icons[assetType] || 'mdi-package-variant'
+    },
+    getStatusColor(status) {
+      const colors = {
+        'active': 'green',
+        'inactive': 'grey',
+        'disputed': 'red',
+        'leased': 'orange',
+        'under repair': 'blue',
+        'outstanding': 'red'
+      }
+      return colors[status] || 'grey'
+    },
+
+    getStatusDisplay(status) {
+      const display = {
+        'active': 'Активный',
+        'inactive': 'Неактивный',
+        'disputed': 'Оспаривается',
+        'leased': 'В аренде',
+        'under repair': 'На ремонте',
+        'outstanding': 'Просрочен'
+      }
+      return display[status] || status
+    },
     addCreditorMeeting() {
       this.$emit('addCreditorMeeting')
     },
@@ -815,10 +1010,10 @@ export default {
     updateEstateSale() {
       eventBus.$emit('updateEstateSaleProgress')
     },
-    updateInvolvedPerson(){
+    updateInvolvedPerson() {
       this.$emit('updateInvolvedPerson')
     },
-    updateComplaint(){
+    updateComplaint() {
       this.$store.dispatch('getComplaintList', this.project)
     },
     addCreditorClaim() {
@@ -844,8 +1039,8 @@ export default {
         }
       }
     },
-    addInvolvedPerson(){
-      this.$emit('addInvolvedPerson' )
+    addInvolvedPerson() {
+      this.$emit('addInvolvedPerson')
     },
     hasStatement(item) {
       if (item.document) {
@@ -876,7 +1071,6 @@ export default {
         url: customConst.REFERENCE_BOOK_API + 'creditors-claims',
         params: {project: this.$route.params['pk']}
       }).then(res => {
-        console.log(res.data.data.data)
         let claims = res.data.data.data
         this.creditorClaims.push(...claims)
       })
@@ -996,29 +1190,83 @@ export default {
     }
   },
   filters: {
+    getType(item) {
+      // Определение очереди погашения
+      const queueMap = {
+        'ES': 'Очередь не определена',
+        'FS': 'Первая очередь',
+        'SS': 'Вторая очередь',
+        'TS': 'Третья очередь',
+        'BR': 'За реестром'
+      };
+
+      // Определение типа требований в зависимости от очереди
+      let typeMap = {};
+
+      if (item.repayment_queue === 'TS') {
+        // Для третьей очереди
+        typeMap = {
+          'empty': 'Не указано',
+          'PD': 'Основной долг',
+          'UC': 'Требования, не обеспеченные залогом',
+          'SC': 'Требования, обеспеченные залогом',
+          'FP': 'Штрафы, пени',
+          'PT': 'Проценты',
+          'OR': 'Другое'
+        };
+      } else if (item.repayment_queue === 'BR') {
+        // Для за реестром
+        typeMap = {
+          'empty': 'Не указано',
+          'PD': 'Основной долг',
+          'UC': 'Требования, не обеспеченные залогом',
+          'SC': 'Требования, обеспеченные залогом',
+          'FP': 'Штрафы, пени',
+          'PT': 'Проценты',
+          'ST': 'Госпошлина',
+          'OR': 'Другое'
+        };
+      }
+
+      const queueText = queueMap[item.repayment_queue] || item.repayment_queue;
+      let typeText = '';
+
+      // Выбираем нужное поле в зависимости от очереди
+      if (item.repayment_queue === 'TS') {
+        typeText = typeMap[item.third_stage_type] || item.third_stage_type;
+      } else if (item.repayment_queue === 'BR') {
+        typeText = typeMap[item.behind_register_type] || item.behind_register_type;
+      }
+
+      // Формируем результат
+      if (item.repayment_queue === 'TS' && typeText) {
+        return `${queueText}: ${typeText}`;
+      } else if (item.repayment_queue === 'BR' && typeText) {
+        return `${queueText}: ${typeText}`;
+      } else {
+        return queueText;
+      }
+    },
+
+    // Фильтр для отображения кредитора (если он вам нужен)
     getCreditor(item) {
       console.log(item)
-      if (!isEmpty(item.physical_creditor)) {
-        return item.physical_creditor?.fullName
-      } else if (!isEmpty(item.legal_creditor)) {
-        return item.legal_creditor?.name
+      if (item.physical_creditor) {
+        return item.physical_creditor.name || item.physical_creditor.fullName || 'Физическое лицо';
+      } else if (item.legal_creditor) {
+        return item.legal_creditor.name || item.legal_creditor.full_name || 'Юридическое лицо';
       }
-      return 'Не указан'
-    },
-    getType(item) {
-      return ThirdStageType.filter(obj => {
-        if ((obj.value === item.third_stage_type) && obj['text']) {
-          return obj
-        }
-      })[0]?.text
+      return 'Не указан';
     }
   },
   created() {
+    console.log(this.project)
     this.$store.dispatch('getBasicCreditorClaim', this.project)
     this.$store.dispatch('getProjectDetail', this.project).then(res => {
       this.procedureType = res.procedure
     })
     this.$store.dispatch('getDocTemplate')
+    this.$store.dispatch('fetchAssets')
     if (this.freePart) {
       this.projectFreePart = this.freePart
     }

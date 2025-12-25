@@ -167,13 +167,14 @@ export default {
                 })
             })
         },
-        changeOrganization({commit}, formData) {
+        changeOrganization({commit, dispatch, rootState}, formData) {
             return new Promise((resolve, reject) => {
                 axios({
                     method: "POST",
                     url: customConst.AUTH_API + 'change-active-organization',
                     data: formData
                 }).then((res) => {
+                    dispatch('resetStoreData', null, { root: true })
                     resolve()
                 })
             })

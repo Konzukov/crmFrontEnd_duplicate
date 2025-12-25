@@ -5,11 +5,19 @@ import axios from "axios";
 
 Vue.use(VueCookies)
 
+const getDefaultState = () => ({
+    physicalPersonList: [],
+
+})
+
 export default {
-    state: {
-        physicalPersonList: []
-    },
+
+    state: getDefaultState(),
     mutations: {
+        RESET_DATA(state) {
+            console.log('RESET_DATA')
+            Object.assign(state, getDefaultState())
+        },
         SET_PHYSICAL_PERSONS(state, data) {
             state.physicalPersonList = [...data]
         },

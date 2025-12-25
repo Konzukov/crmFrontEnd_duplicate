@@ -830,6 +830,28 @@
                                 :rules="requiredRules"
                             />
                           </v-col>
+                          <v-col cols="12" md="4">
+                            <v-text-field
+                                type="number"
+                                step="0.1"
+                                hide-details
+                                outlined dense
+                                v-model="asset.carrying_cost"
+                                label="Балансовая стоимость"
+                                :rules="requiredRules"
+                            />
+                          </v-col>
+                          <v-col cols="12" md="4">
+                            <v-text-field
+                                type="number"
+                                step="0.1"
+                                hide-details
+                                outlined dense
+                                v-model="asset.market_cost"
+                                label="Рыночная стоимость"
+                                :rules="requiredRules"
+                            />
+                          </v-col>
                         </v-row>
 
                         <!-- ДИНАМИЧЕСКИЕ ПОЛЯ ПО JSON СХЕМЕ -->
@@ -1506,7 +1528,7 @@ export default {
       // Для ошибок не auto-close, только по кнопке
       this.notificationTimeout = type === 'error' ? -1 : 6000;
     },
-    closeModal(){
+    closeModal() {
       this.resetForm()
       this.$emit('closeModal')
     },
@@ -1727,6 +1749,8 @@ export default {
         asset_type: "",
         acquisition_date: null,
         disposal_date: null,
+        carrying_cost: 0,
+        market_cost: 0,
         status: "active",
         details: {},
         _isJoint: false,
