@@ -7,48 +7,51 @@ import axios from "axios";
 
 Vue.use(VueCookies)
 
-const getDefaultState = () => ({
-    contractorList: [],
-    physicalPerson: [],
-    physicalPersonDetail: {},
-    systemUsers: '',
-    allSystemUsers: [],
-    servicesList: '',
-    legalEntity: [],
-    arbitrationManager: [],
-    legalEntityDetail: '',
-    organizationStaff: '',
-    position: [],
-    department: [],
-    country: [],
-    region: [],
-    bailiffs: [],
-    fns: [],
-    employmentService: [],
-    marriageService: [],
-    curt: [],
-    judgeCurt: [],
-    gibdd: [],
-    osfr: [],
-    ufsvn: [],
-    git: [],
-    gims: [],
-    technicalSupervision: [],
-    addressDesk: [],
-    mvd: [],
-    bti: [],
-    kio: [],
-    dizo: [],
-    pfr: [],
-})
-
 export default {
-
-    state: getDefaultState(),
+    state: {
+        contractorList: [],
+        physicalPerson: [],
+        physicalPersonDetail: {},
+        systemUsers: '',
+        allSystemUsers: [],
+        servicesList: '',
+        legalEntity: [],
+        arbitrationManager: [],
+        legalEntityDetail: '',
+        organizationStaff: '',
+        position: [],
+        department: [],
+        country: [],
+        region: [],
+        bailiffs: [],
+        fns: [],
+        employmentService: [],
+        marriageService: [],
+        curt: [],
+        judgeCurt: [],
+        gibdd: [],
+        osfr: [],
+        ufsvn: [],
+        git: [],
+        gims: [],
+        technicalSupervision: [],
+        addressDesk: [],
+        mvd: [],
+        bti: [],
+        kio: [],
+        dizo: [],
+        pfr: [],
+    },
     mutations: {
-        RESET_DATA(state) {
-            console.log('RESET_DATA')
-            Object.assign(state, getDefaultState())
+        RESET_REFBOOK(state) {
+            state.systemUsers = ''
+            state.allSystemUsers = []
+            state.legalEntity = []
+            state.legalEntityDetail = ''
+            state.country = []
+            state.curt = []
+            state.judgeCurt = []
+            state.arbitrationManager = []
         },
         syncSystemUser(state, userList) {
             state.systemUsers = userList

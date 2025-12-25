@@ -13,6 +13,11 @@ export default {
         participatorDetail: ''
     },
     mutations: {
+        RESET_PARTICIPAT(state){
+          state.status = ''
+          state.participator = []
+          state.participatorDetail = ''
+        },
         participatorData(state, objectList) {
             state.status = 'Get participator list success'
             state.participator = objectList
@@ -63,7 +68,6 @@ export default {
                 method: "GET",
                 url: customConst.REFERENCE_BOOK_API + 'participator-full-detail/' + pk
             }).then((response) => {
-                console.log(response.data.data.data)
                 commit('participatorDetail', response.data.data.data)
             })
         }

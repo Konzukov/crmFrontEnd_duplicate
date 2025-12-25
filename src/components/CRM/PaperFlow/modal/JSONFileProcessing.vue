@@ -218,241 +218,260 @@
                       </v-chip>
                     </v-card-title>
                     <v-card-text>
-                      <v-expansion-panels multiple v-model="expandedAssetPanels" flat class="identifier-panel">
-                        <v-expansion-panel
-                            v-for="(asset, index) in processedData"
-                            :key="index"
-                            :class="{
-                                  'duplicate-panel': asset.isDuplicate,
-                                  'success-panel': asset.id && !asset.isDuplicate
-                            }"
-                        >
-                          <v-expansion-panel-header disable-icon-rotate>
-                            <div class="d-flex align-center flex-grow-1">
-                              <div class="d-flex align-center">
-                                <!-- Для дубликатов (уже созданных активов) -->
+                      <!-- Основная форма для валидации всех активов -->
+                      <v-form ref="assetsForm" v-model="valid" lazy-validation>
+                        <v-expansion-panels multiple v-model="expandedAssetPanels" flat class="identifier-panel">
+                          <v-expansion-panel
+                              v-for="(asset, index) in processedData"
+                              :key="index"
+                              :class="{
+                                    'duplicate-panel': asset.isDuplicate,
+                                    'success-panel': asset.id && !asset.isDuplicate
+                              }"
+                          >
+                            <v-expansion-panel-header disable-icon-rotate>
+                              <div class="d-flex align-center flex-grow-1">
+                                <div class="d-flex align-center">
+                                  <!-- Для дубликатов (уже созданных активов) -->
+                                  <v-tooltip bottom v-if="asset.isDuplicate">
+                                    <template v-slot:activator="{ on, attrs }">
+                                      <v-icon
+                                          color="info"
+                                          v-bind="attrs"
+                                          v-on="on"
+                                          class="mr-2"
+                                          @click.stop="showDuplicateDetails(asset)"
+                                      >
+                                        mdi-information
+                                      </v-icon>
+                                    </template>
+                                    <span>Актив уже существует в системе</span>
+                                  </v-tooltip>
+                                  <!-- Для успешно созданных активов -->
+                                  <v-icon v-else-if="asset.id" color="success" class="mr-2">
+                                    mdi-check-circle-outline
+                                  </v-icon>
+                                  <!-- Для новых активов -->
+                                  <v-icon v-else color="grey lighten-1" class="mr-2">
+                                    mdi-circle-outline
+                                  </v-icon>
+                                </div>
+
+                                <div class="d-flex flex-column">
+                <span
+                    :class="{'info--text': asset.isDuplicate, 'success--text': asset.id && !asset.isDuplicate, 'grey--text': !asset.id && !asset.isDuplicate}">
+                    {{ getAssetTitle(asset) }}
+                    <span v-if="asset.isDuplicate" class="caption ml-2 info--text">(уже существует)</span>
+                </span>
+                                  <div class="caption mt-1 d-flex align-center">
+                                    <v-chip
+                                        x-small
+                                        :color="asset.isDuplicate ? 'info' : (asset.id ? 'success' : 'grey lighten-1')"
+                                        class="mr-1"
+                                    >
+                                      {{ asset.category || 'Без категории' }}
+                                    </v-chip>
+                                    <span v-if="asset.acquisition_date" class="ml-1 grey--text">
+                        Приобретено: {{ formatDate(asset.acquisition_date) }}
+                    </span>
+                                    <span
+                                        v-if="asset.status"
+                                        class="ml-2"
+                                        :class="getStatusClass(asset.status)"
+                                    >
+                        {{ getStatusText(asset.status) }}
+                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <template v-slot:actions>
                                 <v-tooltip bottom v-if="asset.isDuplicate">
                                   <template v-slot:activator="{ on, attrs }">
                                     <v-icon
-                                        color="info"
                                         v-bind="attrs"
                                         v-on="on"
+                                        color="info"
                                         class="mr-2"
                                         @click.stop="showDuplicateDetails(asset)"
                                     >
                                       mdi-information
                                     </v-icon>
                                   </template>
-                                  <span>Актив уже существует в системе</span>
+                                  <span>Информация о дубликате</span>
                                 </v-tooltip>
-                                <!-- Для успешно созданных активов -->
-                                <v-icon v-else-if="asset.id" color="success" class="mr-2">
-                                  mdi-check-circle-outline
-                                </v-icon>
-                                <!-- Для новых активов -->
-                                <v-icon v-else color="grey lighten-1" class="mr-2">
-                                  mdi-circle-outline
-                                </v-icon>
-                              </div>
-
-                              <div class="d-flex flex-column">
-                <span
-                    :class="{'info--text': asset.isDuplicate, 'success--text': asset.id && !asset.isDuplicate, 'grey--text': !asset.id && !asset.isDuplicate}">
-                    {{ getAssetTitle(asset) }}
-                    <span v-if="asset.isDuplicate" class="caption ml-2 info--text">(уже существует)</span>
-                </span>
-                                <div class="caption mt-1 d-flex align-center">
-                                  <v-chip
-                                      x-small
-                                      :color="asset.isDuplicate ? 'info' : (asset.id ? 'success' : 'grey lighten-1')"
-                                      class="mr-1"
-                                  >
-                                    {{ asset.category || 'Без категории' }}
-                                  </v-chip>
-                                  <span v-if="asset.acquisition_date" class="ml-1 grey--text">
-                        Приобретено: {{ formatDate(asset.acquisition_date) }}
-                    </span>
-                                  <span
-                                      v-if="asset.status"
-                                      class="ml-2"
-                                      :class="getStatusClass(asset.status)"
-                                  >
-                        {{ getStatusText(asset.status) }}
-                    </span>
-                                </div>
-                              </div>
-                            </div>
-
-                            <template v-slot:actions>
-                              <v-tooltip bottom v-if="asset.isDuplicate">
-                                <template v-slot:activator="{ on, attrs }">
-                                  <v-icon
-                                      v-bind="attrs"
-                                      v-on="on"
-                                      color="info"
-                                      class="mr-2"
-                                      @click.stop="showDuplicateDetails(asset)"
-                                  >
-                                    mdi-information
-                                  </v-icon>
-                                </template>
-                                <span>Информация о дубликате</span>
-                              </v-tooltip>
-                              <v-btn
-                                  icon
-                                  small
-                                  color="error"
-                                  @click.stop="removeAsset(index)"
-                                  class="mr-1"
-                              >
-                                <v-icon>mdi-delete</v-icon>
-                              </v-btn>
-                              <v-icon>mdi-chevron-down</v-icon>
-                            </template>
-                          </v-expansion-panel-header>
-
-                          <v-expansion-panel-content>
-                            <v-container>
-                              <!-- Информация о дубликате (только для дубликатов) -->
-                              <v-alert v-if="asset.isDuplicate && asset.duplicateInfo"
-                                       type="info"
-                                       dense
-                                       outlined
-                                       class="mb-4"
-                                       icon="mdi-information">
-                                <strong>Этот актив уже существует в системе</strong>
-                                <div v-if="asset.duplicateInfo.fields" class="mt-2">
-                                  Совпадения по полям:
-                                  <ul class="mt-1 pl-3" style="font-size: 0.875rem;">
-                                    <li v-for="(field, idx) in asset.duplicateInfo.fields" :key="idx">
-                                      <strong>{{ field.field }}:</strong> "{{ field.value }}"
-                                      <span v-if="field.duplicate_value"
-                                            class="caption"> (в существующем: {{ field.duplicate_value }})</span>
-                                    </li>
-                                  </ul>
-                                </div>
-                                <div v-if="asset.duplicateInfo.duplicate_id" class="mt-1" style="font-size: 0.875rem;">
-                                  <strong>ID существующего актива:</strong> {{ asset.duplicateInfo.duplicate_id }}
-                                </div>
-                              </v-alert>
-
-                              <!-- Форма только для не-дубликатов -->
-                              <template v-if="!asset.isDuplicate">
-                                <v-row>
-                                  <v-col cols="12" md="5">
-                                    <v-autocomplete
-                                        hide-details
-                                        outlined dense
-                                        v-model="asset.category"
-                                        :items="assetCategories"
-                                        label="Категория*"
-                                        :rules="requiredRules"
-                                    />
-                                  </v-col>
-
-                                  <v-col cols="12" md="5">
-                                    <v-autocomplete
-                                        hide-details
-                                        outlined dense
-                                        v-model="asset.asset_type"
-                                        :items="assetTypes"
-                                        label="Тип*"
-                                        :rules="requiredRules"
-                                        @change="onAssetTypeChange(asset)"
-                                    />
-                                  </v-col>
-
-                                  <v-col cols="12" md="4">
-                                    <DatePicker
-                                        hide-details
-                                        v-model="asset.acquisition_date"
-                                        value-type="format"
-                                        format="DD.MM.YYYY"
-                                        placeholder="Дата приобретения"
-                                        :clearable="false"
-                                    />
-                                  </v-col>
-
-                                  <v-col cols="12" md="4">
-                                    <DatePicker
-                                        hide-details
-                                        v-model="asset.disposal_date"
-                                        value-type="format"
-                                        format="DD.MM.YYYY"
-                                        placeholder="Дата выбытия"
-                                        :clearable="false"
-                                    />
-                                  </v-col>
-
-                                  <v-col cols="12" md="4">
-                                    <v-autocomplete
-                                        hide-details
-                                        outlined dense
-                                        v-model="asset.status"
-                                        :items="assetStatuses"
-                                        label="Статус*"
-                                        :rules="requiredRules"
-                                    />
-                                  </v-col>
-                                  <v-col cols="12" md="4">
-                                    <v-text-field
-                                        type="number"
-                                        step="0.1"
-                                        hide-details
-                                        outlined dense
-                                        v-model="asset.carrying_cost"
-                                        label="Балансовая стоимость"
-                                        :rules="requiredRules"
-                                    />
-                                  </v-col>
-                                  <v-col cols="12" md="4">
-                                    <v-text-field
-                                        type="number"
-                                        step="0.1"
-                                        hide-details
-                                        outlined dense
-                                        v-model="asset.market_cost"
-                                        label="Рыночная стоимость"
-                                        :rules="requiredRules"
-                                    />
-                                  </v-col>
-                                </v-row>
-
-                                <!-- ДИНАМИЧЕСКИЕ ПОЛЯ ПО JSON СХЕМЕ -->
-                                <v-divider class="my-4" v-if="asset.asset_type && getSchemaFields(asset)"></v-divider>
-                                <div v-if="asset.asset_type && getSchemaFields(asset)" class="d-flex align-center">
-                                  <strong>Характеристики</strong>
-                                </div>
-
-                                <v-row class="mt-2" v-if="asset.asset_type && getSchemaFields(asset)">
-                                  <v-col cols="12" :md="field.type === 'boolean' ? 12 : 6"
-                                         v-for="(field, key) in getSchemaFields(asset)" :key="key">
-                                    <component
-                                        :is="resolveFieldComponent(field, key)"
-                                        v-model="asset.details[key]"
-                                        :label="field.label"
-                                        :rules="getFieldRules(field, key)"
-                                        v-bind="getFieldAttrs(field, key)"
-                                        outlined dense
-                                    />
-                                  </v-col>
-                                </v-row>
+                                <v-btn
+                                    icon
+                                    small
+                                    color="error"
+                                    @click.stop="removeAsset(index)"
+                                    class="mr-1"
+                                >
+                                  <v-icon>mdi-delete</v-icon>
+                                </v-btn>
+                                <v-icon>mdi-chevron-down</v-icon>
                               </template>
+                            </v-expansion-panel-header>
 
-                              <!-- Для дубликатов показываем только информацию -->
-                              <div v-else class="text-center py-4">
-                                <v-icon color="info" size="48" class="mb-3">mdi-information</v-icon>
-                                <p class="mb-0">Этот актив уже существует в системе</p>
-                                <p class="caption grey--text">Для редактирования используйте существующую запись</p>
-                              </div>
-                            </v-container>
-                          </v-expansion-panel-content>
-                        </v-expansion-panel>
-                      </v-expansion-panels>
+                            <v-expansion-panel-content>
+                              <v-container>
+                                <!-- Информация о дубликате (только для дубликатов) -->
+                                <v-alert v-if="asset.isDuplicate && asset.duplicateInfo"
+                                         type="info"
+                                         dense
+                                         outlined
+                                         class="mb-4"
+                                         icon="mdi-information">
+                                  <strong>Этот актив уже существует в системе</strong>
+                                  <div v-if="asset.duplicateInfo.fields" class="mt-2">
+                                    Совпадения по полям:
+                                    <ul class="mt-1 pl-3" style="font-size: 0.875rem;">
+                                      <li v-for="(field, idx) in asset.duplicateInfo.fields" :key="idx">
+                                        <strong>{{ field.field }}:</strong> "{{ field.value }}"
+                                        <span v-if="field.duplicate_value"
+                                              class="caption"> (в существующем: {{ field.duplicate_value }})</span>
+                                      </li>
+                                    </ul>
+                                  </div>
+                                  <div v-if="asset.duplicateInfo.duplicate_id" class="mt-1"
+                                       style="font-size: 0.875rem;">
+                                    <strong>ID существующего актива:</strong> {{ asset.duplicateInfo.duplicate_id }}
+                                  </div>
+                                </v-alert>
+
+                                <!-- Форма только для не-дубликатов -->
+                                <template v-if="!asset.isDuplicate">
+                                  <v-row>
+                                    <v-col cols="12" md="5">
+                                      <v-autocomplete
+                                          outlined dense
+                                          v-model="asset.category"
+                                          :items="assetCategories"
+                                          label="Категория*"
+                                          :rules="requiredRules"
+                                          :error="hasFieldError(asset, 'category')"
+                                          :error-messages="getFieldError(asset, 'category')"
+                                          @input="clearFieldError(asset, 'category')"
+                                      />
+                                    </v-col>
+
+                                    <v-col cols="12" md="5">
+                                      <v-autocomplete
+                                          outlined dense
+                                          v-model="asset.asset_type"
+                                          :items="assetTypes"
+                                          label="Тип*"
+                                          :rules="requiredRules"
+                                          @change="onAssetTypeChange(asset)"
+                                          :error="hasFieldError(asset, 'asset_type')"
+                                          :error-messages="getFieldError(asset, 'asset_type')"
+                                          @input="clearFieldError(asset, 'asset_type')"
+                                      />
+                                    </v-col>
+
+                                    <v-col cols="12" md="4">
+                                      <DatePicker
+                                          v-model="asset.acquisition_date"
+                                          value-type="format"
+                                          format="DD.MM.YYYY"
+                                          placeholder="Дата приобретения"
+                                          :clearable="false"
+                                          :error="hasFieldError(asset, 'acquisition_date')"
+                                          :error-messages="getFieldError(asset, 'acquisition_date')"
+                                          @input="clearFieldError(asset, 'acquisition_date')"
+                                      />
+                                    </v-col>
+
+                                    <v-col cols="12" md="4">
+                                      <DatePicker
+                                          v-model="asset.disposal_date"
+                                          value-type="format"
+                                          format="DD.MM.YYYY"
+                                          placeholder="Дата выбытия"
+                                          :clearable="false"
+                                          :error="hasFieldError(asset, 'disposal_date')"
+                                          :error-messages="getFieldError(asset, 'disposal_date')"
+                                          @input="clearFieldError(asset, 'disposal_date')"
+                                      />
+                                    </v-col>
+
+                                    <v-col cols="12" md="4">
+                                      <v-autocomplete
+                                          outlined dense
+                                          v-model="asset.status"
+                                          :items="assetStatuses"
+                                          label="Статус*"
+                                          :rules="requiredRules"
+                                          :error="hasFieldError(asset, 'status')"
+                                          :error-messages="getFieldError(asset, 'status')"
+                                          @input="clearFieldError(asset, 'status')"
+                                      />
+                                    </v-col>
+                                    <v-col cols="12" md="4">
+                                      <v-text-field
+                                          type="number"
+                                          step="0.1"
+                                          outlined dense
+                                          v-model="asset.carrying_cost"
+                                          label="Балансовая стоимость*"
+                                          :error="hasFieldError(asset, 'carrying_cost')"
+                                          :error-messages="getFieldError(asset, 'carrying_cost')"
+                                          @input="clearFieldError(asset, 'carrying_cost')"
+                                      />
+                                    </v-col>
+                                    <v-col cols="12" md="4">
+                                      <v-text-field
+                                          type="number"
+                                          step="0.1"
+                                          outlined dense
+                                          v-model="asset.market_cost"
+                                          label="Рыночная стоимость*"
+                                          :error="hasFieldError(asset, 'market_cost')"
+                                          :error-messages="getFieldError(asset, 'market_cost')"
+                                          @input="clearFieldError(asset, 'market_cost')"
+                                      />
+                                    </v-col>
+                                  </v-row>
+
+                                  <!-- ДИНАМИЧЕСКИЕ ПОЛЯ ПО JSON СХЕМЕ -->
+                                  <v-divider class="my-4" v-if="asset.asset_type && getSchemaFields(asset)"></v-divider>
+                                  <div v-if="asset.asset_type && getSchemaFields(asset)" class="d-flex align-center">
+                                    <strong>Характеристики</strong>
+                                  </div>
+
+                                  <v-row class="mt-2" v-if="asset.asset_type && getSchemaFields(asset)">
+                                    <v-col cols="12" :md="field.type === 'boolean' ? 12 : 6"
+                                           v-for="(field, key) in getSchemaFields(asset)" :key="key">
+                                      <component
+                                          :is="resolveFieldComponent(field, key)"
+                                          v-model="asset.details[key]"
+                                          :label="field.label"
+                                          :rules="getFieldRules(field, key)"
+                                          v-bind="getFieldAttrs(field, key)"
+                                          outlined dense
+                                          :error="hasDetailFieldError(asset, key)"
+                                          :error-messages="getDetailFieldError(asset, key)"
+                                          @input="clearDetailFieldError(asset, key)"
+                                      />
+                                    </v-col>
+                                  </v-row>
+                                </template>
+
+                                <!-- Для дубликатов показываем только информацию -->
+                                <div v-else class="text-center py-4">
+                                  <v-icon color="info" size="48" class="mb-3">mdi-information</v-icon>
+                                  <p class="mb-0">Этот актив уже существует в системе</p>
+                                  <p class="caption grey--text">Для редактирования используйте существующую запись</p>
+                                </div>
+                              </v-container>
+                            </v-expansion-panel-content>
+                          </v-expansion-panel>
+                        </v-expansion-panels>
+                      </v-form>
 
                       <v-row class="mt-4" justify="center">
                         <v-col cols="auto">
-                          <v-btn color="success" @click="saveAssets"
+                          <v-btn color="success" @click="validateAndSaveAssets"
                                  :disabled="!selectedPersonId || uploadProcess.uploading || allAssetsSaved">
                             {{
                               uploadProcess.uploading ? 'Сохранение...' : allAssetsSaved ? 'Сохранено' : 'Сохранить имущество'
@@ -510,6 +529,28 @@
         @save="onPersonCreated"
         @closeModal="onPersonFormCloseModal"
     ></PhysicalPersonForm>
+    <v-snackbar
+        v-if="showSnackbar"
+        v-model="showNotification"
+        :timeout="notificationTimeout"
+        :color="notificationType"
+        tile
+        multi-line
+    >
+      <v-icon left>
+        {{ notificationType === 'success' ? 'mdi-check-circle' : 'mdi-alert-circle' }}
+      </v-icon>
+      <div v-html="notificationMessage"></div>
+      <template v-slot:action="{ attrs }">
+        <v-btn
+            text
+            v-bind="attrs"
+            @click="showNotification = false"
+        >
+          Закрыть
+        </v-btn>
+      </template>
+    </v-snackbar>
   </v-container>
 </template>
 
@@ -558,8 +599,12 @@ export default {
     },
     templateError: false,
     errorMessage: '',
-
-    // Данные для обработки имущества физ.лиц
+    showSnackbar: false,
+    showNotification: false,
+    valid: false,
+    notificationMessage: '',
+    notificationType: 'success',
+    notificationTimeout: 2000,
     ownerData: null,
     selectedPersonId: null,
     loadingPersons: false,
@@ -567,6 +612,8 @@ export default {
     expandedAssetPanels: [],
     autoMatchedPersons: [],
     personSearchInProgress: false,
+    validationErrors: {},
+    tempIdCounter: 0, // Добавляем счетчик для временных ID
 
     // Данные для формы имущества
     assetCategories: [
@@ -631,6 +678,248 @@ export default {
     }
   },
   methods: {
+    // Генерация временного ID
+    generateTempId() {
+      this.tempIdCounter++;
+      return `temp_${Date.now()}_${this.tempIdCounter}`;
+    },
+
+    // Проверка валидности актива
+    validateAsset(asset) {
+      const errors = {};
+
+      // Проверка основных полей
+      const mainFields = ['category', 'asset_type', 'status', 'carrying_cost', 'market_cost'];
+      mainFields.forEach(field => {
+        if (!asset[field] && asset[field] !== 0) {
+          errors[field] = 'Обязательное поле';
+        }
+      });
+
+      // Проверка числовых полей
+      if (asset.carrying_cost && isNaN(parseFloat(asset.carrying_cost))) {
+        errors.carrying_cost = 'Должно быть числом';
+      }
+      if (asset.market_cost && isNaN(parseFloat(asset.market_cost))) {
+        errors.market_cost = 'Должно быть числом';
+      }
+
+      // Проверка динамических полей
+      if (asset.asset_type && AssetSchemas[asset.asset_type]) {
+        const schemaFields = this.getSchemaFields(asset);
+        Object.keys(schemaFields).forEach(key => {
+          const fieldSchema = schemaFields[key];
+          const value = asset.details[key];
+          const rules = this.getFieldRules(fieldSchema, key);
+
+          rules.forEach(rule => {
+            const result = rule(value);
+            if (typeof result === 'string') {
+              if (!errors.details) errors.details = {};
+              errors.details[key] = result;
+            }
+          });
+        });
+      }
+
+      return Object.keys(errors).length > 0 ? errors : null;
+    },
+
+    // Валидация всех активов
+    validateAllAssets() {
+      const allErrors = {};
+      let hasErrors = false;
+
+      this.processedData.forEach((asset, index) => {
+        if (asset.isDuplicate) return;
+
+        const assetErrors = this.validateAsset(asset);
+        if (assetErrors) {
+          allErrors[index] = assetErrors;
+          hasErrors = true;
+
+          // Разворачиваем панель с ошибкой
+          if (!this.expandedAssetPanels.includes(index)) {
+            this.expandedAssetPanels.push(index);
+          }
+        }
+      });
+
+      return hasErrors ? allErrors : null;
+    },
+
+    // Проверка наличия ошибки для поля
+    hasFieldError(asset, field) {
+      const assetIndex = this.processedData.indexOf(asset);
+      return this.validationErrors[assetIndex] && this.validationErrors[assetIndex][field];
+    },
+
+    // Получение текста ошибки для поля
+    getFieldError(asset, field) {
+      const assetIndex = this.processedData.indexOf(asset);
+      return this.validationErrors[assetIndex] && this.validationErrors[assetIndex][field];
+    },
+
+    // Очистка ошибки для поля при изменении
+    clearFieldError(asset, field) {
+      const assetIndex = this.processedData.indexOf(asset);
+      if (this.validationErrors[assetIndex] && this.validationErrors[assetIndex][field]) {
+        this.$delete(this.validationErrors[assetIndex], field);
+
+        // Если больше нет ошибок для этого актива, удаляем запись
+        if (Object.keys(this.validationErrors[assetIndex]).length === 0) {
+          this.$delete(this.validationErrors, assetIndex);
+        }
+      }
+    },
+
+    // Проверка наличия ошибки для детального поля
+    hasDetailFieldError(asset, field) {
+      const assetIndex = this.processedData.indexOf(asset);
+      return this.validationErrors[assetIndex] &&
+          this.validationErrors[assetIndex].details &&
+          this.validationErrors[assetIndex].details[field];
+    },
+
+    // Получение текста ошибки для детального поля
+    getDetailFieldError(asset, field) {
+      const assetIndex = this.processedData.indexOf(asset);
+      return this.validationErrors[assetIndex] &&
+          this.validationErrors[assetIndex].details &&
+          this.validationErrors[assetIndex].details[field];
+    },
+
+    // Очистка ошибки для детального поля при изменении
+    clearDetailFieldError(asset, field) {
+      const assetIndex = this.processedData.indexOf(asset);
+      if (this.validationErrors[assetIndex] &&
+          this.validationErrors[assetIndex].details &&
+          this.validationErrors[assetIndex].details[field]) {
+        this.$delete(this.validationErrors[assetIndex].details, field);
+
+        // Если в details больше нет ошибок, удаляем объект details
+        if (Object.keys(this.validationErrors[assetIndex].details).length === 0) {
+          this.$delete(this.validationErrors[assetIndex], 'details');
+        }
+
+        // Если больше нет ошибок для этого актива, удаляем запись
+        if (Object.keys(this.validationErrors[assetIndex]).length === 0) {
+          this.$delete(this.validationErrors, assetIndex);
+        }
+      }
+    },
+
+    // Метод сохранения с предварительной валидацией
+    async validateAndSaveAssets() {
+      // Сначала валидация формы Vuetify
+      if (this.$refs.assetsForm && !this.$refs.assetsForm.validate()) {
+        this.showNotificationMessage('Форма не валидна. Проверьте обязательные поля.', 'error');
+        return;
+      }
+
+      // Затем кастомная валидация всех активов
+      this.validationErrors = this.validateAllAssets() || {};
+
+      if (Object.keys(this.validationErrors).length > 0) {
+        // Формируем сообщение об ошибках
+        const errorMessages = [];
+        Object.keys(this.validationErrors).forEach(assetIndex => {
+          const asset = this.processedData[assetIndex];
+          const errors = this.validationErrors[assetIndex];
+
+          errorMessages.push(`Актив "${this.getAssetTitle(asset)}":`);
+
+          Object.keys(errors).forEach(field => {
+            if (field === 'details') {
+              Object.keys(errors.details).forEach(detailField => {
+                errorMessages.push(`  - ${detailField}: ${errors.details[detailField]}`);
+              });
+            } else {
+              errorMessages.push(`  - ${field}: ${errors[field]}`);
+            }
+          });
+        });
+
+        this.showNotificationMessage(
+            `Обнаружены ошибки валидации:<br>${errorMessages.join('<br>')}`,
+            'error'
+        );
+        return;
+      }
+
+      // Если валидация прошла успешно, сохраняем
+      await this.saveAssets();
+    },
+
+    getErrorMessage(error) {
+      const fieldLabels = {
+        'ogrnip': 'ОГРНИП',
+        'opening_date': 'Дата открытия',
+        'last_name': 'Фамилия',
+        'first_name': 'Имя',
+        'birthday': 'Дата рождения',
+        "special_statuses": 'Ошибка спец статуса',
+        "assets": 'Имущество'
+      };
+
+      if (error.isValidationError) {
+        return error.message;
+      }
+      if (error.response?.data?.errors) {
+        const errors = error.response.data.errors;
+        const messages = [];
+
+        const processErrors = (errorObj, prefix = '') => {
+          if (Array.isArray(errorObj)) {
+            errorObj.forEach((item, index) => {
+              if (typeof item === 'string') {
+                messages.push(`<b>${prefix}</b>: ${item}`);
+              } else if (typeof item === 'object' && item !== null) {
+                processErrors(item, `${prefix}[${index}]`);
+              }
+            });
+          } else if (typeof errorObj === 'object' && errorObj !== null) {
+            for (const [field, errorsList] of Object.entries(errorObj)) {
+              const fieldName = fieldLabels[field] || field;
+              const fullPath = prefix ? `${prefix}.${fieldName}` : fieldName;
+
+              if (Array.isArray(errorsList)) {
+                errorsList.forEach(errorMsg => {
+                  if (typeof errorMsg === 'string') {
+                    messages.push(`<b>${fullPath}</b>: ${errorMsg}`);
+                  } else if (typeof errorMsg === 'object' && errorMsg !== null) {
+                    processErrors(errorMsg, fullPath);
+                  }
+                });
+              } else if (typeof errorsList === 'string') {
+                messages.push(`<b>${fullPath}</b>: ${errorsList}`);
+              }
+            }
+          }
+        };
+
+        processErrors(errors);
+
+        if (messages.length === 0) {
+          return 'Произошла ошибка при сохранении';
+        }
+
+        return `Обнаружены ошибки в форме:<br>${messages.join('<br>')}`;
+      }
+      if (error.response?.data?.message) {
+        return error.response.data.message;
+      }
+      return 'Произошла ошибка при сохранении';
+    },
+
+    showNotificationMessage(message, type = 'success') {
+      this.notificationMessage = message;
+      this.notificationType = type;
+      this.showNotification = true;
+
+      // Для ошибок не auto-close, только по кнопке
+      this.notificationTimeout = type === 'error' ? -1 : 6000;
+    },
 
     editBankAccount(item) {
       if (item.hasOwnProperty('created')) {
@@ -841,7 +1130,7 @@ export default {
         'иное имущество': 'Иное имущество',
         'дебиторская задолженность': 'Дебиторская задолженность',
         'ценные бумаги': 'Ценные бумаги',
-        'акции и участие': 'Акции и участие'
+        'акции и участие': 'Акции и участие',
       };
 
       const statusMapping = {
@@ -864,11 +1153,11 @@ export default {
       }
 
       const formatDate = (dateString) => {
-        if (!dateString) return null;
+        if (!dateString || dateString === 'отсутствует информация') return null;
         try {
           return moment(dateString, 'YYYY-MM-DD').format('DD.MM.YYYY');
         } catch (error) {
-          return dateString;
+          return null;
         }
       };
 
@@ -879,6 +1168,8 @@ export default {
         acquisition_date: formatDate(jsonAsset.acquisition_date),
         disposal_date: formatDate(jsonAsset.disposal_date),
         status: statusMapping[jsonAsset.status] || jsonAsset.status || 'active',
+        carrying_cost: 0,
+        market_cost: 0,
         details: {}
       };
 
@@ -1079,24 +1370,6 @@ export default {
       return statusClasses[status] || '';
     },
 
-    addAsset() {
-      const newAsset = {
-        id: null,
-        category: "",
-        asset_type: "",
-        acquisition_date: null,
-        disposal_date: null,
-        carrying_cost: 0,
-        market_cost: 0,
-        status: "active",
-        details: {},
-      };
-      this.initAssetDetails(newAsset);
-      this.processedData.push(newAsset);
-      this.expandedAssetPanels.push(this.processedData.length - 1);
-      this.uploadProcess.uploaded = false;
-    },
-
     showDuplicateDetails(asset) {
       if (!asset.isDuplicate || !asset.duplicateInfo) return;
 
@@ -1141,12 +1414,30 @@ export default {
           .map(i => i > index ? i - 1 : i)
           .filter(i => i !== index);
       this.uploadProcess.uploaded = false;
+
+      // Удаляем ошибки валидации для удаленного актива
+      if (this.validationErrors[index]) {
+        delete this.validationErrors[index];
+        // Перенумеровываем ошибки
+        const newErrors = {};
+        Object.keys(this.validationErrors).forEach(key => {
+          const newKey = key > index ? key - 1 : key;
+          newErrors[newKey] = this.validationErrors[key];
+        });
+        this.validationErrors = newErrors;
+      }
     },
 
     onAssetTypeChange(asset) {
       asset.details = {};
       this.initAssetDetails(asset);
       this.uploadProcess.errors.hasError = false;
+
+      // Удаляем ошибки валидации для этого актива при смене типа
+      const assetIndex = this.processedData.indexOf(asset);
+      if (this.validationErrors[assetIndex]) {
+        delete this.validationErrors[assetIndex];
+      }
     },
 
     getSchemaFields(asset) {
@@ -1211,8 +1502,8 @@ export default {
         }
       }
       if (fieldKey === 'vin') {
-        rules.push(v => !v || v.length === 17 ||
-            'VIN номер должен содержать ровно 17 символов');
+        rules.push(v => !v || v.length <= 17 ||
+            'VIN номер должен содержать не больше 17 символов');
       }
       return rules;
     },
@@ -1257,188 +1548,206 @@ export default {
       return attrs;
     },
 
-    async saveAssets() {
-      if (!this.selectedPersonId) {
-        this.uploadProcess.errors = {
-          message: 'Выберите физ. лицо для привязки имущества',
-          hasError: true,
-          details: null
-        };
-        return;
-      }
+async saveAssets() {
+  if (!this.selectedPersonId) {
+    this.uploadProcess.errors = {
+      message: 'Выберите физ. лицо для привязки имущества',
+      hasError: true,
+      details: null
+    };
+    return;
+  }
 
-      try {
-        this.uploadProcess.uploading = true;
-        this.uploadProcess.errors.hasError = false;
-        this.uploadProcess.errors.message = '';
-        this.uploadProcess.errors.details = null;
+  try {
+    this.uploadProcess.uploading = true;
+    this.uploadProcess.errors.hasError = false;
+    this.uploadProcess.errors.message = '';
+    this.uploadProcess.errors.details = null;
 
-        this.processedData.forEach(asset => {
-          this.$set(asset, 'isDuplicate', false);
-          this.$set(asset, 'duplicateInfo', null);
-        });
+    // Сбрасываем флаги дубликатов
+    this.processedData.forEach(asset => {
+      this.$set(asset, 'isDuplicate', false);
+      this.$set(asset, 'duplicateInfo', null);
+    });
 
-        const assetsToSave = this.processedData.map(asset => ({
-          ...asset,
-          owner: this.selectedPersonId
-        }));
+    const assetsToSave = this.processedData.map(asset => ({
+      ...asset,
+      owner: this.selectedPersonId
+    }));
 
-        const result = await this.$store.dispatch('savePersonAssets', assetsToSave);
+    const result = await this.$store.dispatch('savePersonAssets', assetsToSave);
 
-        if (result.saved_assets && Array.isArray(result.saved_assets)) {
+    console.log('Результат сохранения:', result);
 
-          result.saved_assets.forEach(savedAsset => {
-            const index = this.findAssetIndex(savedAsset);
+    // Обрабатываем сохраненные активы
+    if (result.saved_assets && Array.isArray(result.saved_assets)) {
+      console.log('Сохраненные активы:', result.saved_assets.length);
 
-            if (index !== -1) {
-              console.log(`Найден сохраненный актив на позиции ${index}:`, savedAsset.id);
+      // Сопоставляем сохраненные активы по порядку и деталям
+      result.saved_assets.forEach(savedAsset => {
+        // Ищем соответствующий актив в processedData
+        const index = this.findMatchingAsset(savedAsset);
 
-              this.$set(this.processedData[index], 'id', savedAsset.id);
-              this.$set(this.processedData[index], 'isDuplicate', false);
-              this.$set(this.processedData[index], 'duplicateInfo', null);
+        if (index !== -1) {
+          console.log(`Найден сохраненный актив на позиции ${index}:`, savedAsset.id);
 
+          // Обновляем данные актива
+          this.$set(this.processedData[index], 'id', savedAsset.id);
+          this.$set(this.processedData[index], 'isDuplicate', false);
+          this.$set(this.processedData[index], 'duplicateInfo', null);
+
+          // Обновляем основные поля
+          const fieldsToUpdate = ['category', 'asset_type', 'acquisition_date',
+                                'disposal_date', 'status', 'carrying_cost',
+                                'market_cost', 'details'];
+          fieldsToUpdate.forEach(field => {
+            if (savedAsset[field] !== undefined) {
+              this.$set(this.processedData[index], field, savedAsset[field]);
             }
           });
-        }
-
-        if (result.duplicates && Array.isArray(result.duplicates)) {
-          console.log('Обработка дубликатов:', result.duplicates.length);
-
-          result.duplicates.forEach(duplicate => {
-            const duplicateData = duplicate.data || {};
-
-            const index = this.findAssetIndex(duplicateData);
-
-            if (index !== -1) {
-              console.log(`Найден дубликат на позиции ${index}:`, duplicate.duplicates?.[0]?.duplicate_id);
-
-              const duplicateInfo = {
-                duplicate_id: duplicate.duplicates?.[0]?.duplicate_id,
-                fields: duplicate.duplicates?.[0]?.fields || [],
-                message: duplicate.duplicate || 'Дубликат актива',
-                data: duplicateData,
-                count: duplicate.count
-              };
-
-              // Помечаем как дубликат
-              this.$set(this.processedData[index], 'isDuplicate', true);
-              this.$set(this.processedData[index], 'duplicateInfo', duplicateInfo);
-              this.$set(this.processedData[index], 'id', null);
-
-            }
-          });
-        }
-
-        this.uploadProcess.uploading = false;
-
-        console.log('После сохранения:', JSON.stringify(this.processedData, null, 2));
-
-        // Проверяем, все ли активы обработаны
-        const allProcessed = this.processedData.every(asset =>
-            asset.id || asset.isDuplicate
-        );
-
-        if (allProcessed) {
-          this.uploadProcess.uploaded = true;
-          this.$emit('assetsSaved', {
-            personId: this.selectedPersonId,
-            savedCount: result.saved_assets ? result.saved_assets.length : 0,
-            duplicateCount: result.duplicates ? result.duplicates.length : 0,
-            fileName: this.uploadFile.name
-          });
-        }
-
-        // Принудительная перерисовка
-        this.$nextTick(() => {
-          this.forcePanelUpdate();
-        });
-
-      } catch (error) {
-        console.error('Ошибка сохранения имущества:', error);
-        console.error('Детали ошибки:', error.response?.data || error.message);
-
-        this.uploadProcess.uploading = false;
-        this.uploadProcess.uploaded = false;
-
-        if (error.response && error.response.data) {
-          const errorData = error.response.data;
-          console.log('Данные ошибки от сервера:', errorData);
-
-          // Пробуем извлечь данные из ошибки
-          if (errorData.data && errorData.data.data) {
-            const result = errorData.data.data;
-
-            // Обрабатываем сохраненные активы из ошибки
-            if (result.saved_assets && Array.isArray(result.saved_assets)) {
-              result.saved_assets.forEach(savedAsset => {
-                const index = this.findAssetIndex(savedAsset);
-                if (index !== -1) {
-                  this.$set(this.processedData[index], 'id', savedAsset.id);
-                  this.$set(this.processedData[index], 'isDuplicate', false);
-                }
-              });
-            }
-
-            // Обрабатываем дубликаты из ошибки
-            if (result.duplicates && Array.isArray(result.duplicates)) {
-              result.duplicates.forEach(duplicate => {
-                const duplicateData = duplicate.data || {};
-                const index = this.findAssetIndex(duplicateData);
-                if (index !== -1) {
-                  this.$set(this.processedData[index], 'isDuplicate', true);
-                  this.$set(this.processedData[index], 'id', null);
-                }
-              });
-            }
-          }
-
-          this.uploadProcess.errors.hasError = true;
-          this.uploadProcess.errors.message = errorData.errors?.error || 'Ошибка сохранения имущества';
-          this.uploadProcess.errors.details = errorData.errors?.details || null;
         } else {
-          this.uploadProcess.errors.hasError = true;
-          this.uploadProcess.errors.message = error.message || 'Ошибка соединения с сервером';
+          console.warn('Не найден актив для сохраненного:', savedAsset);
         }
-      }
-    },
-
-    findAssetIndex(serverAsset) {
-      return this.processedData.findIndex(localAsset => {
-
-        if (serverAsset.details) {
-          // Для недвижимости - кадастровый номер
-          if (serverAsset.details.cadastre_number &&
-              localAsset.details?.cadastre_number === serverAsset.details.cadastre_number) {
-            return true;
-          }
-          // Для автомобилей - VIN
-          if (serverAsset.details.vin &&
-              localAsset.details?.vin === serverAsset.details.vin) {
-            return true;
-          }
-          // Для автомобилей - регистрационный номер
-          if (serverAsset.details.registration_number &&
-              localAsset.details?.registration_number === serverAsset.details.registration_number) {
-            return true;
-          }
-        }
-
-        // Fallback: сравниваем по комбинации полей
-        return localAsset.category === serverAsset.category &&
-            localAsset.asset_type === serverAsset.asset_type &&
-            this.formatDateForCompare(localAsset.acquisition_date) ===
-            this.formatDateForCompare(serverAsset.acquisition_date);
       });
-    },
+    }
 
-    formatDateForCompare(dateStr) {
-      if (!dateStr) return null;
-      try {
-        return moment(dateStr, 'DD.MM.YYYY').format('YYYY-MM-DD');
-      } catch (e) {
-        return dateStr;
-      }
-    },
+    // Обрабатываем дубликаты
+    if (result.duplicates && Array.isArray(result.duplicates)) {
+      console.log('Обработка дубликатов:', result.duplicates.length);
+
+      result.duplicates.forEach(duplicate => {
+        // Ищем актив по данным из duplicate.data
+        const index = this.findMatchingAsset(duplicate.data || duplicate);
+
+        if (index !== -1) {
+          console.log(`Найден дубликат на позиции ${index}`);
+
+          const duplicateInfo = {
+            duplicate_id: duplicate.duplicate_id || null,
+            fields: duplicate.fields || [],
+            message: duplicate.message || 'Дубликат актива',
+            data: duplicate.data || duplicate,
+            count: duplicate.count || 1
+          };
+
+          // Помечаем как дубликат
+          this.$set(this.processedData[index], 'isDuplicate', true);
+          this.$set(this.processedData[index], 'duplicateInfo', duplicateInfo);
+          // Для дубликатов ID не устанавливаем
+          this.$set(this.processedData[index], 'id', null);
+        }
+      });
+    }
+
+    this.uploadProcess.uploading = false;
+
+    console.log('После сохранения:', JSON.stringify(this.processedData, null, 2));
+
+    // Проверяем, все ли активы обработаны
+    const allProcessed = this.processedData.every(asset =>
+        asset.id || asset.isDuplicate
+    );
+
+    if (allProcessed) {
+      this.uploadProcess.uploaded = true;
+      this.$emit('assetsSaved', {
+        personId: this.selectedPersonId,
+        savedCount: result.saved_assets ? result.saved_assets.length : 0,
+        duplicateCount: result.duplicates ? result.duplicates.length : 0,
+        fileName: this.uploadFile.name
+      });
+    }
+
+    // Принудительная перерисовка
+    this.$nextTick(() => {
+      this.forcePanelUpdate();
+    });
+
+  } catch (error) {
+    console.error('Ошибка сохранения имущества:', error);
+    console.error('Детали ошибки:', error.response?.data || error.message);
+
+    this.uploadProcess.uploading = false;
+    this.uploadProcess.uploaded = false;
+
+    const errorMsg = this.getErrorMessage(error);
+    this.showNotificationMessage(errorMsg, 'error');
+  }
+},
+
+// Новый метод для поиска соответствующего актива
+findMatchingAsset(serverAsset) {
+  return this.processedData.findIndex(localAsset => {
+    // 1. Проверяем по основным полям
+    const mainFieldsMatch =
+      localAsset.category === serverAsset.category &&
+      localAsset.asset_type === serverAsset.asset_type &&
+      this.formatDateForCompare(localAsset.acquisition_date) ===
+      this.formatDateForCompare(serverAsset.acquisition_date);
+
+    if (!mainFieldsMatch) return false;
+
+    // 2. Проверяем по деталям
+    const localDetails = localAsset.details || {};
+    const serverDetails = serverAsset.details || {};
+
+    // Для недвижимости - кадастровый номер
+    if (localDetails.cadastre_number && serverDetails.cadastre_number) {
+      return localDetails.cadastre_number === serverDetails.cadastre_number;
+    }
+
+    // Для автомобилей - VIN
+    if (localDetails.vin && serverDetails.vin) {
+      return localDetails.vin === serverDetails.vin;
+    }
+
+    // Для автомобилей - регистрационный номер
+    if (localDetails.registration_number && serverDetails.registration_number) {
+      return localDetails.registration_number === serverDetails.registration_number;
+    }
+
+    // Для адреса
+    if (localDetails.address && serverDetails.address) {
+      return localDetails.address === serverDetails.address;
+    }
+
+    // Если нет уникальных полей, проверяем все поля
+    return this.compareObjects(localDetails, serverDetails);
+  });
+},
+
+// Метод для сравнения объектов
+compareObjects(obj1, obj2) {
+  const keys1 = Object.keys(obj1);
+  const keys2 = Object.keys(obj2);
+
+  if (keys1.length !== keys2.length) return false;
+
+  for (let key of keys1) {
+    if (String(obj1[key]) !== String(obj2[key])) {
+      return false;
+    }
+  }
+
+  return true;
+},
+
+formatDateForCompare(dateStr) {
+  if (!dateStr) return null;
+  try {
+    // Конвертируем дату в единый формат для сравнения
+    if (dateStr.includes('.')) {
+      const [day, month, year] = dateStr.split('.');
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    } else if (dateStr.includes('-')) {
+      return dateStr;
+    }
+    return dateStr;
+  } catch (e) {
+    console.error('Ошибка форматирования даты:', e, dateStr);
+    return dateStr;
+  }
+},
 
     forcePanelUpdate() {
       // Принудительная перерисовка панелей
@@ -1496,8 +1805,8 @@ export default {
 
 /* Стили для дубликатов (существующих активов) */
 .duplicate-panel {
-  background-color: rgba(33, 150, 243, 0.08) !important; /* Светло-синий фон */
-  border-left: 4px solid #2196F3 !important; /* Синяя левая граница */
+  background-color: rgba(33, 150, 243, 0.08) !important;
+  border-left: 4px solid #2196F3 !important;
   margin-bottom: 8px;
 }
 
@@ -1507,8 +1816,8 @@ export default {
 
 /* Стили для успешно созданных активов */
 .success-panel {
-  background-color: rgba(76, 175, 80, 0.08) !important; /* Светло-зеленый фон */
-  border-left: 4px solid #4CAF50 !important; /* Зеленая левая граница */
+  background-color: rgba(76, 175, 80, 0.08) !important;
+  border-left: 4px solid #4CAF50 !important;
   margin-bottom: 8px;
 }
 

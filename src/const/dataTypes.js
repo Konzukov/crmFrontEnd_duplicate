@@ -232,6 +232,46 @@ let AssetSchemas = {
             }
         }
     },
+    'иное имущество': {
+        type: "object",
+        required: ["address", "cadastre_number", "total_area"],
+        properties: {
+            address: {
+                type: "string",
+                label: "Адрес",
+                placeholder: "Введите адрес участка",
+                required: true
+            },
+            cadastre_number: {
+                type: "string",
+                label: "Кадастровый номер",
+                placeholder: "Введите кадастровый номер",
+                required: true
+            },
+            total_area: {
+                type: "number",
+                minimum: 0,
+                label: "Общая площадь",
+                placeholder: "Введите площадь",
+                required: true
+            },
+            unit: {
+                type: "string",
+                enum: ["кв. м"],
+                label: "Единица измерения",
+                default: "кв. м",
+                required: false
+            },
+            ownership_share: {
+                type: "number",
+                minimum: 0,
+                maximum: 1,
+                label: "Доля владения",
+                placeholder: "Введите долю (от 0 до 1)",
+                required: false
+            }
+        }
+    },
 
     "гараж": {
         type: "object",
@@ -286,7 +326,7 @@ let AssetSchemas = {
             },
             vin: {
                 type: "string",
-                minLength: 17,
+                minLength: 1,
                 maxLength: 17,
                 label: "VIN номер",
                 placeholder: "17-значный VIN номер",

@@ -7,14 +7,18 @@ import customConst from "../../../const/customConst";
 Vue.use(VueCookies)
 
 
-export default {
-    state: {
-        judgeList: [],
-        judicialCategories: [],
-        courtList: []
+const getDefaultState = () => ({
+    judgeList: [],
+    judicialCategories: [],
+    courtList: []
 
-    },
+})
+export default {
+    state: getDefaultState(),
     mutations: {
+        RESET_JUDGE(state) {
+            Object.assign(state, getDefaultState())
+        },
         syncJudge(state, judgeList) {
             state.judgeList = judgeList
         },

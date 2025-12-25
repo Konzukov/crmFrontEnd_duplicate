@@ -14,6 +14,11 @@ export default {
         creditorMeeting: [],
     },
     mutations: {
+        RESET_PROJECT(state) {
+            state.projectList = [];
+            state.projectDetail = '';
+            state.creditorMeeting = [];
+        },
         syncProjectList(state, projects) {
             state.projectList = projects
         },
@@ -165,15 +170,15 @@ export default {
                 })
             })
         },
-        getProjectByQuarter({commit}, data){
+        getProjectByQuarter({commit}, data) {
             return new Promise((resolve, reject) => {
                 axios({
                     method: "POST",
                     url: customConst.REFERENCE_BOOK_API + "filter-by-quarter-report/",
                     data: data
-                }).then(res=>{
+                }).then(res => {
                     resolve(res.data.data.data)
-                }).catch(err=>{
+                }).catch(err => {
                     reject(err)
                 })
             })

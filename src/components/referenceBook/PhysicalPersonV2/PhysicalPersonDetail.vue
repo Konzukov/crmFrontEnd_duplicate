@@ -2246,6 +2246,8 @@ export default {
         acquisition_date: formatDate(jsonAsset.acquisition_date),
         disposal_date: formatDate(jsonAsset.disposal_date),
         status: statusMapping[jsonAsset.status] || jsonAsset.status,
+        carrying_cost: 0,
+        market_cost: 0,
         details: {}
       };
 

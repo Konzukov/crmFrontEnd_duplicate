@@ -46,28 +46,13 @@ Vue.use(Vuex)
 
 export default new Vuex.Store({
     actions: {
-        resetStoreData({state, dispatch, commit}) {
-            if (state.physicalPersonListDataV2) {
-                state.physicalPersonListDataV2 = []
-            }
-            if (state.legalEntity) {
-                state.legalEntity = []
-            }
-            if (state.judgeList) {
-                state.judgeList = []
-            }
-            if (state.participator) {
-                state.participator = []
-            }
-            if (state.systemUsers) {
-                state.systemUsers = ''
-            }
-            if (state.allSystemUsers) {
-                state.allSystemUsers = []
-            }
-            if (state.projectList) {
-                state.projectList = []
-            }
+        resetStoreData({ commit }) {
+            commit('RESET_PROJECT')
+            commit('RESET_REFBOOK')
+            commit('RESET_PHYSICALPERSON')
+            commit('RESET_JUDGE')
+            commit('RESET_PARTICIPAT')
+
         }
     },
     modules: {
