@@ -232,6 +232,7 @@ let AssetSchemas = {
             }
         }
     },
+
     'иное имущество': {
         type: "object",
         required: [],
@@ -914,30 +915,35 @@ let AssetSchemas = {
         properties: {},
         description: "Акции компаний"
     },
+
     "облигации": {
         type: "object",
         required: [],
         properties: {},
         description: "Облигации"
     },
+
     "банковский вклад": {
         type: "object",
         required: [],
         properties: {},
         description: "Банковский вклад"
     },
+
     "банковский счёт": {
         type: "object",
         required: [],
         properties: {},
         description: "Банковский счет"
     },
+
     "криптовалюта": {
         type: "object",
         required: [],
         properties: {},
         description: "Криптовалюта"
     },
+
     "доля в ООО": {
         type: "object",
         required: [],
@@ -962,48 +968,56 @@ let AssetSchemas = {
         },
         description: "Доля в обществе с ограниченной ответственностью"
     },
+
     "доля в АО": {
         type: "object",
         required: [],
         properties: {},
         description: "Доля в акционерном обществе"
     },
+
     "доля в оффшорной компании": {
         type: "object",
         required: [],
         properties: {},
         description: "Доля в оффшорной компании"
     },
+
     "произведение искусства": {
         type: "object",
         required: [],
         properties: {},
         description: "Произведение искусства"
     },
+
     "коллекция": {
         type: "object",
         required: [],
         properties: {},
         description: "Коллекция"
     },
+
     "патент": {
         type: "object",
         required: [],
         properties: {},
         description: "Патент"
     },
+
     "авторское право": {
         type: "object",
         required: [],
         properties: {},
         description: "Авторское право"
     },
+
     "договор займа": {
         type: "object",
         required: [],
         properties: {},
         description: "Договор займа"
     },
+
     "доля в праве на имущество": {
         type: "object",
         required: [],

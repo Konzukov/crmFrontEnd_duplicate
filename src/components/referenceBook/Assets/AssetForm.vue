@@ -8,6 +8,8 @@
             outlined dense
             v-model="editedAsset.category"
             :items="assetCategories"
+            item-text="text"
+            item-value="value"
             label="Категория*"
             :rules="requiredRules"
             :disabled="disabled"
@@ -505,13 +507,13 @@ export default {
       },
       requiredRules: [v => !!v || 'Обязательное поле'],
       assetCategories: [
-        "Недвижимое имущество",
-        "Движимое имущество",
-        "Денежные средства",
-        "Дебиторская задолженность",
-        "Ценные бумаги",
-        "Акции и участие",
-        "Иное имущество"
+        {value: "Недвижимое имущество", text: "Недвижимое имущество"},
+        {value: "Движимое имущество", text: "Движимое имущество"},
+        {value: "Денежные средства", text: "Денежные средства"},
+        {value: "Дебиторская задолженность", text: "Дебиторская задолженность"},
+        {value: "Ценные бумаги и прочие финансовые инструменты", text: "Ценные бумаги"},
+        {value: "Акции и иное участие в коммерческих организациях", text: "Акции и участие"},
+        {value: "Иное имущество", text: "Иное имущество"}
       ],
       assetTypes: Object.keys(AssetSchemas),
       assetStatuses: [
@@ -608,11 +610,36 @@ export default {
           return
         }
 
+        // Создаем глубокую копию
         this.editedAsset = JSON.parse(JSON.stringify({
           ...newVal,
           pledges: newVal.pledges || [],
-          arrests: newVal.arrests || []
+          arrests: newVal.arrests || [],
+          details: newVal.details || {}
         }))
+
+        // Преобразуем organization из строки в число, если нужно
+        if (this.editedAsset.details && this.editedAsset.details.organization) {
+          const orgValue = this.editedAsset.details.organization;
+          if (typeof orgValue === 'string' && !isNaN(parseInt(orgValue))) {
+            this.editedAsset.details.organization = parseInt(orgValue);
+          }
+        }
+
+        console.log('Asset loaded:', this.editedAsset)
+      }
+    },
+    legalEntities: {
+      immediate: true,
+      handler(newVal) {
+        if (newVal && newVal.length > 0 && this.editedAsset.details && this.editedAsset.details.organization) {
+          // Если organization это ID (число), убедимся что оно остается числом
+          const orgId = this.editedAsset.details.organization;
+          const orgExists = newVal.some(org => org.id === orgId);
+          if (!orgExists && orgId) {
+            console.warn(`Организация с ID ${orgId} не найдена в списке legalEntities`);
+          }
+        }
       }
     }
   },
@@ -777,62 +804,62 @@ export default {
       return rules;
     },
     getFieldAttrs(field, fieldKey) {
-      const attrs = {};
-      if (field.placeholder) {
+    const attrs = {};
+    if (field.placeholder) {
         attrs.placeholder = field.placeholder;
-      }
-      if (field.type === 'string') {
+    }
+    if (field.type === 'string') {
         if (field.maxLength !== undefined) {
-          attrs.counter = field.maxLength;
+            attrs.counter = field.maxLength;
         }
         if (fieldKey === 'vin') {
-          attrs.mask = 'XXXXXXXXXXXXXXXXX';
-          attrs.hint = 'Введите 17-значный VIN номер';
-          attrs.persistentHint = true;
+            attrs.mask = 'XXXXXXXXXXXXXXXXX';
+            attrs.hint = 'Введите 17-значный VIN номер';
+            attrs.persistentHint = true;
         }
-      }
-      if (field.type === 'number' || field.type === 'integer') {
+    }
+    if (field.type === 'number' || field.type === 'integer') {
         attrs.type = 'number';
         if (field.minimum !== undefined) {
-          attrs.min = field.minimum;
+            attrs.min = field.minimum;
         }
         if (field.maximum !== undefined) {
-          attrs.max = field.maximum;
+            attrs.max = field.maximum;
         }
         if (field.type === 'integer') {
-          attrs.step = 1;
+            attrs.step = 1;
         }
-      }
-      if (field.enum) {
+    }
+    if (field.enum) {
         if (Array.isArray(field.enum) && field.enum.length > 0) {
-          // Если enum - статический массив
-          attrs.items = field.enum;
+            // Если enum - статический массив
+            attrs.items = field.enum;
         } else if (typeof field.enum === 'string') {
-          // Если enum - строка (ключ для computed свойства)
-          switch (field.enum) {
-            case 'legalEntities':
-              attrs.items = this.legalEntities;
-              attrs['item-text'] = 'name';
-              attrs['item-value'] = 'id';
-              break;
-              // Можно добавить другие источники данных здесь
-            default:
-              // Если это computed свойство существует
-              if (this[field.enum]) {
-                attrs.items = this[field.enum];
-              }
-          }
+            // Если enum - строка (ключ для computed свойства)
+            switch (field.enum) {
+                case 'legalEntities':
+                    attrs.items = this.legalEntities;
+                    attrs['item-text'] = 'name';
+                    attrs['item-value'] = 'id';
+                    // Не используем return-object, чтобы сохранялось только ID
+                    break;
+                default:
+                    // Если это computed свойство существует
+                    if (this[field.enum]) {
+                        attrs.items = this[field.enum];
+                    }
+            }
         }
-      }
-      if (field.type === 'boolean') {
+    }
+    if (field.type === 'boolean') {
         attrs.dense = true;
-      }
-      if (field.format === 'date' || field.type === 'date') {
+    }
+    if (field.format === 'date' || field.type === 'date') {
         attrs.valueType = 'format';
         attrs.format = 'DD.MM.YYYY';
-      }
-      return attrs;
-    },
+    }
+    return attrs;
+},
     openPledgeArrestDialog(type = 'pledge', index = -1) {
       console.log('Opening dialog for', type, 'at index:', index);
 

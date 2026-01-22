@@ -380,22 +380,6 @@ export default {
       await this.$store.dispatch('fetchPhysicalPersons')
       await this.$store.dispatch('getJudgeList')
       await this.$store.dispatch('allSystemUser')
-      // if (!this.$store.getters.participatorList?.length) {
-      //  await this.$store.dispatch('getParticipator')
-      // }
-      //
-      // if (!this.$store.getters.legalEntityData?.length) {
-      //  await this.$store.dispatch('getLegalEntity')
-      // }
-      //
-      // if (!this.$store.getters.physicalPersonListDataV2?.length) {
-      //  await this.$store.dispatch('fetchPhysicalPersons')
-      // }
-      //
-      // if (!this.$store.getters.judgeListData?.length) {
-      //  await this.$store.dispatch('getJudgeList')
-      // }
-
     },
     async loadAdditionalData() {
 
