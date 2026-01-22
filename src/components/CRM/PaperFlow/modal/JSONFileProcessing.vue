@@ -751,13 +751,13 @@ export default {
     // Проверка наличия ошибки для поля
     hasFieldError(asset, field) {
       const assetIndex = this.processedData.indexOf(asset);
-      return this.validationErrors[assetIndex] && this.validationErrors[assetIndex][field];
+      return !!(this.validationErrors[assetIndex] && this.validationErrors[assetIndex][field]);
     },
 
     // Получение текста ошибки для поля
     getFieldError(asset, field) {
       const assetIndex = this.processedData.indexOf(asset);
-      return this.validationErrors[assetIndex] && this.validationErrors[assetIndex][field];
+      return (this.validationErrors[assetIndex] && this.validationErrors[assetIndex][field]) || '';
     },
 
     // Очистка ошибки для поля при изменении
@@ -776,17 +776,21 @@ export default {
     // Проверка наличия ошибки для детального поля
     hasDetailFieldError(asset, field) {
       const assetIndex = this.processedData.indexOf(asset);
-      return this.validationErrors[assetIndex] &&
+      return !!(
+          this.validationErrors[assetIndex] &&
           this.validationErrors[assetIndex].details &&
-          this.validationErrors[assetIndex].details[field];
+          this.validationErrors[assetIndex].details[field]
+      );
     },
 
     // Получение текста ошибки для детального поля
     getDetailFieldError(asset, field) {
       const assetIndex = this.processedData.indexOf(asset);
-      return this.validationErrors[assetIndex] &&
+      return (
+          this.validationErrors[assetIndex] &&
           this.validationErrors[assetIndex].details &&
-          this.validationErrors[assetIndex].details[field];
+          this.validationErrors[assetIndex].details[field]
+      ) || '';
     },
 
     // Очистка ошибки для детального поля при изменении
@@ -1153,17 +1157,17 @@ export default {
       }
 
       const formatDate = (dateString) => {
-        if (!dateString || dateString === 'отсутствует информация') return null;
+        if (!dateString) return null;
         try {
           return moment(dateString, 'YYYY-MM-DD').format('DD.MM.YYYY');
         } catch (error) {
-          return null;
+          return dateString;
         }
       };
 
       const asset = {
         id: null,
-        category: categoryMapping[jsonAsset.category] || jsonAsset.category,
+        category: categoryMapping[jsonAsset.category] || jsonAsset.category || '',
         asset_type: assetType,
         acquisition_date: formatDate(jsonAsset.acquisition_date),
         disposal_date: formatDate(jsonAsset.disposal_date),
@@ -1173,34 +1177,99 @@ export default {
         details: {}
       };
 
+      // Обработка details с учетом схемы
       if (jsonAsset.details) {
         const schema = AssetSchemas[assetType];
         Object.keys(jsonAsset.details).forEach(key => {
-          const value = jsonAsset.details[key];
-          if (schema.properties && schema.properties[key]) {
-            const fieldSchema = schema.properties[key];
-            switch (fieldSchema.type) {
-              case 'boolean':
-                asset.details[key] = Boolean(value);
-                break;
-              case 'number':
-              case 'integer':
-                asset.details[key] = Number(value) || 0;
-                break;
-              case 'string':
-                asset.details[key] = String(value);
-                break;
-              default:
-                asset.details[key] = value;
+          let value = jsonAsset.details[key];
+
+          // Получаем схему поля
+          const fieldSchema = schema?.properties?.[key];
+
+          // Преобразование единиц измерения для unit
+          if (key === 'unit' && typeof value === 'string') {
+            value = this.normalizeUnit(value);
+          }
+
+          // Если значение пустое
+          if (value === null || value === undefined || value === '') {
+            // Для полей с minLength: 1 (как vin) - не добавляем вообще
+            if (fieldSchema && fieldSchema.type === 'string' && fieldSchema.minLength === 1) {
+              return; // Пропускаем это поле
+            }
+
+            // Обработка по типу данных
+            if (fieldSchema) {
+              switch (fieldSchema.type) {
+                case 'boolean':
+                  asset.details[key] = false;
+                  break;
+                case 'number':
+                case 'integer':
+                  asset.details[key] = 0;
+                  break;
+                case 'string':
+                default:
+                  asset.details[key] = '';
+                  break;
+              }
+            } else {
+              asset.details[key] = '';
             }
           } else {
-            asset.details[key] = value;
+            // Если значение не пустое
+            if (fieldSchema) {
+              switch (fieldSchema.type) {
+                case 'boolean':
+                  asset.details[key] = Boolean(value);
+                  break;
+                case 'number':
+                case 'integer':
+                  asset.details[key] = Number(value) || 0;
+                  break;
+                case 'string':
+                  asset.details[key] = String(value);
+                  break;
+                default:
+                  asset.details[key] = value;
+              }
+            } else {
+              asset.details[key] = value;
+            }
           }
         });
       }
 
       this.initAssetDetails(asset);
       return asset;
+    },
+
+    normalizeUnit(unit) {
+      if (!unit) return '';
+
+      // Приводим к нижнему регистру и убираем пробелы
+      const normalized = unit.toLowerCase().trim();
+
+      // Маппинг альтернативных вариантов к стандартным
+      const unitMapping = {
+        'м2': 'кв. м',
+        'м²': 'кв. м',
+        'м.кв.': 'кв. м',
+        'м кв': 'кв. м',
+        'кв.м': 'кв. м',
+        'кв м': 'кв. м',
+        'sq.m': 'кв. м',
+        'sq m': 'кв. м',
+        'm²': 'кв. м',
+        'm2': 'кв. м',
+        'л/с': 'л.с.',
+        'л.с': 'л.с.',
+        'hp': 'л.с.',
+        'лс': 'л.с.'
+      };
+
+      // Проверяем, есть ли маппинг для этой единицы
+      return unitMapping[normalized] || unit;
     },
 
     initAssetDetails(asset) {
@@ -1212,15 +1281,29 @@ export default {
         const schema = AssetSchemas[asset.asset_type];
         if (schema.properties) {
           Object.keys(schema.properties).forEach(key => {
-            if (asset.details[key] === undefined) {
+            // Если поле уже есть, но оно null или undefined
+            if (asset.details[key] === null || asset.details[key] === undefined) {
               const field = schema.properties[key];
-              if (field.type === 'boolean') {
-                asset.details[key] = field.default !== undefined ? field.default : false;
-              } else if (field.type === 'number' || field.type === 'integer') {
-                asset.details[key] = field.default !== undefined ? field.default : 0;
-              } else if (field.type === 'string') {
-                asset.details[key] = field.default !== undefined ? field.default : '';
+
+              // Устанавливаем значение по умолчанию из схемы
+              if (field.default !== undefined) {
+                asset.details[key] = field.default;
+              } else {
+                // Для полей с minLength: 1 не устанавливаем значение по умолчанию
+                if (field.type === 'boolean') {
+                  asset.details[key] = false;
+                } else if (field.type === 'number' || field.type === 'integer') {
+                  asset.details[key] = 0;
+                } else if (field.type === 'string') {
+                  // Только для строк без minLength: 1 устанавливаем пустую строку
+                  if (field.minLength !== 1) {
+                    asset.details[key] = '';
+                  }
+                }
               }
+            } else if (key === 'unit' && asset.details[key]) {
+              // Нормализуем единицу измерения, если она уже есть
+              asset.details[key] = this.normalizeUnit(asset.details[key]);
             }
           });
         }
@@ -1337,7 +1420,7 @@ export default {
     },
 
     formatDate(dateString) {
-      if (!dateString) return '';
+      if (!dateString || dateString === 'отсутствует информация' || dateString === 'null') return '';
       if (dateString.includes('-')) {
         return moment(dateString, 'YYYY-MM-DD').format('DD.MM.YYYY');
       } else if (dateString.includes('.')) {
@@ -1486,6 +1569,10 @@ export default {
           rules.push(v => !v || regex.test(v) ||
               `Неверный формат. Пример: ${field.patternDescription || field.pattern}`);
         }
+        if (fieldKey === 'unit' && field.enum && field.enum.length > 0) {
+          rules.push(v => !v || field.enum.includes(v) ||
+              `Допустимые значения: ${field.enum.join(', ')}`);
+        }
       }
       if (field.type === 'number' || field.type === 'integer') {
         if (field.minimum !== undefined) {
@@ -1500,10 +1587,6 @@ export default {
           rules.push(v => v === '' || v === null || Number.isInteger(Number(v)) ||
               'Должно быть целое число');
         }
-      }
-      if (fieldKey === 'vin') {
-        rules.push(v => !v || v.length <= 17 ||
-            'VIN номер должен содержать не больше 17 символов');
       }
       return rules;
     },
@@ -1548,206 +1631,206 @@ export default {
       return attrs;
     },
 
-async saveAssets() {
-  if (!this.selectedPersonId) {
-    this.uploadProcess.errors = {
-      message: 'Выберите физ. лицо для привязки имущества',
-      hasError: true,
-      details: null
-    };
-    return;
-  }
+    async saveAssets() {
+      if (!this.selectedPersonId) {
+        this.uploadProcess.errors = {
+          message: 'Выберите физ. лицо для привязки имущества',
+          hasError: true,
+          details: null
+        };
+        return;
+      }
 
-  try {
-    this.uploadProcess.uploading = true;
-    this.uploadProcess.errors.hasError = false;
-    this.uploadProcess.errors.message = '';
-    this.uploadProcess.errors.details = null;
+      try {
+        this.uploadProcess.uploading = true;
+        this.uploadProcess.errors.hasError = false;
+        this.uploadProcess.errors.message = '';
+        this.uploadProcess.errors.details = null;
 
-    // Сбрасываем флаги дубликатов
-    this.processedData.forEach(asset => {
-      this.$set(asset, 'isDuplicate', false);
-      this.$set(asset, 'duplicateInfo', null);
-    });
+        // Сбрасываем флаги дубликатов
+        this.processedData.forEach(asset => {
+          this.$set(asset, 'isDuplicate', false);
+          this.$set(asset, 'duplicateInfo', null);
+        });
 
-    const assetsToSave = this.processedData.map(asset => ({
-      ...asset,
-      owner: this.selectedPersonId
-    }));
+        const assetsToSave = this.processedData.map(asset => ({
+          ...asset,
+          owner: this.selectedPersonId
+        }));
 
-    const result = await this.$store.dispatch('savePersonAssets', assetsToSave);
+        const result = await this.$store.dispatch('savePersonAssets', assetsToSave);
 
-    console.log('Результат сохранения:', result);
+        console.log('Результат сохранения:', result);
 
-    // Обрабатываем сохраненные активы
-    if (result.saved_assets && Array.isArray(result.saved_assets)) {
-      console.log('Сохраненные активы:', result.saved_assets.length);
+        // Обрабатываем сохраненные активы
+        if (result.saved_assets && Array.isArray(result.saved_assets)) {
+          console.log('Сохраненные активы:', result.saved_assets.length);
 
-      // Сопоставляем сохраненные активы по порядку и деталям
-      result.saved_assets.forEach(savedAsset => {
-        // Ищем соответствующий актив в processedData
-        const index = this.findMatchingAsset(savedAsset);
+          // Сопоставляем сохраненные активы по порядку и деталям
+          result.saved_assets.forEach(savedAsset => {
+            // Ищем соответствующий актив в processedData
+            const index = this.findMatchingAsset(savedAsset);
 
-        if (index !== -1) {
-          console.log(`Найден сохраненный актив на позиции ${index}:`, savedAsset.id);
+            if (index !== -1) {
+              console.log(`Найден сохраненный актив на позиции ${index}:`, savedAsset.id);
 
-          // Обновляем данные актива
-          this.$set(this.processedData[index], 'id', savedAsset.id);
-          this.$set(this.processedData[index], 'isDuplicate', false);
-          this.$set(this.processedData[index], 'duplicateInfo', null);
+              // Обновляем данные актива
+              this.$set(this.processedData[index], 'id', savedAsset.id);
+              this.$set(this.processedData[index], 'isDuplicate', false);
+              this.$set(this.processedData[index], 'duplicateInfo', null);
 
-          // Обновляем основные поля
-          const fieldsToUpdate = ['category', 'asset_type', 'acquisition_date',
-                                'disposal_date', 'status', 'carrying_cost',
-                                'market_cost', 'details'];
-          fieldsToUpdate.forEach(field => {
-            if (savedAsset[field] !== undefined) {
-              this.$set(this.processedData[index], field, savedAsset[field]);
+              // Обновляем основные поля
+              const fieldsToUpdate = ['category', 'asset_type', 'acquisition_date',
+                'disposal_date', 'status', 'carrying_cost',
+                'market_cost', 'details'];
+              fieldsToUpdate.forEach(field => {
+                if (savedAsset[field] !== undefined) {
+                  this.$set(this.processedData[index], field, savedAsset[field]);
+                }
+              });
+            } else {
+              console.warn('Не найден актив для сохраненного:', savedAsset);
             }
           });
-        } else {
-          console.warn('Не найден актив для сохраненного:', savedAsset);
         }
-      });
-    }
 
-    // Обрабатываем дубликаты
-    if (result.duplicates && Array.isArray(result.duplicates)) {
-      console.log('Обработка дубликатов:', result.duplicates.length);
+        // Обрабатываем дубликаты
+        if (result.duplicates && Array.isArray(result.duplicates)) {
+          console.log('Обработка дубликатов:', result.duplicates.length);
 
-      result.duplicates.forEach(duplicate => {
-        // Ищем актив по данным из duplicate.data
-        const index = this.findMatchingAsset(duplicate.data || duplicate);
+          result.duplicates.forEach(duplicate => {
+            // Ищем актив по данным из duplicate.data
+            const index = this.findMatchingAsset(duplicate.data || duplicate);
 
-        if (index !== -1) {
-          console.log(`Найден дубликат на позиции ${index}`);
+            if (index !== -1) {
+              console.log(`Найден дубликат на позиции ${index}`);
 
-          const duplicateInfo = {
-            duplicate_id: duplicate.duplicate_id || null,
-            fields: duplicate.fields || [],
-            message: duplicate.message || 'Дубликат актива',
-            data: duplicate.data || duplicate,
-            count: duplicate.count || 1
-          };
+              const duplicateInfo = {
+                duplicate_id: duplicate.duplicate_id || null,
+                fields: duplicate.fields || [],
+                message: duplicate.message || 'Дубликат актива',
+                data: duplicate.data || duplicate,
+                count: duplicate.count || 1
+              };
 
-          // Помечаем как дубликат
-          this.$set(this.processedData[index], 'isDuplicate', true);
-          this.$set(this.processedData[index], 'duplicateInfo', duplicateInfo);
-          // Для дубликатов ID не устанавливаем
-          this.$set(this.processedData[index], 'id', null);
+              // Помечаем как дубликат
+              this.$set(this.processedData[index], 'isDuplicate', true);
+              this.$set(this.processedData[index], 'duplicateInfo', duplicateInfo);
+              // Для дубликатов ID не устанавливаем
+              this.$set(this.processedData[index], 'id', null);
+            }
+          });
         }
-      });
-    }
 
-    this.uploadProcess.uploading = false;
+        this.uploadProcess.uploading = false;
 
-    console.log('После сохранения:', JSON.stringify(this.processedData, null, 2));
+        console.log('После сохранения:', JSON.stringify(this.processedData, null, 2));
 
-    // Проверяем, все ли активы обработаны
-    const allProcessed = this.processedData.every(asset =>
-        asset.id || asset.isDuplicate
-    );
+        // Проверяем, все ли активы обработаны
+        const allProcessed = this.processedData.every(asset =>
+            asset.id || asset.isDuplicate
+        );
 
-    if (allProcessed) {
-      this.uploadProcess.uploaded = true;
-      this.$emit('assetsSaved', {
-        personId: this.selectedPersonId,
-        savedCount: result.saved_assets ? result.saved_assets.length : 0,
-        duplicateCount: result.duplicates ? result.duplicates.length : 0,
-        fileName: this.uploadFile.name
-      });
-    }
+        if (allProcessed) {
+          this.uploadProcess.uploaded = true;
+          this.$emit('assetsSaved', {
+            personId: this.selectedPersonId,
+            savedCount: result.saved_assets ? result.saved_assets.length : 0,
+            duplicateCount: result.duplicates ? result.duplicates.length : 0,
+            fileName: this.uploadFile.name
+          });
+        }
 
-    // Принудительная перерисовка
-    this.$nextTick(() => {
-      this.forcePanelUpdate();
-    });
+        // Принудительная перерисовка
+        this.$nextTick(() => {
+          this.forcePanelUpdate();
+        });
 
-  } catch (error) {
-    console.error('Ошибка сохранения имущества:', error);
-    console.error('Детали ошибки:', error.response?.data || error.message);
+      } catch (error) {
+        console.error('Ошибка сохранения имущества:', error);
+        console.error('Детали ошибки:', error.response?.data || error.message);
 
-    this.uploadProcess.uploading = false;
-    this.uploadProcess.uploaded = false;
+        this.uploadProcess.uploading = false;
+        this.uploadProcess.uploaded = false;
 
-    const errorMsg = this.getErrorMessage(error);
-    this.showNotificationMessage(errorMsg, 'error');
-  }
-},
+        const errorMsg = this.getErrorMessage(error);
+        this.showNotificationMessage(errorMsg, 'error');
+      }
+    },
 
 // Новый метод для поиска соответствующего актива
-findMatchingAsset(serverAsset) {
-  return this.processedData.findIndex(localAsset => {
-    // 1. Проверяем по основным полям
-    const mainFieldsMatch =
-      localAsset.category === serverAsset.category &&
-      localAsset.asset_type === serverAsset.asset_type &&
-      this.formatDateForCompare(localAsset.acquisition_date) ===
-      this.formatDateForCompare(serverAsset.acquisition_date);
+    findMatchingAsset(serverAsset) {
+      return this.processedData.findIndex(localAsset => {
+        // 1. Проверяем по основным полям
+        const mainFieldsMatch =
+            localAsset.category === serverAsset.category &&
+            localAsset.asset_type === serverAsset.asset_type &&
+            this.formatDateForCompare(localAsset.acquisition_date) ===
+            this.formatDateForCompare(serverAsset.acquisition_date);
 
-    if (!mainFieldsMatch) return false;
+        if (!mainFieldsMatch) return false;
 
-    // 2. Проверяем по деталям
-    const localDetails = localAsset.details || {};
-    const serverDetails = serverAsset.details || {};
+        // 2. Проверяем по деталям
+        const localDetails = localAsset.details || {};
+        const serverDetails = serverAsset.details || {};
 
-    // Для недвижимости - кадастровый номер
-    if (localDetails.cadastre_number && serverDetails.cadastre_number) {
-      return localDetails.cadastre_number === serverDetails.cadastre_number;
-    }
+        // Для недвижимости - кадастровый номер
+        if (localDetails.cadastre_number && serverDetails.cadastre_number) {
+          return localDetails.cadastre_number === serverDetails.cadastre_number;
+        }
 
-    // Для автомобилей - VIN
-    if (localDetails.vin && serverDetails.vin) {
-      return localDetails.vin === serverDetails.vin;
-    }
+        // Для автомобилей - VIN
+        if (localDetails.vin && serverDetails.vin) {
+          return localDetails.vin === serverDetails.vin;
+        }
 
-    // Для автомобилей - регистрационный номер
-    if (localDetails.registration_number && serverDetails.registration_number) {
-      return localDetails.registration_number === serverDetails.registration_number;
-    }
+        // Для автомобилей - регистрационный номер
+        if (localDetails.registration_number && serverDetails.registration_number) {
+          return localDetails.registration_number === serverDetails.registration_number;
+        }
 
-    // Для адреса
-    if (localDetails.address && serverDetails.address) {
-      return localDetails.address === serverDetails.address;
-    }
+        // Для адреса
+        if (localDetails.address && serverDetails.address) {
+          return localDetails.address === serverDetails.address;
+        }
 
-    // Если нет уникальных полей, проверяем все поля
-    return this.compareObjects(localDetails, serverDetails);
-  });
-},
+        // Если нет уникальных полей, проверяем все поля
+        return this.compareObjects(localDetails, serverDetails);
+      });
+    },
 
 // Метод для сравнения объектов
-compareObjects(obj1, obj2) {
-  const keys1 = Object.keys(obj1);
-  const keys2 = Object.keys(obj2);
+    compareObjects(obj1, obj2) {
+      const keys1 = Object.keys(obj1);
+      const keys2 = Object.keys(obj2);
 
-  if (keys1.length !== keys2.length) return false;
+      if (keys1.length !== keys2.length) return false;
 
-  for (let key of keys1) {
-    if (String(obj1[key]) !== String(obj2[key])) {
-      return false;
-    }
-  }
+      for (let key of keys1) {
+        if (String(obj1[key]) !== String(obj2[key])) {
+          return false;
+        }
+      }
 
-  return true;
-},
+      return true;
+    },
 
-formatDateForCompare(dateStr) {
-  if (!dateStr) return null;
-  try {
-    // Конвертируем дату в единый формат для сравнения
-    if (dateStr.includes('.')) {
-      const [day, month, year] = dateStr.split('.');
-      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-    } else if (dateStr.includes('-')) {
-      return dateStr;
-    }
-    return dateStr;
-  } catch (e) {
-    console.error('Ошибка форматирования даты:', e, dateStr);
-    return dateStr;
-  }
-},
+    formatDateForCompare(dateStr) {
+      if (!dateStr) return null;
+      try {
+        // Конвертируем дату в единый формат для сравнения
+        if (dateStr.includes('.')) {
+          const [day, month, year] = dateStr.split('.');
+          return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        } else if (dateStr.includes('-')) {
+          return dateStr;
+        }
+        return dateStr;
+      } catch (e) {
+        console.error('Ошибка форматирования даты:', e, dateStr);
+        return dateStr;
+      }
+    },
 
     forcePanelUpdate() {
       // Принудительная перерисовка панелей

@@ -686,196 +686,12 @@
           </v-tab-item>
           <!-- Имущество -->
           <v-tab-item>
-            <v-card>
-              <v-card-text>
-                <v-chip-group v-model="assetFilter" mandatory class="mb-4">
-                  <v-chip filter value="all">Все</v-chip>
-                  <v-chip filter value="personal">Личное</v-chip>
-                  <v-chip filter value="joint">Совместное</v-chip>
-                </v-chip-group>
-
-                <v-expansion-panels multiple v-model="expandedAssetPanels" flat class="identifier-panel">
-                  <v-expansion-panel
-                      v-for="(asset, index) in filteredAssets"
-                      :key="index"
-                      :class="{'joint-asset-panel': asset.ownership_type === 'joint'}"
-                  >
-                    <v-expansion-panel-header disable-icon-rotate>
-                      <div class="d-flex align-center flex-grow-1">
-                        <div class="d-flex flex-column">
-                          <span>{{ getAssetTitle(asset) }}</span>
-                          <div class="caption mt-1 d-flex align-center">
-                            <v-chip
-                                v-if="isJointAsset(asset)"
-                                x-small
-                                color="primary"
-                                class="mr-1"
-                            >
-                              Совместное
-                            </v-chip>
-                            <v-chip
-                                v-else
-                                x-small
-                                color="grey lighten-1"
-                                class="mr-1"
-                            >
-                              Личное
-                            </v-chip>
-                            <span v-if="asset.acquisition_date" class="ml-1">
-          Приобретено: {{ formatDate(asset.acquisition_date) }}
-        </span>
-                            <span
-                                v-if="asset.status_display"
-                                class="ml-2"
-                                :class="getStatusClass(asset.status)"
-                            >
-          {{ asset.status_display }}
-        </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <template v-slot:actions>
-                        <!-- Информация о совместном имуществе -->
-                        <v-tooltip v-if="isJointAsset(asset)" bottom>
-                          <template v-slot:activator="{ on, attrs }">
-                            <v-icon
-                                small
-                                color="primary"
-                                class="mr-2"
-                                v-bind="attrs"
-                                v-on="on"
-                            >
-                              mdi-information
-                            </v-icon>
-                          </template>
-                          <span style="white-space: pre-line;">
-        <strong>Совместное имущество</strong><br>
-        {{ getJointAssetTooltip(asset) }}
-      </span>
-                        </v-tooltip>
-
-                        <!-- Кнопка удаления только для личного имущества -->
-                        <v-btn
-                            v-if="!isJointAsset(asset) && isAssetBelongsToCurrentPerson(asset)"
-                            icon
-                            small
-                            color="error"
-                            @click.stop="removeAsset(index)"
-                            class="mr-1"
-                        >
-                          <v-icon>mdi-delete</v-icon>
-                        </v-btn>
-
-                        <v-icon>mdi-chevron-down</v-icon>
-                      </template>
-                    </v-expansion-panel-header>
-
-                    <v-expansion-panel-content>
-                      <v-container>
-                        <v-row>
-                          <v-col cols="12" md="5">
-                            <v-autocomplete
-                                hide-details
-                                outlined dense
-                                v-model="asset.category"
-                                :items="assetCategories"
-                                label="Категория*"
-                                :rules="requiredRules"
-                            />
-                          </v-col>
-
-                          <v-col cols="12" md="5">
-                            <v-autocomplete
-                                hide-details
-                                outlined dense
-                                v-model="asset.asset_type"
-                                :items="assetTypes"
-                                label="Тип*"
-                                :rules="requiredRules"
-                                @change="onAssetTypeChange(asset)"
-                            />
-                          </v-col>
-
-
-                          <v-col cols="12" md="4">
-                            <DatePicker
-                                hide-details
-                                v-model="asset.acquisition_date"
-                                value-type="format"
-                                format="DD.MM.YYYY"
-                                placeholder="Дата приобретения"
-                                :clearable="false"
-                            />
-                          </v-col>
-
-                          <v-col cols="12" md="4">
-                            <DatePicker
-                                hide-details
-                                v-model="asset.disposal_date"
-                                value-type="format"
-                                format="DD.MM.YYYY"
-                                placeholder="Дата выбытия"
-                                :clearable="false"
-                            />
-                          </v-col>
-
-                          <v-col cols="12" md="4">
-                            <v-autocomplete
-                                hide-details
-                                outlined dense
-                                v-model="asset.status"
-                                :items="assetStatuses"
-                                label="Статус*"
-                                :rules="requiredRules"
-                            />
-                          </v-col>
-                          <v-col cols="12" md="4">
-                            <v-text-field
-                                type="number"
-                                step="0.1"
-                                hide-details
-                                outlined dense
-                                v-model="asset.carrying_cost"
-                                label="Балансовая стоимость"
-                                :rules="requiredRules"
-                            />
-                          </v-col>
-                          <v-col cols="12" md="4">
-                            <v-text-field
-                                type="number"
-                                step="0.1"
-                                hide-details
-                                outlined dense
-                                v-model="asset.market_cost"
-                                label="Рыночная стоимость"
-                                :rules="requiredRules"
-                            />
-                          </v-col>
-                        </v-row>
-
-                        <!-- ДИНАМИЧЕСКИЕ ПОЛЯ ПО JSON СХЕМЕ -->
-                        <v-divider class="my-4" v-if="asset.asset_type && getSchemaFields(asset)"></v-divider>
-                        <strong v-if="asset.asset_type && getSchemaFields(asset)">Характеристики</strong>
-
-                        <v-row class="mt-2" v-if="asset.asset_type && getSchemaFields(asset)">
-                          <v-col cols="12" :md="field.type === 'boolean' ? 12 : 6"
-                                 v-for="(field, key) in getSchemaFields(asset)" :key="key">
-                            <component
-                                :is="resolveFieldComponent(field, key)"
-                                v-model="asset.details[key]"
-                                :label="field.label"
-                                :rules="getFieldRules(field)"
-                                v-bind="getFieldAttrs(field, key)"
-                                outlined dense
-                            />
-                          </v-col>
-                        </v-row>
-                      </v-container>
-                    </v-expansion-panel-content>
-                  </v-expansion-panel>
-                </v-expansion-panels>
-
+            <asset-list
+                :assets="editedItem.assets"
+                :current-person-id="editedItem.id"
+                @update:assets="editedItem.assets = $event"
+            >
+              <template v-slot:actions="{ addAsset, triggerJsonUpload }">
                 <v-btn @click="addAsset" color="primary" class="mt-4">
                   <v-icon left>mdi-plus</v-icon>
                   Добавить имущество
@@ -884,15 +700,8 @@
                   <v-icon left>mdi-file-upload</v-icon>
                   Загрузить из JSON
                 </v-btn>
-                <input
-                    type="file"
-                    ref="jsonFileInput"
-                    accept=".json"
-                    style="display: none"
-                    @change="handleJsonFileUpload"
-                />
-              </v-card-text>
-            </v-card>
+              </template>
+            </asset-list>
           </v-tab-item>
         </v-tabs-items>
       </v-form>
@@ -912,9 +721,11 @@ import {uuid} from "vue-uuid";
 import {cloneDeep, debounce} from "lodash";
 import moment from "moment";
 import {AssetSchemas} from '@/const/dataTypes'
+import AssetList from "@/components/referenceBook/Assets/AssetList.vue";
 
 export default {
   name: "PhysicalPersonDetail",
+  components: {AssetList},
   props: {
     person: Object,
     isCreating: Boolean,

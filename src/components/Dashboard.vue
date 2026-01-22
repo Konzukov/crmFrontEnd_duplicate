@@ -232,19 +232,42 @@
                               }"
                           class="elevation-1 assets-table"
                       >
+                        <template v-slot:item.asset_type="{ item }">
+                          <div class="asset-type-with-badges">
+                            <div class="asset-type-content">
+                              <v-icon small class="mr-1">{{ getAssetIcon(item.asset_type) }}</v-icon>
+                              <span class="asset-type-text">{{ item.asset_type }}</span>
+
+                              <!-- Бейджи для арестов и залогов -->
+                              <div v-if="hasActiveStatuses(item)" class="asset-badges">
+                                <v-tooltip v-if="item.arrest_status_info && item.arrest_status_info.arrest_count > 0"
+                                           top>
+                                  <template v-slot:activator="{ on, attrs }">
+                                    <div class="arrest-badge" v-bind="attrs" v-on="on">
+                                      {{ item.arrest_status_info.arrest_count }}
+                                    </div>
+                                  </template>
+                                  <span>Активных арестов: {{ item.arrest_status_info.arrest_count }}</span>
+                                </v-tooltip>
+
+                                <v-tooltip v-if="item.pledge_status_info && item.pledge_status_info.pledge_count > 0"
+                                           top>
+                                  <template v-slot:activator="{ on, attrs }">
+                                    <div class="pledge-badge" v-bind="attrs" v-on="on">
+                                      {{ item.pledge_status_info.pledge_count }}
+                                    </div>
+                                  </template>
+                                  <span>Активных залогов: {{ item.pledge_status_info.pledge_count }}</span>
+                                </v-tooltip>
+                              </div>
+                            </div>
+                          </div>
+                        </template>
                         <template v-slot:item.is_joint_property="{ item }">
                           <v-chip small :color="getCategoryColor(item.is_joint_property)" dark class="category-chip">
                             {{ item.is_joint_property ? "Совместное" : 'Личное' }}
                           </v-chip>
                         </template>
-
-                        <template v-slot:item.asset_type="{ item }">
-                          <div class="asset-type">
-                            <v-icon small class="mr-1">{{ getAssetIcon(item.asset_type) }}</v-icon>
-                            {{ item.asset_type }}
-                          </div>
-                        </template>
-
                         <template v-slot:item.status="{ item }">
                           <v-chip
                               small
@@ -255,31 +278,38 @@
                             {{ getStatusDisplay(item.status) }}
                           </v-chip>
                         </template>
-
                         <template v-slot:item.acquisition_date="{ item }">
                           <div class="date-cell">
                             {{ item.acquisition_date || '-' }}
                           </div>
                         </template>
-
                         <template v-slot:item.owner_name="{ item }">
                           <div class="owner-info">
                             {{ item.owner_name || '-' }}
                           </div>
                         </template>
-
                         <template v-slot:item.details="{ item }">
-                          <v-btn
-                              small
-                              icon
-                              @click="showAssetDetails(item)"
-                              title="Показать детали"
-                              class="details-btn"
-                          >
-                            <v-icon small>mdi-information-outline</v-icon>
-                          </v-btn>
+                          <v-menu>
+                            <template v-slot:activator="{attrs, on}">
+                              <v-icon size="15" v-bind="attrs" v-on="on">mdi-dots-vertical</v-icon>
+                            </template>
+                            <v-list class="action bg-grey" dense>
+                              <v-list-item link @click="showAssetDetails(item)">
+                                <v-list-item-icon>
+                                  <v-icon small>mdi-pencil</v-icon>
+                                </v-list-item-icon>
+                                <v-list-item-title>Редактировать</v-list-item-title>
+                              </v-list-item>
+                              <v-list-item link @click="deleteAsset(item)">
+                                <v-list-item-icon>
+                                  <v-icon small color="error">mdi-delete</v-icon>
+                                </v-list-item-icon>
+                                <v-list-item-title style="color: #f44336;">Удалить</v-list-item-title>
+                              </v-list-item>
+                              <v-divider></v-divider>
+                            </v-list>
+                          </v-menu>
                         </template>
-
                         <template v-slot:no-data>
                           <div class="text-center py-4">
                             <v-icon class="mb-2">mdi-package-variant</v-icon>
@@ -290,14 +320,12 @@
                             </v-btn>
                           </div>
                         </template>
-
                         <template v-slot:loading>
                           <v-row justify="center" align="center" class="py-4">
                             <v-progress-circular indeterminate color="primary" size="24"></v-progress-circular>
                             <span class="ml-3">Загрузка имущества...</span>
                           </v-row>
                         </template>
-
                         <template v-slot:footer>
                           <v-divider></v-divider>
                           <div class="text-center py-2">
@@ -362,6 +390,31 @@
         </v-row>
       </v-container>
       <createDocument></createDocument>
+      <v-dialog v-model="showDeleteDialog" max-width="500px" persistent>
+        <v-card>
+          <v-card-title class="headline">Подтверждение удаления</v-card-title>
+          <v-card-text v-if="assetToDelete">
+            Вы уверены, что хотите удалить имущество:
+            <strong>{{ assetToDelete.asset_type }} ({{
+                assetToDelete.formatted_description || assetToDelete.details.address || assetToDelete.details.brand_model || 'Без названия'
+              }})</strong>?
+            <br><br>
+            <v-alert type="warning" dense outlined class="mt-2">
+              Это действие нельзя отменить. Все связанные данные (залоги, аресты) также будут удалены.
+            </v-alert>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="grey" text @click="cancelDelete" :disabled="deletingAsset">
+              Отмена
+            </v-btn>
+            <v-btn color="error" @click="confirmDeleteAsset" :loading="deletingAsset" :disabled="deletingAsset">
+              <v-icon left>mdi-delete</v-icon>
+              Удалить
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </v-main>
   </v-app>
 </template>
@@ -398,7 +451,7 @@ export default {
 
       // Заголовки таблицы
       assetHeaders: [
-        {text: 'Тип имущества', value: 'asset_type', sortable: true, width: '22%'},
+        {text: 'Тип имущества', value: 'asset_type', sortable: true, width: '25%'},
         {text: 'Доля владения', value: 'is_joint_property', sortable: true, width: '18%'},
         {text: 'Дата приобретения', value: 'acquisition_date', sortable: true, width: '15%'},
         {text: 'Дата отчуждения', value: 'disposal_date', sortable: true, width: '15%'},
@@ -409,6 +462,9 @@ export default {
       showAssetDialog: false,
       selectedAsset: null,
       savingAsset: false,
+      showDeleteDialog: false,
+      assetToDelete: null,
+      deletingAsset: false,
     }
   },
   computed: {
@@ -527,16 +583,27 @@ export default {
           await this.loadAssets();
 
           this.showAssetDialog = false;
-          await this.$store.dispatch('showNotification', {
-            message: 'Имущество успешно обновлено',
-            type: 'success'
-          });
+
+          await this.$store.dispatch('snackbar/showSuccess', 'Имущество успешно обновлено');
+
         } catch (error) {
           console.error('Ошибка при сохранении имущества:', error);
-          await this.$store.dispatch('showNotification', {
-            message: 'Ошибка при сохранении имущества',
-            type: 'error'
-          });
+
+          // Вариант 1: используем хелпер showError
+          let errorMessage = 'Ошибка при сохранении имущества';
+          if (error.response && error.response.data) {
+            const data = error.response.data;
+            if (data.error) {
+              errorMessage = data.error;
+            } else if (data.details) {
+              errorMessage = typeof data.details === 'string'
+                  ? data.details
+                  : JSON.stringify(data.details);
+            }
+          }
+
+          await this.$store.dispatch('snackbar/showError', errorMessage);
+
         } finally {
           this.savingAsset = false;
         }
@@ -605,11 +672,58 @@ export default {
       return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
     },
 
+    hasActiveStatuses(asset) {
+      const hasArrests = asset.arrest_status_info && asset.arrest_status_info.arrest_count > 0;
+      const hasPledges = asset.pledge_status_info && asset.pledge_status_info.pledge_count > 0;
+      return hasArrests || hasPledges;
+    },
+
     showAssetDetails(asset) {
       this.selectedAsset = {...asset};
       this.showAssetDialog = true;
     },
+    async deleteAsset(asset) {
+      // Сохраняем актив для удаления и показываем диалог
+      this.assetToDelete = {...asset};
+      this.showDeleteDialog = true;
+    },
 
+    async confirmDeleteAsset() {
+      if (!this.assetToDelete) return;
+
+      this.deletingAsset = true;
+      try {
+        await this.$store.dispatch('deleteAsset', this.assetToDelete);
+        await this.loadAssets();
+
+        await this.$store.dispatch('snackbar/showSuccess', 'Имущество успешно удалено');
+        this.showDeleteDialog = false;
+        this.assetToDelete = null;
+      } catch (error) {
+        console.error('Ошибка при удалении имущества:', error);
+
+        let errorMessage = 'Ошибка при удалении имущества';
+        if (error.response && error.response.data) {
+          const data = error.response.data;
+          if (data.error) {
+            errorMessage = data.error;
+          } else if (data.details) {
+            errorMessage = typeof data.details === 'string'
+                ? data.details
+                : JSON.stringify(data.details);
+          }
+        }
+
+        await this.$store.dispatch('snackbar/showError', errorMessage);
+      } finally {
+        this.deletingAsset = false;
+      }
+    },
+    cancelDelete() {
+      this.showDeleteDialog = false;
+      this.assetToDelete = null;
+      this.deletingAsset = false;
+    },
     isJointAsset(asset) {
       return asset.is_joint_property || asset.ownership_type === 'joint';
     },
@@ -727,6 +841,7 @@ export default {
   font-size: 0.8rem !important;
   height: 40px !important;
 }
+
 .assets-table >>> .v-data-footer__select {
   font-size: 0.7rem !important;
 }
@@ -797,6 +912,81 @@ export default {
   }
 }
 
+.asset-type-with-badges {
+  display: flex;
+  align-items: center;
+}
+
+.asset-type-content {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.asset-type-text {
+  margin-right: 8px;
+}
+
+.asset-badges {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+/* Бейджи для арестов и залогов */
+.arrest-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  background-color: #ff5252;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0 4px;
+  cursor: default;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.pledge-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  background-color: #4caf50;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0 4px;
+  cursor: default;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Эффекты при наведении */
+.arrest-badge:hover {
+  background-color: #ff1744;
+  transform: scale(1.05);
+}
+
+.pledge-badge:hover {
+  background-color: #388e3c;
+  transform: scale(1.05);
+}
+
+.action .v-list-item__icon {
+  margin-right: 8px;
+  margin-left: -8px;
+}
+
+.action .v-list-item__title {
+  font-size: 0.875rem;
+}
+
 @media (max-width: 600px) {
   .dashboard-container {
     padding: 8px;
@@ -811,6 +1001,23 @@ export default {
   .v-btn {
     font-size: 0.75rem !important;
     padding: 2px 8px !important;
+  }
+
+  .asset-type-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .asset-badges {
+    margin-left: 0;
+    margin-top: 2px;
+  }
+
+  .arrest-badge,
+  .pledge-badge {
+    min-width: 16px;
+    height: 16px;
+    font-size: 0.6rem;
   }
 }
 </style>

@@ -84,12 +84,12 @@
                           </v-list-item-title>
                         </v-list-item>
                         <v-divider></v-divider>
-                        <v-list-item v-if="item.type === 'document' || item.type === 'post'" link
-                                     @click="showDocument(item)">
-                          <v-list-item-title>
-                            Показать документ
-                          </v-list-item-title>
-                        </v-list-item>
+<!--                        <v-list-item v-if="item.type === 'document' || item.type === 'post'" link-->
+<!--                                     @click="showDocument(item)">-->
+<!--                          <v-list-item-title>-->
+<!--                            Показать документ-->
+<!--                          </v-list-item-title>-->
+<!--                        </v-list-item>-->
                         <v-list-item v-if="item.type === 'document' || item.type === 'post'" link
                                      @click="addToSendQueue(item)">
                           <v-list-item-title>

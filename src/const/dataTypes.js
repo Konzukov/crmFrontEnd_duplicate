@@ -112,26 +112,26 @@ let CommunicationMethodType = [
 let AssetSchemas = {
     "квартира": {
         type: "object",
-        required: ["address", "cadastre_number", "total_area"],
+        required: [],
         properties: {
             address: {
                 type: "string",
                 label: "Адрес",
                 placeholder: "Введите адрес квартиры",
-                required: true
+                required: false
             },
             cadastre_number: {
                 type: "string",
                 label: "Кадастровый номер",
                 placeholder: "Введите кадастровый номер",
-                required: true
+                required: false
             },
             total_area: {
                 type: "number",
                 minimum: 0,
                 label: "Общая площадь",
                 placeholder: "Введите площадь",
-                required: true
+                required: false
             },
             unit: {
                 type: "string",
@@ -153,26 +153,26 @@ let AssetSchemas = {
 
     "дом": {
         type: "object",
-        required: ["address", "cadastre_number", "total_area"],
+        required: [],
         properties: {
             address: {
                 type: "string",
                 label: "Адрес",
                 placeholder: "Введите адрес дома",
-                required: true
+                required: false
             },
             cadastre_number: {
                 type: "string",
                 label: "Кадастровый номер",
                 placeholder: "Введите кадастровый номер",
-                required: true
+                required: false
             },
             total_area: {
                 type: "number",
                 minimum: 0,
                 label: "Общая площадь",
                 placeholder: "Введите площадь",
-                required: true
+                required: false
             },
             unit: {
                 type: "string",
@@ -194,26 +194,26 @@ let AssetSchemas = {
 
     "земельный участок": {
         type: "object",
-        required: ["address", "cadastre_number", "total_area"],
+        required: [],
         properties: {
             address: {
                 type: "string",
                 label: "Адрес",
                 placeholder: "Введите адрес участка",
-                required: true
+                required: false
             },
             cadastre_number: {
                 type: "string",
                 label: "Кадастровый номер",
                 placeholder: "Введите кадастровый номер",
-                required: true
+                required: false
             },
             total_area: {
                 type: "number",
                 minimum: 0,
                 label: "Общая площадь",
                 placeholder: "Введите площадь",
-                required: true
+                required: false
             },
             unit: {
                 type: "string",
@@ -234,26 +234,26 @@ let AssetSchemas = {
     },
     'иное имущество': {
         type: "object",
-        required: ["address", "cadastre_number", "total_area"],
+        required: [],
         properties: {
             address: {
                 type: "string",
                 label: "Адрес",
                 placeholder: "Введите адрес участка",
-                required: true
+                required: false
             },
             cadastre_number: {
                 type: "string",
                 label: "Кадастровый номер",
                 placeholder: "Введите кадастровый номер",
-                required: true
+                required: false
             },
             total_area: {
                 type: "number",
                 minimum: 0,
                 label: "Общая площадь",
                 placeholder: "Введите площадь",
-                required: true
+                required: false
             },
             unit: {
                 type: "string",
@@ -275,26 +275,26 @@ let AssetSchemas = {
 
     "гараж": {
         type: "object",
-        required: ["address", "cadastre_number", "total_area"],
+        required: [],
         properties: {
             address: {
                 type: "string",
                 label: "Адрес",
                 placeholder: "Введите адрес гаража",
-                required: true
+                required: false
             },
             cadastre_number: {
                 type: "string",
                 label: "Кадастровый номер",
                 placeholder: "Введите кадастровый номер",
-                required: true
+                required: false
             },
             total_area: {
                 type: "number",
                 minimum: 0,
                 label: "Общая площадь",
                 placeholder: "Введите площадь",
-                required: true
+                required: false
             },
             unit: {
                 type: "string",
@@ -316,13 +316,13 @@ let AssetSchemas = {
 
     "автомобиль": {
         type: "object",
-        required: ["brand_model", "vin", "registration_number"],
+        required: [],
         properties: {
             brand_model: {
                 type: "string",
                 label: "Марка и модель",
                 placeholder: "Например: Toyota Camry",
-                required: true
+                required: false
             },
             vin: {
                 type: "string",
@@ -330,13 +330,13 @@ let AssetSchemas = {
                 maxLength: 17,
                 label: "VIN номер",
                 placeholder: "17-значный VIN номер",
-                required: true
+                required: false
             },
             registration_number: {
                 type: "string",
                 label: "Регистрационный номер",
                 placeholder: "Например: A123BC777",
-                required: true
+                required: false
             },
             year_of_manufacture: {
                 type: "integer",
@@ -447,31 +447,31 @@ let AssetSchemas = {
 
     "яхта": {
         type: "object",
-        required: ["brand_model", "imo_number", "registration_port", "country"],
+        required: [],
         properties: {
             brand_model: {
                 type: "string",
                 label: "Марка и модель",
                 placeholder: "Например: Princess V50",
-                required: true
+                required: false
             },
             imo_number: {
                 type: "string",
                 label: "IMO номер",
                 placeholder: "Введите IMO номер",
-                required: true
+                required: false
             },
             registration_port: {
                 type: "string",
                 label: "Порт регистрации",
                 placeholder: "Например: Сочи",
-                required: true
+                required: false
             },
             country: {
                 type: "string",
                 label: "Страна регистрации",
                 placeholder: "Например: Россия",
-                required: true
+                required: false
             },
             year_of_manufacture: {
                 type: "integer",
@@ -506,7 +506,7 @@ let AssetSchemas = {
             },
             currency: {
                 type: "string",
-                pattern: "^[A-Z]{3}$",
+
                 label: "Валюта",
                 placeholder: "Например: RUB, USD, EUR",
                 required: false
@@ -529,13 +529,13 @@ let AssetSchemas = {
 
     "охотничье ружьё": {
         type: "object",
-        required: ["model", "serial_number", "license_number"],
+        required: [],
         properties: {
             model: {
                 type: "string",
                 label: "Модель",
                 placeholder: "Например: ИЖ-27",
-                required: true
+                required: false
             },
             caliber: {
                 type: "string",
@@ -547,13 +547,13 @@ let AssetSchemas = {
                 type: "string",
                 label: "Серийный номер",
                 placeholder: "Введите серийный номер",
-                required: true
+                required: false
             },
             license_number: {
                 type: "string",
                 label: "Номер лицензии",
                 placeholder: "Введите номер лицензии",
-                required: true
+                required: false
             },
             license_issue_date: {
                 type: "string",
@@ -643,25 +643,25 @@ let AssetSchemas = {
 
     "сельхозтехника": {
         type: "object",
-        required: ["brand_model", "vin", "registration_number"],
+        required: [],
         properties: {
             brand_model: {
                 type: "string",
                 label: "Марка и модель",
                 placeholder: "Например: John Deere 7810",
-                required: true
+                required: false
             },
             vin: {
                 type: "string",
                 label: "VIN номер",
                 placeholder: "Введите VIN номер",
-                required: true
+                required: false
             },
             registration_number: {
                 type: "string",
                 label: "Регистрационный номер",
                 placeholder: "Введите регистрационный номер",
-                required: true
+                required: false
             },
             year_of_manufacture: {
                 type: "integer",
@@ -689,7 +689,7 @@ let AssetSchemas = {
             },
             currency: {
                 type: "string",
-                pattern: "^[A-Z]{3}$",
+
                 label: "Валюта",
                 placeholder: "Например: RUB, USD, EUR",
                 required: false
@@ -710,26 +710,26 @@ let AssetSchemas = {
 
     "подарочная карта": {
         type: "object",
-        required: ["issuer", "card_number", "nominal_value", "currency"],
+        required: [],
         properties: {
             issuer: {
                 type: "string",
                 label: "Эмитент",
                 placeholder: "Например: Магнит, Пятерочка",
-                required: true
+                required: false
             },
             card_number: {
                 type: "string",
                 label: "Номер карты",
                 placeholder: "Введите номер карты",
-                required: true
+                required: false
             },
             nominal_value: {
                 type: "number",
                 minimum: 0,
                 label: "Номинал",
                 placeholder: "Номинал карты",
-                required: true
+                required: false
             },
             balance: {
                 type: "number",
@@ -740,10 +740,10 @@ let AssetSchemas = {
             },
             currency: {
                 type: "string",
-                pattern: "^[A-Z]{3}$",
+
                 label: "Валюта",
                 placeholder: "Например: RUB, USD, EUR",
-                required: true
+                required: false
             },
             issue_date: {
                 type: "string",
@@ -770,26 +770,19 @@ let AssetSchemas = {
 
     "право краткосрочной аренды": {
         type: "object",
-        required: [
-            "property_type",
-            "address",
-            "lease_term_months",
-            "monthly_rent",
-            "start_date",
-            "end_date"
-        ],
+        required: [],
         properties: {
             property_type: {
                 type: "string",
                 label: "Тип имущества",
                 placeholder: "Например: квартира, офис",
-                required: true
+                required: false
             },
             address: {
                 type: "string",
                 label: "Адрес",
                 placeholder: "Адрес арендуемого имущества",
-                required: true
+                required: false
             },
             lease_term_months: {
                 type: "integer",
@@ -797,17 +790,16 @@ let AssetSchemas = {
                 maximum: 12,
                 label: "Срок аренды (мес.)",
                 placeholder: "Срок в месяцах",
-                required: true
+                required: false
             },
             monthly_rent: {
                 type: "number",
                 label: "Ежемесячная плата",
                 placeholder: "Сумма ежемесячной арендной платы",
-                required: true
+                required: false
             },
             currency: {
                 type: "string",
-                pattern: "^[A-Z]{3}$",
                 label: "Валюта",
                 placeholder: "Например: RUB, USD, EUR",
                 required: false
@@ -829,14 +821,14 @@ let AssetSchemas = {
                 format: "date",
                 label: "Дата начала",
                 placeholder: "Дата начала аренды",
-                required: true
+                required: false
             },
             end_date: {
                 type: "string",
                 format: "date",
                 label: "Дата окончания",
                 placeholder: "Дата окончания аренды",
-                required: true
+                required: false
             },
             deposit_paid: {
                 type: "number",
@@ -854,53 +846,45 @@ let AssetSchemas = {
 
     "платный сервитут": {
         type: "object",
-        required: [
-            "servitude_type",
-            "granted_by",
-            "property_cadastre",
-            "duration_years",
-            "annual_fee",
-            "currency"
-        ],
+        required: [],
         properties: {
             servitude_type: {
                 type: "string",
                 enum: ["проезд", "подъезд", "прокладка коммуникаций"],
                 label: "Тип сервитута",
                 placeholder: "Выберите тип сервитута",
-                required: true
+                required: false
             },
             granted_by: {
                 type: "string",
                 label: "Предоставлен",
                 placeholder: "Кем предоставлен сервитут",
-                required: true
+                required: false
             },
             property_cadastre: {
                 type: "string",
                 label: "Кадастровый номер",
                 placeholder: "Кадастровый номер имущества",
-                required: true
+                required: false
             },
             duration_years: {
                 type: "integer",
                 minimum: 1,
                 label: "Срок действия (лет)",
                 placeholder: "Срок действия в годах",
-                required: true
+                required: false
             },
             annual_fee: {
                 type: "number",
                 label: "Годовая плата",
                 placeholder: "Сумма годовой плата",
-                required: true
+                required: false
             },
             currency: {
                 type: "string",
-                pattern: "^[A-Z]{3}$",
                 label: "Валюта",
                 placeholder: "Например: RUB, USD, EUR",
-                required: true
+                required: false
             },
             payment_method: {
                 type: "string",
@@ -957,7 +941,25 @@ let AssetSchemas = {
     "доля в ООО": {
         type: "object",
         required: [],
-        properties: {},
+        properties: {
+            organization: {
+                type: "string",
+                label: "Организация",
+                placeholder: "Выберите организацию",
+                required: true,
+                enum: "legalEntities"  // источник данных
+            },
+            shape: {
+                type: "number",
+                label: "Доля владения",
+                placeholder: "Доля владения в процентах",
+            },
+            authorized_capital: {
+                type: "number",
+                label: "Уставной капитал",
+                placeholder: "Уставной капитал",
+            }
+        },
         description: "Доля в обществе с ограниченной ответственностью"
     },
     "доля в АО": {
@@ -1005,7 +1007,42 @@ let AssetSchemas = {
     "доля в праве на имущество": {
         type: "object",
         required: [],
-        properties: {},
+        properties: {
+            address: {
+                type: "string",
+                label: "Адрес",
+                placeholder: "Введите адрес участка",
+                required: false
+            },
+            cadastre_number: {
+                type: "string",
+                label: "Кадастровый номер",
+                placeholder: "Введите кадастровый номер",
+                required: false
+            },
+            total_area: {
+                type: "number",
+                minimum: 0,
+                label: "Общая площадь",
+                placeholder: "Введите площадь",
+                required: false
+            },
+            unit: {
+                type: "string",
+                enum: ["кв. м"],
+                label: "Единица измерения",
+                default: "кв. м",
+                required: false
+            },
+            ownership_share: {
+                type: "number",
+                minimum: 0,
+                maximum: 1,
+                label: "Доля владения",
+                placeholder: "Введите долю (от 0 до 1)",
+                required: false
+            }
+        },
         description: "Доля в праве на имущество"
     }
 };

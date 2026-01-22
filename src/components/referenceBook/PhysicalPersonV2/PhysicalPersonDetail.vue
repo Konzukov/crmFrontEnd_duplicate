@@ -774,106 +774,12 @@
                     </v-expansion-panel-header>
 
                     <v-expansion-panel-content>
-                      <v-container>
-                        <v-row>
-                          <v-col cols="12" md="5">
-                            <v-autocomplete
-                                hide-details
-                                outlined dense
-                                v-model="asset.category"
-                                :items="assetCategories"
-                                label="Категория*"
-                                :rules="requiredRules"
-                            />
-                          </v-col>
-
-                          <v-col cols="12" md="5">
-                            <v-autocomplete
-                                hide-details
-                                outlined dense
-                                v-model="asset.asset_type"
-                                :items="assetTypes"
-                                label="Тип*"
-                                :rules="requiredRules"
-                                @change="onAssetTypeChange(asset)"
-                            />
-                          </v-col>
-
-
-                          <v-col cols="12" md="4">
-                            <DatePicker
-                                hide-details
-                                v-model="asset.acquisition_date"
-                                value-type="format"
-                                format="DD.MM.YYYY"
-                                placeholder="Дата приобретения"
-                                :clearable="false"
-                            />
-                          </v-col>
-
-                          <v-col cols="12" md="4">
-                            <DatePicker
-                                hide-details
-                                v-model="asset.disposal_date"
-                                value-type="format"
-                                format="DD.MM.YYYY"
-                                placeholder="Дата выбытия"
-                                :clearable="false"
-                            />
-                          </v-col>
-
-                          <v-col cols="12" md="4">
-                            <v-autocomplete
-                                hide-details
-                                outlined dense
-                                v-model="asset.status"
-                                :items="assetStatuses"
-                                label="Статус*"
-                                :rules="requiredRules"
-                            />
-                          </v-col>
-                          <v-col cols="12" md="4">
-                            <v-text-field
-                                type="number"
-                                step="0.1"
-                                hide-details
-                                outlined dense
-                                v-model="asset.carrying_cost"
-                                label="Балансовая стоимость"
-                                :rules="requiredRules"
-                            />
-                          </v-col>
-                          <v-col cols="12" md="4">
-                            <v-text-field
-                                type="number"
-                                step="0.1"
-                                hide-details
-                                outlined dense
-                                v-model="asset.market_cost"
-                                label="Рыночная стоимость"
-                                :rules="requiredRules"
-                            />
-                          </v-col>
-                        </v-row>
-
-                        <!-- ДИНАМИЧЕСКИЕ ПОЛЯ ПО JSON СХЕМЕ -->
-                        <v-divider class="my-4" v-if="asset.asset_type && getSchemaFields(asset)"></v-divider>
-                        <strong v-if="asset.asset_type && getSchemaFields(asset)">Характеристики</strong>
-
-                        <v-row class="mt-2" v-if="asset.asset_type && getSchemaFields(asset)">
-                          <v-col cols="12" :md="field.type === 'boolean' ? 12 : 6"
-                                 v-for="(field, key) in getSchemaFields(asset)" :key="key">
-                            <component
-                                :is="resolveFieldComponent(field, key)"
-                                v-model="asset.details[key]"
-                                :label="field.label"
-                                :rules="getFieldRules(field)"
-                                v-bind="getFieldAttrs(field, key)"
-                                outlined dense
-                            />
-                          </v-col>
-                        </v-row>
-                      </v-container>
+                      <AssetForm
+                          ref="assetForms"
+                          :asset="getAssetForForm(asset, index)"
+                          :disabled="!isAssetBelongsToCurrentPerson(asset)"
+                          @asset-change="onAssetChange(index, $event)"
+                      />
                     </v-expansion-panel-content>
                   </v-expansion-panel>
                 </v-expansion-panels>
@@ -962,10 +868,11 @@ import {cloneDeep, debounce} from "lodash";
 import moment from "moment";
 import {AssetSchemas} from '@/const/dataTypes'
 import PhysicalPersonForm from "@/components/referenceBook/PhysicalPersonV2/PhysicalPersonForm.vue";
+import AssetForm from "@/components/referenceBook/Assets/AssetForm.vue";
 
 export default {
   name: "PhysicalPersonDetail",
-  components: {PhysicalPersonForm},
+  components: {AssetForm, PhysicalPersonForm},
   props: {
     person: Object,
     isCreating: Boolean,
@@ -1064,6 +971,7 @@ export default {
       {text: 'Включен в реестр', value: 'Included'},
       {text: 'Без статуса', value: 'Undefined'},
     ],
+    assetFormData: {},
   }),
   computed: {
     ...mapGetters({
@@ -1134,21 +1042,6 @@ export default {
         this.debouncedCheckDuplicates();
       }
     },
-    // 'editedItem.first_name': function (newVal) {
-    //   if (this.isCreating) {
-    //     this.debouncedCheckDuplicates();
-    //   }
-    // },
-    // 'editedItem.middle_name': function (newVal) {
-    //   if (this.isCreating) {
-    //     this.debouncedCheckDuplicates();
-    //   }
-    // },
-    // 'editedItem.birthday': function (newVal) {
-    //   if (this.isCreating) {
-    //     this.debouncedCheckDuplicates();
-    //   }
-    // },
     'editedItem.assets': {
       deep: true,
       handler() {
@@ -1260,6 +1153,8 @@ export default {
       handler(newVal) {
         this.originalItem = cloneDeep(newVal);
         this.editedItem = cloneDeep(newVal);
+
+        this.assetFormData = {};
       }
     },
     isCreating(val) {
@@ -1267,6 +1162,60 @@ export default {
     },
   },
   methods: {
+    getAssetKey(asset, index) {
+      // Создаем уникальный ключ для каждого актива
+      return asset.id ? `asset-${asset.id}` : `asset-temp-${index}`;
+    },
+    getAssetForForm(asset, index) {
+      // Возвращаем данные для формы с учетом сохраненных изменений
+      const assetKey = this.getAssetKey(asset, index);
+
+      // Если есть сохраненные данные формы, используем их
+      if (this.assetFormData[assetKey]) {
+        return {
+          ...asset,
+          ...this.assetFormData[assetKey],
+          // Сохраняем оригинальные поля
+          id: asset.id,
+          ownership_type: asset.ownership_type,
+          _isJoint: asset._isJoint
+        };
+      }
+
+      // Иначе возвращаем оригинальный актив
+      return asset;
+    },
+    onAssetChange(index, updatedAsset) {
+      const asset = this.filteredAssets[index];
+      const assetKey = this.getAssetKey(asset, index);
+
+      // Сохраняем все изменяемые поля, включая pledges и arrests
+      const {pledges = [], arrests = [], ...formData} = updatedAsset;
+
+      this.assetFormData[assetKey] = {
+        ...formData,
+        pledges,
+        arrests
+      };
+
+      // Находим и обновляем актив в основном массиве
+      const originalIndex = this.editedItem.assets.findIndex(a =>
+          (a.id && a.id === asset.id) || a === asset
+      );
+
+      if (originalIndex !== -1) {
+        // Обновляем актив, сохраняя системные поля
+        this.editedItem.assets[originalIndex] = {
+          ...this.editedItem.assets[originalIndex],
+          ...formData,
+          pledges: [...pledges],
+          arrests: [...arrests]
+        };
+
+        // Форсируем обновление реактивности
+        this.$set(this.editedItem.assets, originalIndex, this.editedItem.assets[originalIndex]);
+      }
+    },
     onPersonFormCloseModal() {
       this.showPersonFormModal = false;
       this.currentFamilyMemberIndex = null; // Сбрасываем индекс при закрытии
@@ -1819,11 +1768,37 @@ export default {
         market_cost: 0,
         status: "active",
         details: {},
+        pledges: [], // Добавляем пустой массив залогов
+        arrests: [], // Добавляем пустой массив арестов
         _isJoint: false,
       };
       this.initAssetDetails(newAsset);
       this.editedItem.assets.push(newAsset);
       this.expandedAssetPanels.push(this.editedItem.assets.length - 1);
+    },
+    updateAsset(index, updatedAsset) {
+      // Находим оригинальный актив в отфильтрованном списке
+      const filteredAsset = this.filteredAssets[index];
+
+      // Находим индекс в оригинальном массиве editedItem.assets
+      const originalIndex = this.editedItem.assets.findIndex(a =>
+          (a.id && a.id === filteredAsset.id) ||
+          (!a.id && this.isSameAsset(a, filteredAsset))
+      );
+
+      if (originalIndex !== -1) {
+        // Обновляем актив с новыми данными из AssetForm
+        const updatedAssetWithPledgesArrests = {
+          ...updatedAsset,
+          // Сохраняем дополнительные поля, которые могут быть в оригинальном активе
+          id: this.editedItem.assets[originalIndex].id,
+          tempId: this.editedItem.assets[originalIndex].tempId,
+          ownership_type: this.editedItem.assets[originalIndex].ownership_type,
+          _isJoint: this.editedItem.assets[originalIndex]._isJoint
+        };
+
+        this.$set(this.editedItem.assets, originalIndex, updatedAssetWithPledgesArrests);
+      }
     },
     onAssetTypeChange(asset) {
       if (!this.isJointAsset(asset)) {
@@ -1964,147 +1939,6 @@ export default {
 
       return null;
     },
-    getSchemaFields(asset) {
-      if (!asset.asset_type || !AssetSchemas[asset.asset_type]) {
-        return {};
-      }
-      const schema = AssetSchemas[asset.asset_type];
-      return schema?.properties || {};
-    },
-    resolveFieldComponent(field) {
-      switch (field.type) {
-        case "boolean":
-          return "v-checkbox";
-        case "date":
-          return "DatePicker";
-        case "string":
-          if (field.enum && field.enum.length > 0) {
-            return "v-autocomplete";
-          }
-          return "v-text-field";
-        case "integer":
-        case "number":
-          return "v-text-field";
-        default:
-          return "v-text-field";
-      }
-    },
-    getFieldRules(field, fieldKey) {
-      const rules = [];
-
-      // Обязательное поле
-      if (field.required) {
-        rules.push(v => !!v || 'Обязательное поле');
-      }
-
-      // Валидация для строковых полей
-      if (field.type === 'string') {
-        // Проверка минимальной длины
-        if (field.minLength !== undefined) {
-          rules.push(v => !v || v.length >= field.minLength ||
-              `Минимальная длина: ${field.minLength} символов`);
-        }
-
-        // Проверка максимальной длины
-        if (field.maxLength !== undefined) {
-          rules.push(v => !v || v.length <= field.maxLength ||
-              `Максимальная длина: ${field.maxLength} символов`);
-        }
-
-        // Проверка паттерна (регулярного выражения)
-        if (field.pattern) {
-          const regex = new RegExp(field.pattern);
-          rules.push(v => !v || regex.test(v) ||
-              `Неверный формат. Пример: ${field.patternDescription || field.pattern}`);
-        }
-      }
-
-      // Валидация для числовых полей
-      if (field.type === 'number' || field.type === 'integer') {
-        // Минимальное значение
-        if (field.minimum !== undefined) {
-          rules.push(v => v === '' || v === null || v >= field.minimum ||
-              `Минимальное значение: ${field.minimum}`);
-        }
-
-        // Максимальное значение
-        if (field.maximum !== undefined) {
-          rules.push(v => v === '' || v === null || v <= field.maximum ||
-              `Максимальное значение: ${field.maximum}`);
-        }
-
-        // Проверка на целое число для integer
-        if (field.type === 'integer') {
-          rules.push(v => v === '' || v === null || Number.isInteger(Number(v)) ||
-              'Должно быть целое число');
-        }
-      }
-
-      // Специальная валидация для VIN (17 символов)
-      if (fieldKey === 'vin') {
-        rules.push(v => !v || v.length === 17 ||
-            'VIN номер должен содержать ровно 17 символов');
-      }
-
-      return rules;
-    },
-    getFieldAttrs(field, fieldKey) {
-      const attrs = {};
-
-      // Плейсхолдер
-      if (field.placeholder) {
-        attrs.placeholder = field.placeholder;
-      }
-
-      // Для текстовых полей
-      if (field.type === 'string') {
-        if (field.maxLength !== undefined) {
-          attrs.counter = field.maxLength;
-        }
-
-        // Маска для VIN номера
-        if (fieldKey === 'vin') {
-          attrs.mask = 'XXXXXXXXXXXXXXXXX';
-          attrs.hint = 'Введите 17-значный VIN номер';
-          attrs.persistentHint = true;
-        }
-      }
-
-      // Для числовых полей
-      if (field.type === 'number' || field.type === 'integer') {
-        attrs.type = 'number';
-
-        // Атрибуты min/max для HTML5 валидации
-        if (field.minimum !== undefined) {
-          attrs.min = field.minimum;
-        }
-        if (field.maximum !== undefined) {
-          attrs.max = field.maximum;
-        }
-
-        // Шаг для числовых полей
-        if (field.type === 'integer') {
-          attrs.step = 1;
-        }
-      }
-
-      // Для полей с перечислением
-      if (field.enum && field.enum.length > 0) {
-        attrs.items = field.enum;
-      }
-
-      // Для булевых полей
-      if (field.type === 'boolean') {
-        attrs.dense = true;
-      }
-
-      // Для полей с форматом даты
-      if (field.format === 'date' || field.type === 'date') {
-        attrs.valueType = 'format';
-        attrs.format = 'DD.MM.YYYY';
-      }
-      return attrs;
-    },
     initAssetDetails(asset) {
       // Создаем объект details, если его нет
       if (!asset.details) {
@@ -2211,13 +2045,15 @@ export default {
       const statusMapping = {
         'active': 'active',
         'inactive': 'inactive',
-        'leased': 'leased'
+        'leased': 'leased',
+        'pledged': 'pledged',
+        'arrested': 'arrested',
+        'pledged_arrested': 'pledged_arrested'
       };
 
       // Проверяем и преобразуем тип актива
       let assetType = jsonAsset.type;
       if (!AssetSchemas[assetType]) {
-        // Пытаемся найти похожий тип
         const similarType = Object.keys(AssetSchemas).find(key =>
             key.toLowerCase() === assetType.toLowerCase()
         );
@@ -2234,7 +2070,7 @@ export default {
         try {
           return moment(dateString, 'YYYY-MM-DD').format('DD.MM.YYYY');
         } catch (error) {
-          return dateString; // Возвращаем как есть, если не удалось преобразовать
+          return dateString;
         }
       };
 
@@ -2246,24 +2082,23 @@ export default {
         acquisition_date: formatDate(jsonAsset.acquisition_date),
         disposal_date: formatDate(jsonAsset.disposal_date),
         status: statusMapping[jsonAsset.status] || jsonAsset.status,
-        carrying_cost: 0,
-        market_cost: 0,
-        details: {}
+        carrying_cost: jsonAsset.carrying_cost || 0,
+        market_cost: jsonAsset.market_cost || 0,
+        details: {},
+        pledges: jsonAsset.pledges || [], // Добавляем залоги из JSON
+        arrests: jsonAsset.arrests || []  // Добавляем аресты из JSON
       };
 
       // Обрабатываем детали
       if (jsonAsset.details) {
         const schema = AssetSchemas[assetType];
 
-        // Преобразуем все поля из JSON в соответствии со схемой
         Object.keys(jsonAsset.details).forEach(key => {
           const value = jsonAsset.details[key];
 
-          // Если есть схема для этого поля, используем правильный тип
           if (schema.properties && schema.properties[key]) {
             const fieldSchema = schema.properties[key];
 
-            // Преобразование значений в зависимости от типа
             switch (fieldSchema.type) {
               case 'boolean':
                 asset.details[key] = Boolean(value);
@@ -2279,13 +2114,12 @@ export default {
                 asset.details[key] = value;
             }
           } else {
-            // Для полей, не описанных в схеме, сохраняем как есть
             asset.details[key] = value;
           }
         });
       }
 
-      // Инициализируем детали по схеме (заполняем недостающие поля значениями по умолчанию)
+      // Инициализируем детали по схеме
       this.initAssetDetails(asset);
 
       return asset;

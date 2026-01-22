@@ -950,6 +950,9 @@ export default {
     getCategoryColor(is_joint_property) {
       return is_joint_property ? 'success' : 'grey'
     },
+    addAsset(){
+
+    },
     isJointAsset(asset) {
       return asset.is_joint_property || asset.ownership_type === 'joint';
     },

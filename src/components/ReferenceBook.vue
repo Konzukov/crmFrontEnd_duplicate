@@ -5,9 +5,9 @@
         background-color="primary"
         class="mb-3"
         dark>
-<!--      <v-tab :to="{name: 'physicalPersonV2'}">-->
-<!--        <span>Физ.лица (2)</span>-->
-<!--      </v-tab>-->
+      <!--      <v-tab :to="{name: 'physicalPersonV2'}">-->
+      <!--        <span>Физ.лица (2)</span>-->
+      <!--      </v-tab>-->
       <v-tab v-for="(subsystem, id) in subsystems" :key="id" :to="{name: subsystem.api_list_url}">
         <v-icon class="mr-2">{{ subsystem.icon }}</v-icon>
         <span>{{ subsystem.name }}</span>
@@ -17,6 +17,10 @@
       </v-tab>
       <v-tab :to="{name: 'AccountOpening'}">
         <span>Заявки на открытие счета</span>
+      </v-tab>
+      <v-tab :to="{name: 'syncPhysicalPersons'}">
+        <v-icon left>mdi-database-sync</v-icon>
+        <span>Синхронизация</span>
       </v-tab>
       <!--            <v-tab :to="{name: 'new-project-list'}">-->
       <!--              <span>Проекты(Н)</span>-->

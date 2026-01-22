@@ -222,6 +222,12 @@ const routes = [
                         path: 'project-wizard',
                         name: 'projectWizard',
                         component: () => import('../components/referenceBook/ProjectNew/ProjectSetupWizard')
+                    },
+                    {
+                        path: 'sync',
+                        name: 'syncPhysicalPersons',
+                        component: () => import('@/components/referenceBook/PhysicalPersonV2/SyncPhysicalPersons.vue'),
+                        meta: {requiresAuth: true}
                     }
                 ]
             },

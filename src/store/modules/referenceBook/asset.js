@@ -62,6 +62,35 @@ export default {
                     }
                 })
             })
+        },
+        async updateAsset({commit}, asset) {
+            console.log(asset)
+            console.log(asset.id)
+            return await new Promise((resolve, reject) => {
+                axios({
+                    method: "PUT",
+                    url: customConst.REFERENCE_BOOK_API + `asset/${asset.id}/`,
+                    data: asset
+                }).then(res=>{
+                    console.log(res)
+                    resolve(res)
+                }).catch(err=>{
+                    console.log(err)
+                    reject(err)
+                })
+            })
+        },
+        async deleteAsset({commit}, asset){
+            return new Promise((resolve, reject) => {
+                axios({
+                    method: "DELETE",
+                    url: customConst.REFERENCE_BOOK_API + `asset/${asset.id}/`,
+                }).then(res=>{
+                    resolve(res)
+                }).catch(err=>{
+                    reject(err)
+                })
+            })
         }
     },
     getters: {
