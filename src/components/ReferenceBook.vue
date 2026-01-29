@@ -18,10 +18,10 @@
       <v-tab :to="{name: 'AccountOpening'}">
         <span>Заявки на открытие счета</span>
       </v-tab>
-      <v-tab :to="{name: 'syncPhysicalPersons'}">
-        <v-icon left>mdi-database-sync</v-icon>
-        <span>Синхронизация</span>
-      </v-tab>
+<!--      <v-tab :to="{name: 'syncPhysicalPersons'}">-->
+<!--        <v-icon left>mdi-database-sync</v-icon>-->
+<!--        <span>Синхронизация</span>-->
+<!--      </v-tab>-->
       <!--            <v-tab :to="{name: 'new-project-list'}">-->
       <!--              <span>Проекты(Н)</span>-->
       <!--            </v-tab>-->

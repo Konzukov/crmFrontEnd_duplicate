@@ -13,10 +13,7 @@
       <v-tab :to="{name: 'task-list'}">
         <span>Задачи</span>
       </v-tab>
-      <!--      <v-tab v-for="(subsystem, id) in subsystems" :key="id" :to="{name: subsystem.api_list_url}">-->
-      <!--        <v-icon class="mr-2">{{ subsystem.icon }}</v-icon>-->
-      <!--        <span>{{ subsystem.name }}</span>-->
-      <!--      </v-tab>-->
+
     </v-tabs>
     <transition
         :enter-active-class="transitionEnter"

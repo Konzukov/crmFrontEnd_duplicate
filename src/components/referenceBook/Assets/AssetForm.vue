@@ -221,6 +221,93 @@
       </v-col>
     </v-row>
 
+    <!-- Раздел конкурсной массы -->
+    <v-divider class="my-4"></v-divider>
+    <v-row>
+      <v-col cols="12">
+        <div class="d-flex justify-space-between align-center mb-2">
+          <h4 class="text-h6">Конкурсная масса</h4>
+          <v-btn
+              color="primary"
+              small
+              @click="openEstateProcessDialog"
+              :disabled="disabled"
+          >
+            <v-icon left small>mdi-scale-balance</v-icon>
+            {{ editedAsset.estate_process ? 'Изменить решение' : 'Добавить решение' }}
+          </v-btn>
+        </div>
+
+        <!-- Карточка текущего решения по конкурсной массе -->
+        <v-card v-if="editedAsset.estate_process" class="mb-4"
+                :key="'estate-' + (editedAsset.estate_process ? editedAsset.estate_process.id : '')">
+          <v-card-title class="py-2 text-h8">
+            <v-icon left small>mdi-scale-balance</v-icon>
+            Решение по конкурсной массе
+          </v-card-title>
+          <v-card-text class="pt-0">
+            <v-list dense>
+              <v-list-item>
+                <v-list-item-content>
+                  <div class="d-flex justify-space-between align-center">
+                    <div>
+                      <strong>{{ getEstateDecisionText(editedAsset.estate_process.decision) }}</strong>
+                      <v-chip x-small :color="getEstateColor(editedAsset.estate_process.decision)" class="ml-2">
+                        {{ editedAsset.estate_process.is_active ? 'Актуально' : 'Устарело' }}
+                      </v-chip>
+                    </div>
+                    <div>
+                      <!-- Кнопка истории изменений -->
+                      <v-btn
+                          icon small
+                          @click="openHistoryDialog"
+                          :disabled="!hasHistory"
+                          title="История изменений"
+                      >
+                        <v-icon small>mdi-history</v-icon>
+                      </v-btn>
+
+                      <v-btn icon small @click="editEstateProcess" :disabled="disabled">
+                        <v-icon small>mdi-pencil</v-icon>
+                      </v-btn>
+                      <v-btn icon small @click="removeEstateProcess" color="error" :disabled="disabled">
+                        <v-icon small>mdi-delete</v-icon>
+                      </v-btn>
+                    </div>
+                  </div>
+
+                  <div v-if="editedAsset.estate_process.exclusion_ground" class="text-caption mt-1">
+                    <strong>Основание:</strong> {{
+                      getExclusionGroundText(editedAsset.estate_process.exclusion_ground)
+                    }}
+                  </div>
+
+                  <div v-if="editedAsset.estate_process.legal_reference" class="text-caption mt-1">
+                    <strong>Правовое обоснование:</strong>
+                    {{
+                      editedAsset.estate_process.legal_reference.substring(0, 100)
+                    }}{{ editedAsset.estate_process.legal_reference.length > 100 ? '...' : '' }}
+                  </div>
+
+                  <div class="text-caption mt-1">
+                    <strong>Дата решения:</strong> {{ formatDate(editedAsset.estate_process.decision_date) }}
+                  </div>
+
+                  <div v-if="editedAsset.estate_process.decided_by_name" class="text-caption mt-1">
+                    <strong>Принял:</strong> {{ editedAsset.estate_process.decided_by_name }}
+                  </div>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list>
+          </v-card-text>
+        </v-card>
+
+        <v-alert v-else type="info" outlined dense>
+          Решение по конкурсной массе не принято
+        </v-alert>
+      </v-col>
+    </v-row>
+
     <!-- Модальное окно для добавления/редактирования залогов и арестов -->
     <v-dialog v-model="pledgeArrestDialog" max-width="800" persistent>
       <v-card>
@@ -417,6 +504,445 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Модальное окно для конкурсной массы -->
+    <v-dialog v-model="estateProcessDialog" max-width="700" persistent>
+      <v-card>
+        <v-card-title>
+          {{ isEditingEstateProcess ? 'Редактирование решения' : 'Новое решение' }} по конкурсной массе
+        </v-card-title>
+
+        <v-card-text>
+          <v-form ref="estateForm" v-model="estateValid">
+            <v-row>
+              <v-col cols="12" md="6">
+                <v-autocomplete
+                    v-model="currentEstateProcess.decision"
+                    :items="estateDecisions"
+                    item-text="text"
+                    item-value="value"
+                    label="Решение*"
+                    :rules="estateRules.decision"
+                    outlined dense
+                    @change="onDecisionChange"
+                />
+              </v-col>
+
+              <template v-if="currentEstateProcess.decision">
+                <v-col cols="12" md="6" v-if="currentEstateProcess.decision === 'OUT'">
+                  <v-autocomplete
+                      v-model="currentEstateProcess.exclusion_ground"
+                      :items="exclusionGrounds"
+                      item-text="text"
+                      item-value="value"
+                      label="Основание исключения*"
+                      :rules="estateRules.exclusion_ground"
+                      outlined dense
+                  />
+                </v-col>
+
+                <v-col cols="12">
+                  <v-textarea
+                      v-model="currentEstateProcess.legal_reference"
+                      label="Правовое обоснование*"
+                      outlined dense
+                      rows="3"
+                  />
+                </v-col>
+
+                <v-col cols="12" md="6">
+                  <v-autocomplete
+                      v-model="currentEstateProcess.document_reference"
+                      :items="documents"
+                      item-text="title"
+                      item-value="id"
+                      label="Документ-основание"
+                      outlined dense
+                      clearable
+                  >
+                    <!-- Кастомный шаблон для выбранного значения -->
+                    <template v-slot:selection="{ item }">
+                    <span class="compact-document-selection">
+                      <span class="document-type">{{ getRouteText(item.route) }}</span>
+                      <span class="document-name">{{ item.fileName }}</span>
+                      <span class="document-from" v-if="getFromWhoName(item.fromWho)">{{
+                          getFromWhoName(item.fromWho)
+                        }}</span>
+                    </span>
+                    </template>
+
+                    <!-- Кастомный шаблон для элементов списка -->
+                    <template v-slot:item="{ item }">
+                      <v-list-item-content>
+                        <!-- Первая строка: Название файла -->
+                        <v-list-item-title class="document-compact-title">
+                          <div class="document-compact-name" v-if="item.correspondence_type">
+                            <v-icon x-small class="mr-1">mdi-file-document</v-icon>
+                            {{ item.correspondence_type }}
+                          </div>
+                        </v-list-item-title>
+                        <span class="document-compact-correspondence">{{ item.fileName }}</span>
+                        <v-list-item-subtitle class="document-compact-subtitle">
+                          <div class="document-compact-info">
+                          <span class="document-compact-direction">
+                            {{ getRouteText(item.route) }}
+                          </span>
+                            <span class="document-compact-date" v-if="item.entry_date">
+                            <v-icon x-small class="mr-1 ml-2">mdi-calendar</v-icon>
+                              {{ formatDateShort(item.entry_date) }}
+                          </span>
+                            <span class="document-compact-from" v-if="getFromWhoName(item.fromWho)">
+                            <v-icon x-small class="mr-1 ml-2">mdi-account</v-icon>
+                            {{ getFromWhoName(item.fromWho) }}
+                          </span>
+                          </div>
+                        </v-list-item-subtitle>
+                      </v-list-item-content>
+                    </template>
+
+                    <!-- Кастомный префикс для поиска -->
+                    <template v-slot:prepend-item v-if="documents.length > 0">
+                      <v-list-item dense class="document-filter-header">
+                        <v-list-item-content>
+                          <v-list-item-subtitle class="text-caption">
+                            Всего документов: {{ documents.length }}
+                          </v-list-item-subtitle>
+                        </v-list-item-content>
+                      </v-list-item>
+                      <v-divider class="mt-1 mb-1"></v-divider>
+                    </template>
+
+                    <!-- Кастомный текст при отсутствии документов -->
+                    <template v-slot:no-data>
+                      <v-list-item>
+                        <v-list-item-content>
+                          <v-list-item-title class="text-center">
+                            Документы не найдены
+                          </v-list-item-title>
+                        </v-list-item-content>
+                      </v-list-item>
+                    </template>
+                  </v-autocomplete>
+                </v-col>
+
+                <v-col cols="12" md="6">
+                  <DatePicker
+                      v-model="currentEstateProcess.decision_date"
+                      value-type="format"
+                      format="DD.MM.YYYY"
+                      placeholder="Дата принятия решения*"
+                      :clearable="false"
+                      :rules="estateRules.decision_date"
+                      outlined
+                  />
+                </v-col>
+
+                <v-col cols="12">
+                  <v-switch
+                      v-model="currentEstateProcess.is_active"
+                      label="Актуальное решение"
+                      :disabled="currentEstateProcess.decision === 'OUT'"
+                      hint="Для исключения из конкурсной массы решение всегда активно"
+                      persistent-hint
+                      hide-details
+                  />
+                </v-col>
+              </template>
+            </v-row>
+          </v-form>
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn text @click="closeEstateProcessDialog">Отмена</v-btn>
+          <v-btn
+              color="primary"
+              @click="saveEstateProcess"
+              :disabled="!estateValid"
+          >
+            {{ isEditingEstateProcess ? 'Сохранить' : 'Добавить' }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Модальное окно для истории изменений конкурсной массы -->
+    <v-dialog v-model="historyDialog" max-width="900" persistent>
+      <v-card>
+        <v-card-title class="d-flex justify-space-between align-center">
+          <div>
+            <v-icon left>mdi-history</v-icon>
+            История изменений конкурсной массы
+          </div>
+          <v-btn icon @click="closeHistoryDialog">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-card-title>
+
+        <v-card-text class="pt-0">
+          <!-- Фильтры и поиск -->
+          <v-row class="mt-2 mb-4" dense>
+            <v-col cols="12" md="6">
+              <v-text-field
+                  v-model="historySearch"
+                  label="Поиск по истории"
+                  outlined dense
+                  clearable
+                  prepend-inner-icon="mdi-magnify"
+                  hide-details
+              />
+            </v-col>
+            <v-col cols="12" md="3">
+              <v-autocomplete
+                  v-model="historyFilter.decision"
+                  :items="[{text: 'Все решения', value: null}, ...estateDecisions]"
+                  label="Фильтр по решению"
+                  outlined dense
+                  clearable
+                  hide-details
+              />
+            </v-col>
+            <v-col cols="12" md="3">
+              <v-autocomplete
+                  v-model="historyFilter.changed_by"
+                  :items="historyUsers"
+                  item-text="full_name"
+                  item-value="id"
+                  label="Кто изменил"
+                  outlined dense
+                  clearable
+                  hide-details
+              />
+            </v-col>
+          </v-row>
+
+          <!-- Сводная статистика -->
+          <v-alert v-if="filteredHistory.length > 0" type="info" outlined dense class="mb-4">
+            <div class="d-flex justify-space-between">
+              <span>Всего записей: {{ filteredHistory.length }}</span>
+              <span>Последнее изменение: {{ formatDateTime(latestHistoryChange) }}</span>
+              <span>Первый раз внесено: {{ formatDateTime(earliestHistoryChange) }}</span>
+            </div>
+          </v-alert>
+
+          <!-- Таблица истории изменений -->
+          <v-data-table
+              :headers="historyHeaders"
+              :items="filteredHistory"
+              :search="historySearch"
+              :items-per-page="10"
+              :footer-props="{
+                'items-per-page-options': [5, 10, 20, 50]
+              }"
+              dense
+              class="history-table"
+          >
+            <!-- Дата изменения -->
+            <template v-slot:item.change_date="{ item }">
+              <div class="text-caption">{{ formatDateTime(item.change_date) }}</div>
+            </template>
+
+            <!-- Кто изменил -->
+            <template v-slot:item.changed_by_name="{ item }">
+              <div class="d-flex align-center">
+                <v-avatar size="24" color="primary" class="mr-2">
+                  <span class="white--text text-caption">{{ getInitials(item.changed_by_name) }}</span>
+                </v-avatar>
+                <span>{{ item.changed_by_name }}</span>
+              </div>
+            </template>
+
+            <!-- Решение -->
+            <template v-slot:item.decision_change="{ item }">
+              <div class="d-flex align-center">
+                <v-chip
+                    x-small
+                    :color="getDecisionColor(item.previous_decision)"
+                    class="mr-1"
+                    outlined
+                >
+                  {{ getEstateDecisionText(item.previous_decision) || 'Не указано' }}
+                </v-chip>
+                <v-icon x-small color="grey">mdi-arrow-right</v-icon>
+                <v-chip
+                    x-small
+                    :color="getDecisionColor(item.new_decision)"
+                    class="ml-1"
+                >
+                  {{ getEstateDecisionText(item.new_decision) }}
+                </v-chip>
+              </div>
+            </template>
+
+            <!-- Основание исключения -->
+            <template v-slot:item.exclusion_ground_change="{ item }">
+              <div v-if="item.previous_exclusion_ground || item.new_exclusion_ground" class="d-flex align-center">
+                <span class="text-caption text-truncate mr-1" style="max-width: 120px">
+                  {{ getExclusionGroundText(item.previous_exclusion_ground) || '—' }}
+                </span>
+                <v-icon x-small color="grey">mdi-arrow-right</v-icon>
+                <span class="text-caption text-truncate ml-1" style="max-width: 120px">
+                  {{ getExclusionGroundText(item.new_exclusion_ground) || '—' }}
+                </span>
+              </div>
+              <div v-else class="text-caption text--secondary">—</div>
+            </template>
+
+            <!-- Действия -->
+            <template v-slot:item.actions="{ item }">
+              <v-btn
+                  icon x-small
+                  @click="showHistoryDetails(item)"
+                  title="Подробности"
+              >
+                <v-icon x-small>mdi-eye</v-icon>
+              </v-btn>
+            </template>
+
+            <!-- Слот для пустой таблицы -->
+            <template v-slot:no-data>
+              <div class="text-center py-4">
+                <v-icon size="48" color="grey lighten-1" class="mb-2">mdi-history-off</v-icon>
+                <div class="text-h6 grey--text">История изменений отсутствует</div>
+              </div>
+            </template>
+          </v-data-table>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+
+    <!-- Диалог с подробностями изменения -->
+    <v-dialog v-model="historyDetailDialog" max-width="700">
+      <v-card v-if="selectedHistoryItem">
+        <v-card-title class="d-flex justify-space-between align-center">
+          <div>
+            <v-icon left>mdi-information</v-icon>
+            Подробности изменения
+          </div>
+          <v-btn icon @click="historyDetailDialog = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-card-title>
+
+        <v-card-text>
+          <!-- Основная информация -->
+          <v-row class="mb-4">
+            <v-col cols="12" md="6">
+              <div class="text-caption text--secondary">Дата изменения</div>
+              <div class="text-body-1">{{ formatDateTime(selectedHistoryItem.change_date) }}</div>
+            </v-col>
+            <v-col cols="12" md="6">
+              <div class="text-caption text--secondary">Кто изменил</div>
+              <div class="d-flex align-center">
+                <v-avatar size="32" color="primary" class="mr-2">
+                  <span class="white--text">{{ getInitials(selectedHistoryItem.changed_by_name) }}</span>
+                </v-avatar>
+                <div>
+                  <div class="text-body-1">{{ selectedHistoryItem.changed_by_name }}</div>
+                  <div class="text-caption text--secondary">
+                    ID пользователя: {{ selectedHistoryItem.changed_by }}
+                  </div>
+                </div>
+              </div>
+            </v-col>
+          </v-row>
+
+          <!-- Детали изменений -->
+          <v-divider class="my-4"></v-divider>
+
+          <!-- Решение -->
+          <v-row>
+            <v-col cols="12">
+              <div class="text-h6 mb-2">Решение</div>
+              <v-card outlined class="pa-3">
+                <div class="d-flex justify-space-between align-center">
+                  <div class="text-center" style="flex: 1">
+                    <div class="text-caption text--secondary mb-1">Было</div>
+                    <v-chip :color="getDecisionColor(selectedHistoryItem.previous_decision)" outlined>
+                      {{ getEstateDecisionText(selectedHistoryItem.previous_decision) || 'Не указано' }}
+                    </v-chip>
+                  </div>
+                  <v-icon color="grey">mdi-arrow-right</v-icon>
+                  <div class="text-center" style="flex: 1">
+                    <div class="text-caption text--secondary mb-1">Стало</div>
+                    <v-chip :color="getDecisionColor(selectedHistoryItem.new_decision)">
+                      {{ getEstateDecisionText(selectedHistoryItem.new_decision) }}
+                    </v-chip>
+                  </div>
+                </div>
+              </v-card>
+            </v-col>
+          </v-row>
+
+          <!-- Основание исключения -->
+          <v-row v-if="selectedHistoryItem.previous_exclusion_ground || selectedHistoryItem.new_exclusion_ground"
+                 class="mt-4">
+            <v-col cols="12">
+              <div class="text-h6 mb-2">Основание исключения</div>
+              <v-card outlined class="pa-3">
+                <div class="d-flex justify-space-between align-center">
+                  <div class="text-center" style="flex: 1">
+                    <div class="text-caption text--secondary mb-1">Было</div>
+                    <div class="text-body-1">
+                      {{ getExclusionGroundText(selectedHistoryItem.previous_exclusion_ground) || 'Не указано' }}
+                    </div>
+                  </div>
+                  <v-icon color="grey">mdi-arrow-right</v-icon>
+                  <div class="text-center" style="flex: 1">
+                    <div class="text-caption text--secondary mb-1">Стало</div>
+                    <div class="text-body-1">
+                      {{ getExclusionGroundText(selectedHistoryItem.new_exclusion_ground) || 'Не указано' }}
+                    </div>
+                  </div>
+                </div>
+              </v-card>
+            </v-col>
+          </v-row>
+
+          <!-- Правовое обоснование -->
+          <v-row v-if="selectedHistoryItem.previous_legal_reference || selectedHistoryItem.new_legal_reference"
+                 class="mt-4">
+            <v-col cols="12">
+              <div class="text-h6 mb-2">Правовое обоснование</div>
+              <v-card outlined class="pa-3">
+                <div class="d-flex">
+                  <div class="mr-4" style="flex: 1">
+                    <div class="text-caption text--secondary mb-1">Было</div>
+                    <div class="text-body-1 pre-wrap">
+                      {{ selectedHistoryItem.previous_legal_reference || 'Не указано' }}
+                    </div>
+                  </div>
+                  <v-divider vertical></v-divider>
+                  <div class="ml-4" style="flex: 1">
+                    <div class="text-caption text--secondary mb-1">Стало</div>
+                    <div class="text-body-1 pre-wrap">
+                      {{ selectedHistoryItem.new_legal_reference || 'Не указано' }}
+                    </div>
+                  </div>
+                </div>
+              </v-card>
+            </v-col>
+          </v-row>
+
+          <!-- Описание изменения -->
+          <v-row v-if="selectedHistoryItem.change_description" class="mt-4">
+            <v-col cols="12">
+              <div class="text-h6 mb-2">Комментарий к изменению</div>
+              <v-card outlined class="pa-3">
+                <div class="text-body-1 pre-wrap">
+                  {{ selectedHistoryItem.change_description }}
+                </div>
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn text @click="historyDetailDialog = false">Закрыть</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-form>
 </template>
 
@@ -512,7 +1038,7 @@ export default {
         {value: "Денежные средства", text: "Денежные средства"},
         {value: "Дебиторская задолженность", text: "Дебиторская задолженность"},
         {value: "Ценные бумаги и прочие финансовые инструменты", text: "Ценные бумаги"},
-        {value: "Акции и иное участие в коммерческих организациях", text: "Акции и участие"},
+        {value: "Акции и иное участие в коммерческих организациян", text: "Акции и участие"},
         {value: "Иное имущество", text: "Иное имущество"}
       ],
       assetTypes: Object.keys(AssetSchemas),
@@ -582,10 +1108,77 @@ export default {
         arrest_date: [v => !!v || 'Дата ареста обязательна'],
         reason: [v => !!v || 'Основание для ареста обязательно']
       },
+
+      estateProcessDialog: false,
+      estateValid: false,
+      isEditingEstateProcess: false,
+      currentEstateProcess: {
+        decision: 'IN',
+        exclusion_ground: null,
+        legal_reference: '',
+        document_reference: null,
+        decision_date: null,
+        is_active: true
+      },
+      estateDecisions: [
+        {value: 'IN', text: 'Включается в конкурсную массу'},
+        {value: 'OUT', text: 'Исключается из конкурсной массы'}
+      ],
+
+      exclusionGrounds: [
+        {value: 'gpk_446', text: 'Ст. 446 ГПК РФ (единственное жильё)'},
+        {value: 'court_definition', text: 'Определение Арбитражного суда'},
+        {value: 'trustee_decision', text: 'Решение арбитражного управляющего'},
+        {value: 'legal_position', text: 'Аналогичная правовая позиция'}
+      ],
+      estateRules: {
+        decision: [v => !!v || 'Решение обязательно'],
+        exclusion_ground: [
+          v => {
+            // Если решение OUT, то основание обязательно
+            if (this.currentEstateProcess.decision === 'OUT') {
+              return !!v || 'Основание исключения обязательно при исключении из конкурсной массы'
+            }
+            return true
+          }
+        ],
+        legal_reference: [
+          v => {
+            // Если решение OUT, то правовое обоснование обязательно
+            if (this.currentEstateProcess.decision === 'OUT') {
+              return !!v || 'Правовое обоснование обязательно при исключении из конкурсной массы'
+            }
+            return true
+          }
+        ],
+        decision_date: [v => !!v || 'Дата решения обязательна']
+      },
+      documentFilter: null,
+      documentFilters: [
+        {text: 'Все документы', value: null},
+        {text: 'Входящие', value: 'incoming'},
+        {text: 'Исходящие', value: 'outgoing'},
+      ],
+      // История изменений
+      historyDialog: false,
+      historyDetailDialog: false,
+      historySearch: '',
+      historyFilter: {
+        decision: null,
+        changed_by: null
+      },
+      historyHeaders: [
+        {text: 'Дата изменения', value: 'change_date', width: '150px'},
+        {text: 'Кто изменил', value: 'changed_by_name', width: '200px'},
+        {text: 'Решение', value: 'decision_change', width: '250px'},
+        {text: 'Основание исключения', value: 'exclusion_ground_change', width: '250px'},
+        {text: 'Действия', value: 'actions', width: '80px', sortable: false}
+      ],
+      selectedHistoryItem: null,
     }
   },
   computed: {
-    ...mapGetters({allRefData: "allRefData", legalEntities: 'legalEntityData'}),
+    ...mapGetters({allRefData: "allRefData", legalEntities: 'legalEntityData', documents: 'projectDocumentListData'}),
     hasPledges() {
       return Array.isArray(this.editedAsset.pledges) &&
           this.editedAsset.pledges.length > 0;
@@ -593,7 +1186,77 @@ export default {
     hasArrests() {
       return Array.isArray(this.editedAsset.arrests) &&
           this.editedAsset.arrests.length > 0;
-    }
+    },
+    hasHistory() {
+      return this.editedAsset.estate_process &&
+          this.editedAsset.estate_process.history &&
+          Array.isArray(this.editedAsset.estate_process.history) &&
+          this.editedAsset.estate_process.history.length > 0;
+    },
+
+    filteredHistory() {
+      if (!this.editedAsset.estate_process || !this.editedAsset.estate_process.history) {
+        return [];
+      }
+
+      let history = [...this.editedAsset.estate_process.history];
+
+      // Фильтр по решению
+      if (this.historyFilter.decision) {
+        history = history.filter(item => item.new_decision === this.historyFilter.decision);
+      }
+
+      // Фильтр по пользователю
+      if (this.historyFilter.changed_by) {
+        history = history.filter(item => item.changed_by === this.historyFilter.changed_by);
+      }
+
+      // Поиск
+      if (this.historySearch) {
+        const search = this.historySearch.toLowerCase();
+        history = history.filter(item => {
+          return (
+              (item.changed_by_name && item.changed_by_name.toLowerCase().includes(search)) ||
+              (item.change_description && item.change_description.toLowerCase().includes(search)) ||
+              (this.getEstateDecisionText(item.new_decision).toLowerCase().includes(search)) ||
+              (item.new_legal_reference && item.new_legal_reference.toLowerCase().includes(search))
+          );
+        });
+      }
+
+      // Сортируем по дате (новые сверху)
+      return history.sort((a, b) => {
+        const dateA = new Date(a.change_date);
+        const dateB = new Date(b.change_date);
+        return dateB - dateA;
+      });
+    },
+
+    historyUsers() {
+      if (!this.editedAsset.estate_process || !this.editedAsset.estate_process.history) {
+        return [];
+      }
+
+      const usersMap = new Map();
+      this.editedAsset.estate_process.history.forEach(item => {
+        if (item.changed_by && item.changed_by_name) {
+          usersMap.set(item.changed_by, {
+            id: item.changed_by,
+            full_name: item.changed_by_name
+          });
+        }
+      });
+
+      return Array.from(usersMap.values());
+    },
+    latestHistoryChange() {
+      if (!this.filteredHistory.length) return null;
+      return this.filteredHistory[0].change_date;
+    },
+    earliestHistoryChange() {
+      if (!this.filteredHistory.length) return null;
+      return this.filteredHistory[this.filteredHistory.length - 1].change_date;
+    },
   },
   watch: {
     'editedAsset.details': {
@@ -615,7 +1278,8 @@ export default {
           ...newVal,
           pledges: newVal.pledges || [],
           arrests: newVal.arrests || [],
-          details: newVal.details || {}
+          details: newVal.details || {},
+          estate_process: newVal.estate_process || null
         }))
 
         // Преобразуем organization из строки в число, если нужно
@@ -646,7 +1310,7 @@ export default {
   mounted() {
     this.$store.dispatch('fetchPhysicalPersons')
     this.$store.dispatch('getLegalEntity')
-
+    this.$store.dispatch('getProjectDocument', {project: this.editedAsset.owner_project.toString()})
   },
   methods: {
     setPledgee(item) {
@@ -704,7 +1368,8 @@ export default {
             ...this.editedAsset,
             details: this.editedAsset.details || {},
             pledges: this.editedAsset.pledges || [],
-            arrests: this.editedAsset.arrests || []
+            arrests: this.editedAsset.arrests || [],
+            estate_process: this.editedAsset.estate_process || null
           }));
 
           this.$emit('asset-change', assetData);
@@ -804,62 +1469,62 @@ export default {
       return rules;
     },
     getFieldAttrs(field, fieldKey) {
-    const attrs = {};
-    if (field.placeholder) {
+      const attrs = {};
+      if (field.placeholder) {
         attrs.placeholder = field.placeholder;
-    }
-    if (field.type === 'string') {
+      }
+      if (field.type === 'string') {
         if (field.maxLength !== undefined) {
-            attrs.counter = field.maxLength;
+          attrs.counter = field.maxLength;
         }
         if (fieldKey === 'vin') {
-            attrs.mask = 'XXXXXXXXXXXXXXXXX';
-            attrs.hint = 'Введите 17-значный VIN номер';
-            attrs.persistentHint = true;
+          attrs.mask = 'XXXXXXXXXXXXXXXXX';
+          attrs.hint = 'Введите 17-значный VIN номер';
+          attrs.persistentHint = true;
         }
-    }
-    if (field.type === 'number' || field.type === 'integer') {
+      }
+      if (field.type === 'number' || field.type === 'integer') {
         attrs.type = 'number';
         if (field.minimum !== undefined) {
-            attrs.min = field.minimum;
+          attrs.min = field.minimum;
         }
         if (field.maximum !== undefined) {
-            attrs.max = field.maximum;
+          attrs.max = field.maximum;
         }
         if (field.type === 'integer') {
-            attrs.step = 1;
+          attrs.step = 1;
         }
-    }
-    if (field.enum) {
+      }
+      if (field.enum) {
         if (Array.isArray(field.enum) && field.enum.length > 0) {
-            // Если enum - статический массив
-            attrs.items = field.enum;
+          // Если enum - статический массив
+          attrs.items = field.enum;
         } else if (typeof field.enum === 'string') {
-            // Если enum - строка (ключ для computed свойства)
-            switch (field.enum) {
-                case 'legalEntities':
-                    attrs.items = this.legalEntities;
-                    attrs['item-text'] = 'name';
-                    attrs['item-value'] = 'id';
-                    // Не используем return-object, чтобы сохранялось только ID
-                    break;
-                default:
-                    // Если это computed свойство существует
-                    if (this[field.enum]) {
-                        attrs.items = this[field.enum];
-                    }
-            }
+          // Если enum - строка (ключ для computed свойства)
+          switch (field.enum) {
+            case 'legalEntities':
+              attrs.items = this.legalEntities;
+              attrs['item-text'] = 'name';
+              attrs['item-value'] = 'id';
+              // Не используем return-object, чтобы сохранялось только ID
+              break;
+            default:
+              // Если это computed свойство существует
+              if (this[field.enum]) {
+                attrs.items = this[field.enum];
+              }
+          }
         }
-    }
-    if (field.type === 'boolean') {
+      }
+      if (field.type === 'boolean') {
         attrs.dense = true;
-    }
-    if (field.format === 'date' || field.type === 'date') {
+      }
+      if (field.format === 'date' || field.type === 'date') {
         attrs.valueType = 'format';
         attrs.format = 'DD.MM.YYYY';
-    }
-    return attrs;
-},
+      }
+      return attrs;
+    },
     openPledgeArrestDialog(type = 'pledge', index = -1) {
       console.log('Opening dialog for', type, 'at index:', index);
 
@@ -1081,6 +1746,43 @@ export default {
         console.error('Ошибка при сохранении залога/ареста:', error);
       }
     },
+    async saveEstateProcess() {
+      try {
+        // Валидация формы
+        const estateFormValid = await this.$refs.estateForm.validate();
+        if (!estateFormValid) {
+          console.log('Форма конкурсной массы не валидна');
+          return;
+        }
+
+        // Подготавливаем данные
+        const estateData = {
+          ...this.currentEstateProcess,
+          decision_date: this.currentEstateProcess.decision_date
+        };
+
+        // Устанавливаем ID редактируемого процесса
+        if (this.isEditingEstateProcess && this.editedAsset.estate_process) {
+          estateData.id = this.editedAsset.estate_process.id;
+        }
+
+        // Обновляем estate_process в editedAsset
+        this.$set(this.editedAsset, 'estate_process', estateData);
+
+        // Закрываем диалог
+        this.closeEstateProcessDialog();
+
+        // Обновляем данные
+        this.$nextTick(() => {
+          this.emitAssetChange();
+        });
+
+        console.log('Решение по конкурсной массе успешно сохранено');
+
+      } catch (error) {
+        console.error('Ошибка при сохранении решения по конкурсной массе:', error);
+      }
+    },
     editPledge(index) {
       console.log('Editing pledge at index:', index);
       this.openPledgeArrestDialog('pledge', index);
@@ -1136,6 +1838,218 @@ export default {
         currency: 'RUB',
         minimumFractionDigits: 0
       }).format(amount);
+    },
+    openEstateProcessDialog() {
+      this.estateProcessDialog = true;
+      this.isEditingEstateProcess = !!this.editedAsset.estate_process;
+
+      if (this.editedAsset.estate_process) {
+        // Копируем существующий процесс
+        this.currentEstateProcess = {...this.editedAsset.estate_process};
+
+        // Преобразуем дату в правильный формат
+        if (this.currentEstateProcess.decision_date) {
+          this.currentEstateProcess.decision_date = this.formatDateForPicker(this.currentEstateProcess.decision_date);
+        }
+      } else {
+        // Новый процесс
+        this.currentEstateProcess = {
+          decision: 'IN',
+          exclusion_ground: null,
+          legal_reference: '',
+          document_reference: null,
+          decision_date: this.getTodayDate(),
+          is_active: true
+        };
+      }
+
+      // Сбрасываем валидацию
+      if (this.$refs.estateForm) {
+        this.$refs.estateForm.resetValidation();
+      }
+    },
+    closeEstateProcessDialog() {
+      this.estateProcessDialog = false;
+      this.isEditingEstateProcess = false;
+      this.resetEstateProcessForm();
+    },
+    resetEstateProcessForm() {
+      this.currentEstateProcess = {
+        decision: 'IN',
+        exclusion_ground: null,
+        legal_reference: '',
+        document_reference: null,
+        decision_date: null,
+        is_active: true
+      };
+    },
+    onDecisionChange() {
+      // Если решение изменилось на IN, очищаем основание исключения
+      if (this.currentEstateProcess.decision === 'IN') {
+        this.currentEstateProcess.exclusion_ground = null;
+      }
+      // Для исключения решение всегда активно
+      if (this.currentEstateProcess.decision === 'OUT') {
+        this.currentEstateProcess.is_active = true;
+      }
+    },
+    editEstateProcess() {
+      this.openEstateProcessDialog();
+    },
+    getFromWhoName(fromWho) {
+      if (!fromWho) return null;
+
+      // Если это строка
+      if (typeof fromWho === 'string') {
+        // Проверяем, не является ли это JSON строкой
+        try {
+          const parsed = JSON.parse(fromWho);
+          if (parsed && typeof parsed === 'object') {
+            return parsed.name || parsed.fullName || parsed.full_name || null;
+          }
+        } catch (e) {
+          // Если не JSON, возвращаем как есть
+          return fromWho;
+        }
+      }
+
+      // Если это объект
+      if (typeof fromWho === 'object') {
+        return fromWho.name || fromWho.fullName || fromWho.full_name || null;
+      }
+
+      return null;
+    },
+    formatDateForPicker(dateString) {
+      if (!dateString) return null;
+      if (typeof dateString === 'string' && dateString.includes('.')) {
+        return dateString;
+      }
+      if (typeof dateString === 'string' && dateString.includes('-')) {
+        const [year, month, day] = dateString.split('-');
+        return `${day}.${month}.${year}`;
+      }
+      return dateString;
+    },
+    formatDateShort(dateString) {
+      if (!dateString) return '';
+
+      try {
+        const date = new Date(dateString);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}.${month}.${year}`;
+      } catch (e) {
+        return dateString;
+      }
+    },
+    getRouteText(route) {
+      return route ? 'Исходящий' : 'Входящий';
+    },
+    removeEstateProcess() {
+      if (confirm('Вы уверены, что хотите удалить решение по конкурсной массе?')) {
+        this.$set(this.editedAsset, 'estate_process', null);
+
+        this.$nextTick(() => {
+          this.emitAssetChange();
+        });
+      }
+    },
+    getEstateDecisionText(decision) {
+      if (!decision) return 'Не указано';
+
+      const decisionMap = {
+        'IN': 'Включается в конкурсную массу',
+        'OUT': 'Исключается из конкурсной массы'
+      };
+      return decisionMap[decision] || decision;
+    },
+    getExclusionGroundText(ground) {
+      const groundMap = {
+        'gpk_446': 'Ст. 446 ГПК РФ (единственное жильё)',
+        'court_definition': 'Определение Арбитражного суда',
+        'trustee_decision': 'Решение арбитражного управляющего',
+        'legal_position': 'Аналогичная правовая позиция'
+      };
+      return groundMap[ground] || ground;
+    },
+    getEstateColor(decision) {
+      return decision === 'IN' ? 'success' : 'error';
+    },
+    getDecisionColor(decision) {
+      if (!decision) return 'grey';
+      return decision === 'IN' ? 'success' : 'error';
+    },
+    getTodayDate() {
+      const today = new Date();
+      const day = String(today.getDate()).padStart(2, '0');
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const year = today.getFullYear();
+      return `${day}.${month}.${year}`;
+    },
+    openHistoryDialog() {
+      if (this.hasHistory) {
+        this.historyDialog = true;
+        // Сбрасываем фильтры при открытии
+        this.historySearch = '';
+        this.historyFilter = {
+          decision: null,
+          changed_by: null
+        };
+      }
+    },
+    closeHistoryDialog() {
+      this.historyDialog = false;
+      this.historySearch = '';
+      this.historyFilter = {
+        decision: null,
+        changed_by: null
+      };
+    },
+    showHistoryDetails(item) {
+      this.selectedHistoryItem = item;
+      this.historyDetailDialog = true;
+    },
+    getInitials(name) {
+      if (!name) return '?';
+      return name
+          .split(' ')
+          .map(word => word.charAt(0))
+          .join('')
+          .toUpperCase()
+          .substring(0, 2);
+    },
+    formatDateTime(dateTime) {
+      if (!dateTime) return '—';
+      try {
+        const date = new Date(dateTime);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${day}.${month}.${year} ${hours}:${minutes}`;
+      } catch (e) {
+        return dateTime;
+      }
+    },
+    async loadHistory() {
+      try {
+        if (this.editedAsset.estate_process && this.editedAsset.estate_process.id) {
+          // Загрузите историю с сервера
+          const response = await this.$store.dispatch('getEstateProcessHistory', {
+            estateProcessId: this.editedAsset.estate_process.id
+          });
+
+          // Обновите историю в estate_process
+          if (response && response.data) {
+            this.$set(this.editedAsset.estate_process, 'history', response.data);
+          }
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки истории:', error);
+      }
     }
   }
 }
@@ -1163,5 +2077,170 @@ export default {
 .v-chip--x-small {
   height: 16px;
   font-size: 10px;
+}
+
+.compact-document-selection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.compact-document-selection .document-type {
+  background-color: #e3f2fd;
+  color: #1976d2;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.compact-document-selection .document-name {
+  font-weight: 500;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.compact-document-selection .document-from {
+  color: #666;
+  font-size: 0.8rem;
+  font-style: italic;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Стили для элементов списка */
+.document-compact-title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.document-compact-name {
+  flex: 1;
+  font-weight: 500;
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.document-compact-subtitle {
+  font-size: 0.75rem;
+  color: #666;
+  line-height: 1.3;
+}
+
+.document-compact-info {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 2px;
+}
+
+.document-compact-direction {
+  display: flex;
+  align-items: center;
+  font-size: 0.7rem;
+  color: #1976d2;
+  background-color: #e3f2fd;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.document-compact-date,
+.document-compact-from {
+  display: flex;
+  align-items: center;
+  font-size: 0.7rem;
+}
+
+.document-compact-correspondence {
+  display: flex;
+  align-items: center;
+  font-size: 0.7rem;
+  color: #666;
+  margin-top: 2px;
+}
+
+/* Стили для иконок */
+.document-compact-info .v-icon,
+.document-compact-correspondence .v-icon {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+/* Стили для таблицы истории */
+.history-table {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.history-table .v-data-table__wrapper {
+  max-height: 400px;
+}
+
+/* Стили для подробного просмотра */
+.pre-wrap {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Стили для аватаров */
+.v-avatar {
+  font-size: 0.75rem;
+}
+
+@media (max-width: 960px) {
+  .history-table .v-data-table__wrapper {
+    max-height: 300px;
+  }
+
+  .v-data-table__mobile-row {
+    min-height: 48px;
+  }
+}
+
+/* Стили для чипов с решениями */
+.v-chip--outlined {
+  background-color: transparent !important;
+}
+
+/* Анимация появления */
+.v-dialog {
+  transition: all 0.3s ease;
+}
+
+/* Стили для разделителей */
+.v-divider--vertical {
+  margin: 0 16px;
+}
+
+@media (max-width: 600px) {
+  .compact-document-selection {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .document-compact-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .document-compact-direction,
+  .document-compact-date,
+  .document-compact-from {
+    margin-bottom: 2px;
+  }
 }
 </style>

@@ -518,34 +518,34 @@ export default {
     },
 
     syncStats() {
-  return [
-    {
-      label: 'Всего',
-      value: this.syncResult.total || 0,
-      color: 'primary--text'
-    },
-    {
-      label: 'Создано',
-      value: this.syncResult.created || 0,
-      color: this.syncResult.created > 0 ? 'success--text' : 'grey--text'
-    },
-    {
-      label: 'Обновлено',
-      value: this.syncResult.updated || 0,
-      color: this.syncResult.updated > 0 ? 'info--text' : 'grey--text'
-    },
-    {
-      label: 'Пропущено',
-      value: this.syncResult.skipped || 0,
-      color: this.syncResult.skipped > 0 ? 'warning--text' : 'grey--text'
-    },
-    {
-      label: 'Ошибки',
-      value: this.syncResult.errors || 0,
-      color: (this.syncResult.errors || 0) > 0 ? 'error--text' : 'grey--text'
+      return [
+        {
+          label: 'Всего',
+          value: this.syncResult.total || 0,
+          color: 'primary--text'
+        },
+        {
+          label: 'Создано',
+          value: this.syncResult.created || 0,
+          color: this.syncResult.created > 0 ? 'success--text' : 'grey--text'
+        },
+        {
+          label: 'Обновлено',
+          value: this.syncResult.updated || 0,
+          color: this.syncResult.updated > 0 ? 'info--text' : 'grey--text'
+        },
+        {
+          label: 'Пропущено',
+          value: this.syncResult.skipped || 0,
+          color: this.syncResult.skipped > 0 ? 'warning--text' : 'grey--text'
+        },
+        {
+          label: 'Ошибки',
+          value: this.syncResult.errors || 0,
+          color: (this.syncResult.errors || 0) > 0 ? 'error--text' : 'grey--text'
+        }
+      ]
     }
-  ]
-}
   },
 
   methods: {
@@ -555,112 +555,112 @@ export default {
 
     // Универсальная функция для проверки дубликатов
     async checkDuplicates(personOrArray, options = {}) {
-  const { showDialog = false } = options;
+      const {showDialog = false} = options;
 
-  // Определяем, что передали: массив ID, объект person или массив объектов
-  let personIds = [];
-  let isSingle = false;
+      // Определяем, что передали: массив ID, объект person или массив объектов
+      let personIds = [];
+      let isSingle = false;
 
-  if (Array.isArray(personOrArray)) {
-    // Если передали массив - извлекаем ID
-    personIds = personOrArray.map(item =>
-      typeof item === 'object' ? item.id : item
-    ).filter(id => id !== undefined);
+      if (Array.isArray(personOrArray)) {
+        // Если передали массив - извлекаем ID
+        personIds = personOrArray.map(item =>
+            typeof item === 'object' ? item.id : item
+        ).filter(id => id !== undefined);
 
-    if (personIds.length === 0) {
-      await this.$store.dispatch('snackbar/showError', 'Не выбрано ни одного лица для проверки');
-      return;
-    }
-    isSingle = personIds.length === 1;
-  } else if (personOrArray && typeof personOrArray === 'object') {
-    // Если передали один объект
-    personIds = [personOrArray.id];
-    isSingle = true;
-  } else {
-    console.error('Неподдерживаемый формат данных:', personOrArray);
-    return;
-  }
+        if (personIds.length === 0) {
+          await this.$store.dispatch('snackbar/showError', 'Не выбрано ни одного лица для проверки');
+          return;
+        }
+        isSingle = personIds.length === 1;
+      } else if (personOrArray && typeof personOrArray === 'object') {
+        // Если передали один объект
+        personIds = [personOrArray.id];
+        isSingle = true;
+      } else {
+        console.error('Неподдерживаемый формат данных:', personOrArray);
+        return;
+      }
 
-  if (!this.selectedTargetDb) {
-    this.$store.dispatch('snackbar/showError', 'Сначала выберите целевую базу данных');
-    return;
-  }
+      if (!this.selectedTargetDb) {
+        this.$store.dispatch('snackbar/showError', 'Сначала выберите целевую базу данных');
+        return;
+      }
 
-  // Устанавливаем состояние загрузки
-  if (isSingle) {
-    this.checkingDuplicates = personIds[0];
-  } else {
-    this.checkingAllDuplicates = true;
-  }
+      // Устанавливаем состояние загрузки
+      if (isSingle) {
+        this.checkingDuplicates = personIds[0];
+      } else {
+        this.checkingAllDuplicates = true;
+      }
 
-  this.duplicateCheckStatus = null;
+      this.duplicateCheckStatus = null;
 
-  try {
-    const response = await this.$http.post(customConst.REFERENCE_BOOK_API + 'sync/find_duplicates/', {
-      target_db: this.selectedTargetDb,
-      current_db: this.userData.profile.active_organization.db_name,
-      person_ids: personIds
-    });
+      try {
+        const response = await this.$http.post(customConst.REFERENCE_BOOK_API + 'sync/find_duplicates/', {
+          target_db: this.selectedTargetDb,
+          current_db: this.userData.profile.active_organization.db_name,
+          person_ids: personIds
+        });
 
-    // Извлекаем данные из правильного места
-    const responseData = response.data?.data || response.data;
+        // Извлекаем данные из правильного места
+        const responseData = response.data?.data || response.data;
 
-    // Если ответ пустой или содержит ошибку
-    if (!responseData) {
-      this.$store.dispatch('snackbar/showError', 'Некорректный ответ от сервера');
-      return;
-    }
+        // Если ответ пустой или содержит ошибку
+        if (!responseData) {
+          this.$store.dispatch('snackbar/showError', 'Некорректный ответ от сервера');
+          return;
+        }
 
-    // Устанавливаем флаг диалога для одиночной проверки
-    if (isSingle && showDialog) {
-      this.duplicateDialog = true;
-    }
+        // Устанавливаем флаг диалога для одиночной проверки
+        if (isSingle && showDialog) {
+          this.duplicateDialog = true;
+        }
 
-    this.processDuplicateResults(responseData, personIds, isSingle, showDialog);
+        this.processDuplicateResults(responseData, personIds, isSingle, showDialog);
 
-  } catch (error) {
-    console.error('Ошибка проверки дубликатов:', error);
-    await this.$store.dispatch('snackbar/showError', 'Ошибка проверки дубликатов');
-  } finally {
-    if (isSingle) {
-      this.checkingDuplicates = null;
-    } else {
-      this.checkingAllDuplicates = false;
-    }
-  }
-},
+      } catch (error) {
+        console.error('Ошибка проверки дубликатов:', error);
+        await this.$store.dispatch('snackbar/showError', 'Ошибка проверки дубликатов');
+      } finally {
+        if (isSingle) {
+          this.checkingDuplicates = null;
+        } else {
+          this.checkingAllDuplicates = false;
+        }
+      }
+    },
 
     // Вспомогательный метод для обработки результатов
     processDuplicateResults(data, personIds, isSingle, showDialog) {
-  // Проверяем структуру данных
-  if (!data) {
-    console.error('Нет данных для обработки');
-    return;
-  }
+      // Проверяем структуру данных
+      if (!data) {
+        console.error('Нет данных для обработки');
+        return;
+      }
 
-  const results = data.results || [];
-  const totalWithDuplicates = data.total_with_duplicates || 0;
+      const results = data.results || [];
+      const totalWithDuplicates = data.total_with_duplicates || 0;
 
-  // Обновляем счетчики дубликатов
-  results.forEach(result => {
-    if (result && result.source_person && result.source_person.id) {
-      this.updatePersonDuplicateCount(
-        result.source_person.id,
-        result.total_duplicates || (result.duplicates ? result.duplicates.length : 0)
-      );
-    }
-  });
+      // Обновляем счетчики дубликатов
+      results.forEach(result => {
+        if (result && result.source_person && result.source_person.id) {
+          this.updatePersonDuplicateCount(
+              result.source_person.id,
+              result.total_duplicates || (result.duplicates ? result.duplicates.length : 0)
+          );
+        }
+      });
 
-  // Обрабатываем в зависимости от контекста
-  if (isSingle && showDialog) {
-    this.handleSingleDuplicateResult(results[0], personIds[0]);
-  } else if (!isSingle) {
-    this.handleBulkDuplicateResult({ total_with_duplicates: totalWithDuplicates }, personIds.length);
-  } else {
-    // Для одиночной проверки без диалога показываем snackbar
-    this.handleSingleDuplicateResult(results[0], personIds[0]);
-  }
-},
+      // Обрабатываем в зависимости от контекста
+      if (isSingle && showDialog) {
+        this.handleSingleDuplicateResult(results[0], personIds[0]);
+      } else if (!isSingle) {
+        this.handleBulkDuplicateResult({total_with_duplicates: totalWithDuplicates}, personIds.length);
+      } else {
+        // Для одиночной проверки без диалога показываем snackbar
+        this.handleSingleDuplicateResult(results[0], personIds[0]);
+      }
+    },
 
     // Обновление счетчика дубликатов для лица
     updatePersonDuplicateCount(personId, duplicateCount) {
@@ -744,88 +744,88 @@ export default {
     },
 
     async startSync() {
-  if (!this.canSync) return;
+      if (!this.canSync) return;
 
-  this.syncing = true;
+      this.syncing = true;
 
-  try {
-    // Извлекаем ID из выбранных объектов
-    const personIds = this.selected.map(person => person.id);
+      try {
+        // Извлекаем ID из выбранных объектов
+        const personIds = this.selected.map(person => person.id);
 
-    const response = await this.$http.post(customConst.REFERENCE_BOOK_API + 'sync/sync_physical_persons/', {
-      target_db: this.selectedTargetDb,
-      current_db: this.userData.profile.active_organization.db_name,
-      person_ids: personIds
-    });
+        const response = await this.$http.post(customConst.REFERENCE_BOOK_API + 'sync/sync_physical_persons/', {
+          target_db: this.selectedTargetDb,
+          current_db: this.userData.profile.active_organization.db_name,
+          person_ids: personIds
+        });
 
-    // Извлекаем данные из правильного места - response.data.data
-    const responseData = response.data?.data || response.data;
+        // Извлекаем данные из правильного места - response.data.data
+        const responseData = response.data?.data || response.data;
 
-    // Создаем корректный объект syncResult на основе ответа сервера
-    this.syncResult = {
-      log_id: responseData?.log_id || null,
-      created: responseData?.created || 0,
-      updated: responseData?.updated || 0,
-      skipped: responseData?.skipped || 0,
-      errors: responseData?.errors || 0,
-      total: responseData?.total || personIds.length,
-      status: responseData?.status || 'success',
-      results: responseData?.results || []
-    };
+        // Создаем корректный объект syncResult на основе ответа сервера
+        this.syncResult = {
+          log_id: responseData?.log_id || null,
+          created: responseData?.created || 0,
+          updated: responseData?.updated || 0,
+          skipped: responseData?.skipped || 0,
+          errors: responseData?.errors || 0,
+          total: responseData?.total || personIds.length,
+          status: responseData?.status || 'success',
+          results: responseData?.results || []
+        };
 
-    this.resultDialog = true;
+        this.resultDialog = true;
 
-    await this.loadPhysicalPersons();
+        await this.loadPhysicalPersons();
 
-    const created = this.syncResult.created || 0;
-    const updated = this.syncResult.updated || 0;
-    const skipped = this.syncResult.skipped || 0;
+        const created = this.syncResult.created || 0;
+        const updated = this.syncResult.updated || 0;
+        const skipped = this.syncResult.skipped || 0;
 
-    let successMessage = '';
+        let successMessage = '';
 
-    if (created > 0 && updated === 0 && skipped === 0) {
-      successMessage = `Синхронизация завершена: ${created} создано`;
-    } else if (created === 0 && updated > 0 && skipped === 0) {
-      successMessage = `Синхронизация завершена: ${updated} обновлено`;
-    } else if (created > 0 && updated > 0 && skipped === 0) {
-      successMessage = `Синхронизация завершена: ${created} создано, ${updated} обновлено`;
-    } else if (skipped > 0) {
-      successMessage = `Синхронизация завершена: ${created} создано, ${updated} обновлено, ${skipped} пропущено (данные актуальны)`;
-    } else {
-      successMessage = 'Синхронизация завершена';
-    }
+        if (created > 0 && updated === 0 && skipped === 0) {
+          successMessage = `Синхронизация завершена: ${created} создано`;
+        } else if (created === 0 && updated > 0 && skipped === 0) {
+          successMessage = `Синхронизация завершена: ${updated} обновлено`;
+        } else if (created > 0 && updated > 0 && skipped === 0) {
+          successMessage = `Синхронизация завершена: ${created} создано, ${updated} обновлено`;
+        } else if (skipped > 0) {
+          successMessage = `Синхронизация завершена: ${created} создано, ${updated} обновлено, ${skipped} пропущено (данные актуальны)`;
+        } else {
+          successMessage = 'Синхронизация завершена';
+        }
 
-    if (this.syncResult.errors > 0) {
-      this.$store.dispatch('snackbar/showWarning',
-        `${successMessage}, ${this.syncResult.errors} с ошибками`);
-    } else if (this.syncResult.status === 'Конфликт' || this.syncResult.status === 'conflict') {
-      this.$store.dispatch('snackbar/showInfo',
-        `${successMessage} (статус: ${this.syncResult.status})`);
-    } else {
-      this.$store.dispatch('snackbar/showSuccess', successMessage);
-    }
+        if (this.syncResult.errors > 0) {
+          this.$store.dispatch('snackbar/showWarning',
+              `${successMessage}, ${this.syncResult.errors} с ошибками`);
+        } else if (this.syncResult.status === 'Конфликт' || this.syncResult.status === 'conflict') {
+          this.$store.dispatch('snackbar/showInfo',
+              `${successMessage} (статус: ${this.syncResult.status})`);
+        } else {
+          this.$store.dispatch('snackbar/showSuccess', successMessage);
+        }
 
-  } catch (error) {
-    console.error('Ошибка синхронизации:', error);
-    this.$store.dispatch('snackbar/showError', 'Ошибка синхронизации');
+      } catch (error) {
+        console.error('Ошибка синхронизации:', error);
+        this.$store.dispatch('snackbar/showError', 'Ошибка синхронизации');
 
-    // В случае ошибки показываем базовый результат
-    this.syncResult = {
-      log_id: null,
-      created: 0,
-      updated: 0,
-      skipped: 0,
-      errors: 1,
-      total: this.selected.length,
-      status: 'failed',
-      results: []
-    };
-    this.resultDialog = true;
-  } finally {
-    this.syncing = false;
-    this.selected = [];
-  }
-},
+        // В случае ошибки показываем базовый результат
+        this.syncResult = {
+          log_id: null,
+          created: 0,
+          updated: 0,
+          skipped: 0,
+          errors: 1,
+          total: this.selected.length,
+          status: 'failed',
+          results: []
+        };
+        this.resultDialog = true;
+      } finally {
+        this.syncing = false;
+        this.selected = [];
+      }
+    },
 
     loadDatabases() {
       this.loading = true
@@ -1012,18 +1012,18 @@ export default {
     },
 
     getStatusText(status) {
-  const statusMap = {
-    success: 'Успешно',
-    partial: 'Частично',
-    failed: 'Ошибка',
-    conflict: 'Конфликт',
-    'Успешно': 'Успешно',
-    'Частично': 'Частично',
-    'Ошибка': 'Ошибка',
-    'Конфликт': 'Конфликт'
-  }
-  return statusMap[status] || status
-},
+      const statusMap = {
+        success: 'Успешно',
+        partial: 'Частично',
+        failed: 'Ошибка',
+        conflict: 'Конфликт',
+        'Успешно': 'Успешно',
+        'Частично': 'Частично',
+        'Ошибка': 'Ошибка',
+        'Конфликт': 'Конфликт'
+      }
+      return statusMap[status] || status
+    },
 
     getActionColor(action) {
       const colorMap = {

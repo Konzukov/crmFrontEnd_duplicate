@@ -58,14 +58,14 @@
               <v-list-item-title>Календарь</v-list-item-title>
             </v-list-item-content>
           </v-list-item>
-          <v-list-item :to="{name: 'background-task'}">
-            <v-list-item-icon>
-              <v-icon>mdi-view-list</v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title>Фоновые задания</v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
+          <!--          <v-list-item :to="{name: 'background-task'}">-->
+          <!--            <v-list-item-icon>-->
+          <!--              <v-icon>mdi-view-list</v-icon>-->
+          <!--            </v-list-item-icon>-->
+          <!--            <v-list-item-content>-->
+          <!--              <v-list-item-title>Фоновые задания</v-list-item-title>-->
+          <!--            </v-list-item-content>-->
+          <!--          </v-list-item>-->
           <v-list-item :to="{name: 'documentGenerator'}">
             <v-list-item-icon>
               <v-icon>mdi-file-document-edit</v-icon>
@@ -82,14 +82,22 @@
               <v-list-item-title>Вики</v-list-item-title>
             </v-list-item-content>
           </v-list-item>
-          <v-list-item :to="{name: 'document-flow'}">
+          <v-list-item :to="{name: 'syncMain'}">
             <v-list-item-icon>
-              <v-icon>mdi-file-document-edit</v-icon>
+              <v-icon left>mdi-database-sync</v-icon>
             </v-list-item-icon>
             <v-list-item-content>
-              <v-list-item-title>Документы (v2)</v-list-item-title>
+              <v-list-item-title>Синхронизация</v-list-item-title>
             </v-list-item-content>
           </v-list-item>
+          <!--          <v-list-item :to="{name: 'document-flow'}">-->
+          <!--            <v-list-item-icon>-->
+          <!--              <v-icon>mdi-file-document-edit</v-icon>-->
+          <!--            </v-list-item-icon>-->
+          <!--            <v-list-item-content>-->
+          <!--              <v-list-item-title>Документы (v2)</v-list-item-title>-->
+          <!--            </v-list-item-content>-->
+          <!--          </v-list-item>-->
         </v-list-item-group>
       </v-list>
     </v-navigation-drawer>
@@ -502,7 +510,7 @@ export default {
 
       // Фильтр по категории
       if (this.categoryFilter) {
-        filtered = filtered.filter(asset => asset.category === this.categoryFilter)
+        filtered = filtered.filter(asset => asset.category_display === this.categoryFilter)
       }
 
       return filtered

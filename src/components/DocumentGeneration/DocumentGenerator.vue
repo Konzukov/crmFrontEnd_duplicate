@@ -857,7 +857,19 @@
 
                       </template>
                       <template v-else-if="field['is_date']">
-                        <v-text-field type="date" :rules="field.required? rules.required: []"
+                        <template  v-if="field.value === 'ADMISSION_DEPARTMENT_DATE' || field.value === 'RETURN_SEND_DATE'">
+                          <DatePicker
+                              style="width: 100%"
+                              class="mb-4"
+                              v-model="templateFields[field.value]"
+                              value-type="format"
+                              format="DD.MM.YYYY"
+                              :placeholder="field.name"
+                              :clearable="false"
+                              outlined
+                          />
+                        </template>
+                        <v-text-field v-else type="date" :rules="field.required? rules.required: []"
                                       @change="checkForm"
                                       dense outlined v-model="templateFields[field.value]" :label="field.name">
                         </v-text-field>
@@ -1338,7 +1350,8 @@
               <v-btn small color="success" :disabled="!confirmData" @click="saveDoc(false)">Сохранить</v-btn>
             </v-col>
             <v-col cols="12" class="d-flex justify-center">
-              <v-btn small color="success" :disabled="this.selectedFormat.docType === 'docx' || !confirmData" @click="saveDoc(true)">
+              <v-btn small color="success" :disabled="this.selectedFormat.docType === 'docx' || !confirmData"
+                     @click="saveDoc(true)">
                 Подготовить к отправке
               </v-btn>
             </v-col>
@@ -1394,6 +1407,7 @@ import {VueEditor} from "vue2-editor";
 import PhysicalPersonModalFormView from "@/views/PhysicalPersonV2/PhysicalPersonModalFormView.vue";
 import BasicCreditorClaimCreate from "@/components/referenceBook/Project/Creditor/BasicCreditorClaimCreate.vue";
 import CreditorClaimCreate from "@/components/referenceBook/Project/Creditor/CreditorClaimCreate.vue";
+import DatePicker from "vue2-datepicker";
 
 
 let vueStore = {
@@ -2325,6 +2339,7 @@ export default {
 
   },
   components: {
+    DatePicker,
     CreditorClaimCreate,
     BasicCreditorClaimCreate,
     // CreateCreditorClaimNew,

@@ -223,12 +223,6 @@ const routes = [
                         name: 'projectWizard',
                         component: () => import('../components/referenceBook/ProjectNew/ProjectSetupWizard')
                     },
-                    {
-                        path: 'sync',
-                        name: 'syncPhysicalPersons',
-                        component: () => import('@/components/referenceBook/PhysicalPersonV2/SyncPhysicalPersons.vue'),
-                        meta: {requiresAuth: true}
-                    }
                 ]
             },
             {
@@ -480,6 +474,19 @@ const routes = [
                 name: 'permission',
                 path: 'user-list',
                 component: UserList,
+            },
+            {
+                path: 'sync',
+                name: 'syncMain',
+                component: () => import('@/components/SyncMain.vue'),
+                children: [
+                    {
+                        path: 'physical-persons',
+                        name: 'syncPhysicalPersons',
+                        component: () => import('@/components/referenceBook/PhysicalPersonV2/SyncPhysicalPersons.vue'),
+                        meta: {requiresAuth: true}
+                    }
+                ]
             },
             {
                 path: '/setting',
