@@ -1,5 +1,5 @@
 <template>
-  <v-expansion-panel-content class="procedure_content" :style="collapsed? 'height: 63vh': 'height: 41vh'">
+  <v-expansion-panel-content class="procedure_content" :style="collapsed? 'max-height: 63vh': 'max-height: 41vh'">
     <v-data-table :headers="headers" :items="involvedPerson" :items-per-page="50"
                   dense
                   height="50%">

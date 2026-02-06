@@ -31,9 +31,9 @@ export default {
         syncBasicCreditorClaim(state, data) {
             state.basicCreditorClaim = [...data]
         },
-        syncCreditorClaimRegister(state, data){
+        syncCreditorClaimRegister(state, data) {
             console.log(data)
-          state.creditorClaimsRegister = [...data]
+            state.creditorClaimsRegister = [...data]
         },
         syncAddBasicCreditorClaim(state, data) {
             state.basicCreditorClaim.push(data)
@@ -116,7 +116,7 @@ export default {
                     console.log(res.data.data.data)
                     commit('syncCreditorClaimRegister', res.data.data.data)
                     resolve(res.data.data.data)
-                }).catch(err=>{
+                }).catch(err => {
                     reject(err)
                 })
             })
@@ -385,8 +385,7 @@ export default {
         complaintsData(state) {
             return state.complaints
         },
-        creditorClaimRegisterData(state){
-            console.log(state.creditorClaimsRegister)
+        creditorClaimRegisterData(state) {
             return state.creditorClaimsRegister
         }
     }

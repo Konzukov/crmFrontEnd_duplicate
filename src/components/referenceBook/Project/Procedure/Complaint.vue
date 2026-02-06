@@ -7,7 +7,7 @@
         <v-icon>mdi-plus</v-icon>
       </v-btn>
     </v-expansion-panel-header>
-    <v-expansion-panel-content class="procedure_content" :style="collapsed? 'height: 63vh': 'height: 41vh'">
+    <v-expansion-panel-content class="procedure_content" :style="collapsed? 'max-height: 63vh': 'max-height: 41vh'">
       <v-data-table :headers="headers" :items="complaintsList" :items-per-page="50"
                     dense
                     height="50%">
@@ -50,7 +50,7 @@ export default {
     addComplaints() {
       eventBus.$emit('addComplaints', this.project)
     },
-    editComplaint(item){
+    editComplaint(item) {
       eventBus.$emit('editComplaints', item)
     }
   },

@@ -226,123 +226,19 @@
                       </v-row>
 
                       <!-- Таблица имущества с пагинацией -->
-                      <v-data-table
-                          :headers="assetHeaders"
-                          :items="filteredAssets"
-                          :search="searchQuery"
+                      <AssetsTable
+                          :items="assets"
                           :loading="loadingAssets"
+                          :search="searchQuery"
+                          :filter-type="assetFilter"
+                          :filter-category="categoryFilter"
                           :page.sync="assetPage"
                           :items-per-page.sync="assetItemsPerPage"
-                          :footer-props="{
-                                'items-per-page-options': [10, 25, 50, 100],
-                                'items-per-page-text': 'Строк на странице:',
-                                'page-text': '{0}-{1} из {2}'
-                              }"
-                          class="elevation-1 assets-table"
-                      >
-                        <template v-slot:item.asset_type="{ item }">
-                          <div class="asset-type-with-badges">
-                            <div class="asset-type-content">
-                              <v-icon small class="mr-1">{{ getAssetIcon(item.asset_type) }}</v-icon>
-                              <span class="asset-type-text">{{ item.asset_type }}</span>
-
-                              <!-- Бейджи для арестов и залогов -->
-                              <div v-if="hasActiveStatuses(item)" class="asset-badges">
-                                <v-tooltip v-if="item.arrest_status_info && item.arrest_status_info.arrest_count > 0"
-                                           top>
-                                  <template v-slot:activator="{ on, attrs }">
-                                    <div class="arrest-badge" v-bind="attrs" v-on="on">
-                                      {{ item.arrest_status_info.arrest_count }}
-                                    </div>
-                                  </template>
-                                  <span>Активных арестов: {{ item.arrest_status_info.arrest_count }}</span>
-                                </v-tooltip>
-
-                                <v-tooltip v-if="item.pledge_status_info && item.pledge_status_info.pledge_count > 0"
-                                           top>
-                                  <template v-slot:activator="{ on, attrs }">
-                                    <div class="pledge-badge" v-bind="attrs" v-on="on">
-                                      {{ item.pledge_status_info.pledge_count }}
-                                    </div>
-                                  </template>
-                                  <span>Активных залогов: {{ item.pledge_status_info.pledge_count }}</span>
-                                </v-tooltip>
-                              </div>
-                            </div>
-                          </div>
-                        </template>
-                        <template v-slot:item.is_joint_property="{ item }">
-                          <v-chip small :color="getCategoryColor(item.is_joint_property)" dark class="category-chip">
-                            {{ item.is_joint_property ? "Совместное" : 'Личное' }}
-                          </v-chip>
-                        </template>
-                        <template v-slot:item.status="{ item }">
-                          <v-chip
-                              small
-                              :color="getStatusColor(item.status)"
-                              text-color="white"
-                              class="status-chip"
-                          >
-                            {{ getStatusDisplay(item.status) }}
-                          </v-chip>
-                        </template>
-                        <template v-slot:item.acquisition_date="{ item }">
-                          <div class="date-cell">
-                            {{ item.acquisition_date || '-' }}
-                          </div>
-                        </template>
-                        <template v-slot:item.owner_name="{ item }">
-                          <div class="owner-info">
-                            {{ item.owner_name || '-' }}
-                          </div>
-                        </template>
-                        <template v-slot:item.details="{ item }">
-                          <v-menu>
-                            <template v-slot:activator="{attrs, on}">
-                              <v-icon size="15" v-bind="attrs" v-on="on">mdi-dots-vertical</v-icon>
-                            </template>
-                            <v-list class="action bg-grey" dense>
-                              <v-list-item link @click="showAssetDetails(item)">
-                                <v-list-item-icon>
-                                  <v-icon small>mdi-pencil</v-icon>
-                                </v-list-item-icon>
-                                <v-list-item-title>Редактировать</v-list-item-title>
-                              </v-list-item>
-                              <v-list-item link @click="deleteAsset(item)">
-                                <v-list-item-icon>
-                                  <v-icon small color="error">mdi-delete</v-icon>
-                                </v-list-item-icon>
-                                <v-list-item-title style="color: #f44336;">Удалить</v-list-item-title>
-                              </v-list-item>
-                              <v-divider></v-divider>
-                            </v-list>
-                          </v-menu>
-                        </template>
-                        <template v-slot:no-data>
-                          <div class="text-center py-4">
-                            <v-icon class="mb-2">mdi-package-variant</v-icon>
-                            <p class="mb-2">Нет данных об имуществе</p>
-                            <v-btn color="primary" @click="addAsset">
-                              <v-icon left>mdi-plus</v-icon>
-                              Добавить имущество
-                            </v-btn>
-                          </div>
-                        </template>
-                        <template v-slot:loading>
-                          <v-row justify="center" align="center" class="py-4">
-                            <v-progress-circular indeterminate color="primary" size="24"></v-progress-circular>
-                            <span class="ml-3">Загрузка имущества...</span>
-                          </v-row>
-                        </template>
-                        <template v-slot:footer>
-                          <v-divider></v-divider>
-                          <div class="text-center py-2">
-                          <span class="text-caption grey--text">
-                            Показано {{ getAssetPaginationInfo() }}
-                          </span>
-                          </div>
-                        </template>
-                      </v-data-table>
+                          @edit="showAssetDetails"
+                          @delete="deleteAsset"
+                          @estate-process="openEstateProcessDialog"
+                          @add="addAsset"
+                      />
                     </div>
                   </v-tab-item>
 
@@ -423,6 +319,15 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
+      <EstateProcessDialog
+          v-if="assetForEstateProcess"
+          v-model="showEstateProcessDialog"
+          :estate-process="estateProcessData"
+          :is-editing="isEditingEstateProcess"
+          :project-id="assetForEstateProcess.owner_project"
+          @cancel="closeEstateProcessDialog"
+          @save="saveEstateProcess"
+      />
     </v-main>
   </v-app>
 </template>
@@ -433,10 +338,12 @@ import SystemUpdateNotice from "@/components/UI/SystemUpdateNotice.vue";
 import createDocument from "@/components/CRM/PaperFlow/modal/createDocument.vue";
 import AssetForm from "@/components/referenceBook/Assets/AssetForm.vue";
 import {eventBus} from "@/bus";
+import EstateProcessDialog from "@/components/referenceBook/Assets/EstateProcessDialog.vue";
+import AssetsTable from "@/components/referenceBook/Assets/AssetsTable.vue";
 
 export default {
   name: "Dashboard",
-  components: {SystemUpdateNotice, createDocument, AssetForm},
+  components: {AssetsTable, SystemUpdateNotice, createDocument, AssetForm, EstateProcessDialog},
   data() {
     return {
       activeTab: 0,
@@ -473,6 +380,17 @@ export default {
       showDeleteDialog: false,
       assetToDelete: null,
       deletingAsset: false,
+      showEstateProcessDialog: false,
+      assetForEstateProcess: null,
+      estateProcessData: {
+        decision: 'IN',
+        exclusion_ground: null,
+        legal_reference: '',
+        document_reference: null,
+        decision_date: null,
+        is_active: true
+      },
+      isEditingEstateProcess: false
     }
   },
   computed: {
@@ -618,7 +536,6 @@ export default {
       }
     },
 
-    // Вспомогательные методы для форматирования
     getCategoryColor(is_joint_property) {
       return is_joint_property ? 'success' : 'grey'
     },
@@ -639,16 +556,6 @@ export default {
         'банковский счёт': 'mdi-credit-card'
       }
       return icons[assetType] || 'mdi-package-variant'
-    },
-
-    getAssetTypeDisplay(assetType) {
-      // Преобразуем snake_case в читаемый текст
-      if (!assetType) return ''
-
-      return assetType
-          .split('_')
-          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(' ')
     },
 
     getStatusColor(status) {
@@ -675,11 +582,6 @@ export default {
       return display[status] || status
     },
 
-    getInitials(name) {
-      if (!name) return '?'
-      return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
-    },
-
     hasActiveStatuses(asset) {
       const hasArrests = asset.arrest_status_info && asset.arrest_status_info.arrest_count > 0;
       const hasPledges = asset.pledge_status_info && asset.pledge_status_info.pledge_count > 0;
@@ -690,6 +592,7 @@ export default {
       this.selectedAsset = {...asset};
       this.showAssetDialog = true;
     },
+
     async deleteAsset(asset) {
       // Сохраняем актив для удаления и показываем диалог
       this.assetToDelete = {...asset};
@@ -727,25 +630,87 @@ export default {
         this.deletingAsset = false;
       }
     },
+
     cancelDelete() {
       this.showDeleteDialog = false;
       this.assetToDelete = null;
       this.deletingAsset = false;
     },
+
     isJointAsset(asset) {
       return asset.is_joint_property || asset.ownership_type === 'joint';
     },
 
-    // Информация о пагинации
     getAssetPaginationInfo() {
       const start = (this.assetPage - 1) * this.assetItemsPerPage + 1
       const end = Math.min(this.assetPage * this.assetItemsPerPage, this.filteredAssets.length)
       return `${start}-${end} из ${this.filteredAssets.length}`
     },
 
+    truncateDescription(text, maxLength) {
+      if (!text) return '';
+      if (text.length <= maxLength) return text;
+      return text.substring(0, maxLength) + '...';
+    },
+    openEstateProcessDialog(asset) {
+      this.assetForEstateProcess = {...asset};
+      this.isEditingEstateProcess = !!asset.estate_process;
+
+      if (asset.estate_process) {
+        this.estateProcessData = {...asset.estate_process};
+      } else {
+        this.estateProcessData = {
+          decision: 'IN',
+          exclusion_ground: null,
+          legal_reference: '',
+          document_reference: null,
+          decision_date: new Date().toLocaleDateString('ru-RU'),
+          is_active: true
+        };
+      }
+
+      this.showEstateProcessDialog = true;
+    },
+
+    closeEstateProcessDialog() {
+      this.showEstateProcessDialog = false;
+      this.assetForEstateProcess = null;
+    },
+    async saveEstateProcess(estateData) {
+      try {
+        const updatedAsset = {
+          ...this.assetForEstateProcess,
+          estate_process: estateData
+        };
+
+        await this.$store.dispatch('updateAsset', updatedAsset);
+        await this.loadAssets();
+
+        this.closeEstateProcessDialog();
+        await this.$store.dispatch('snackbar/showSuccess', 'Решение по конкурсной массе успешно сохранено');
+
+      } catch (error) {
+        console.error('Ошибка при сохранении решения по конкурсной массе:', error);
+
+        let errorMessage = 'Ошибка при сохранении решения по конкурсной массе';
+        if (error.response && error.response.data) {
+          const data = error.response.data;
+          if (data.error) {
+            errorMessage = data.error;
+          } else if (data.details) {
+            errorMessage = typeof data.details === 'string'
+                ? data.details
+                : JSON.stringify(data.details);
+          }
+        }
+
+        await this.$store.dispatch('snackbar/showError', errorMessage);
+      }
+    }
 
   },
   async created() {
+    await this.$store.dispatch('getProjectList')
     await this.$store.dispatch('checkAuth').then(async (data) => {
       await this.$store.dispatch('getSystemUpdateNotice').then(notice => {
         let showNotice = notice['display_user'].filter(obj => obj.uuid === this.userData.uuid)
@@ -904,21 +869,26 @@ export default {
   padding: 12px 16px !important;
 }
 
-/* Адаптивность для мобильных */
-@media (max-width: 960px) {
-  .dashboard-container {
-    padding: 12px;
-  }
-
-  .card-title {
-    padding: 8px 12px !important;
-    font-size: 0.85rem !important;
-  }
-
-  .assets-table >>> .v-data-table__wrapper {
-    max-height: calc(100vh - 500px) !important;
-  }
+.asset-type-with-description {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
+
+.asset-description {
+  font-size: 0.75rem;
+  color: #666;
+  line-height: 1.2;
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.description-text, .address-text {
+  cursor: help;
+}
+
 
 .asset-type-with-badges {
   display: flex;
@@ -993,6 +963,22 @@ export default {
 
 .action .v-list-item__title {
   font-size: 0.875rem;
+}
+
+/* Адаптивность для мобильных */
+@media (max-width: 960px) {
+  .dashboard-container {
+    padding: 12px;
+  }
+
+  .card-title {
+    padding: 8px 12px !important;
+    font-size: 0.85rem !important;
+  }
+
+  .assets-table >>> .v-data-table__wrapper {
+    max-height: calc(100vh - 500px) !important;
+  }
 }
 
 @media (max-width: 600px) {

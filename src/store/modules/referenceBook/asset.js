@@ -8,6 +8,7 @@ Vue.use(VueCookies)
 export default {
     state: {
         assets: [],
+        personAssets: [],
         loading: false,
         error: null
     },
@@ -18,6 +19,9 @@ export default {
         SET_LOADING(state, loading) {
             state.loading = loading;
         },
+        SET_PERSON_ASSETS(state, assets) {
+            state.personAssets = assets
+        }
     },
     actions: {
         async fetchAssets({commit}) {
@@ -28,6 +32,20 @@ export default {
                     url: customConst.REFERENCE_BOOK_API + 'asset',
                 }).then(res => {
                     commit('SET_ASSETS', res.data.data.data);
+                    resolve(res.data.data.data)
+                }).catch(err => {
+                    reject(err)
+                })
+            })
+        },
+        async fetchAssetsByPerson({commit}, {personId}) {
+            return await new Promise((resolve, reject) => {
+                axios({
+                    method: "GET",
+                    url: customConst.REFERENCE_BOOK_API + `asset/by-person/${personId}/`,
+                }).then(res => {
+                    console.log(res.data.data.data)
+                    commit('SET_PERSON_ASSETS', res.data.data.data);
                     resolve(res.data.data.data)
                 }).catch(err => {
                     reject(err)
@@ -71,23 +89,23 @@ export default {
                     method: "PUT",
                     url: customConst.REFERENCE_BOOK_API + `asset/${asset.id}/`,
                     data: asset
-                }).then(res=>{
+                }).then(res => {
                     console.log(res)
                     resolve(res)
-                }).catch(err=>{
+                }).catch(err => {
                     console.log(err)
                     reject(err)
                 })
             })
         },
-        async deleteAsset({commit}, asset){
+        async deleteAsset({commit}, asset) {
             return new Promise((resolve, reject) => {
                 axios({
                     method: "DELETE",
                     url: customConst.REFERENCE_BOOK_API + `asset/${asset.id}/`,
-                }).then(res=>{
+                }).then(res => {
                     resolve(res)
-                }).catch(err=>{
+                }).catch(err => {
                     reject(err)
                 })
             })
@@ -95,5 +113,6 @@ export default {
     },
     getters: {
         assetsList: state => state.assets,
+        personAssetsList: state => state.personAssets
     }
 }

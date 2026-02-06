@@ -308,6 +308,32 @@
       </v-col>
     </v-row>
 
+    <!-- Раздел оспаривания сделок -->
+    <v-divider class="my-4"></v-divider>
+    <!-- Раздел оспаривания сделок (используем новый компонент) -->
+    <DisputeTransactionsList
+        :disputes="editedAsset.dispute_transactions || []"
+        :disabled="disabled"
+        :disposal-date="editedAsset.disposal_date"
+        :all-ref-data="allRefData"
+        :legal-entities="legalEntities"
+        @open-dialog="openDisputeDialog"
+        @edit-dispute="editDispute"
+        @remove-dispute="removeDispute"
+    />
+
+    <!-- Модальное окно для оспаривания (новый компонент) -->
+    <DisputeDialog
+        v-model="disputeDialog"
+        :dispute="currentDispute"
+        :is-editing="isEditingDispute"
+        :projects="filteredProjects"
+        :physical-persons="physicalPersons"
+        :legal-entities="legalEntities"
+        :creditors-list="availableCreditors"
+        @cancel="closeDisputeDialog"
+        @save="saveDispute"
+    />
     <!-- Модальное окно для добавления/редактирования залогов и арестов -->
     <v-dialog v-model="pledgeArrestDialog" max-width="800" persistent>
       <v-card>
@@ -506,165 +532,15 @@
     </v-dialog>
 
     <!-- Модальное окно для конкурсной массы -->
-    <v-dialog v-model="estateProcessDialog" max-width="700" persistent>
-      <v-card>
-        <v-card-title>
-          {{ isEditingEstateProcess ? 'Редактирование решения' : 'Новое решение' }} по конкурсной массе
-        </v-card-title>
-
-        <v-card-text>
-          <v-form ref="estateForm" v-model="estateValid">
-            <v-row>
-              <v-col cols="12" md="6">
-                <v-autocomplete
-                    v-model="currentEstateProcess.decision"
-                    :items="estateDecisions"
-                    item-text="text"
-                    item-value="value"
-                    label="Решение*"
-                    :rules="estateRules.decision"
-                    outlined dense
-                    @change="onDecisionChange"
-                />
-              </v-col>
-
-              <template v-if="currentEstateProcess.decision">
-                <v-col cols="12" md="6" v-if="currentEstateProcess.decision === 'OUT'">
-                  <v-autocomplete
-                      v-model="currentEstateProcess.exclusion_ground"
-                      :items="exclusionGrounds"
-                      item-text="text"
-                      item-value="value"
-                      label="Основание исключения*"
-                      :rules="estateRules.exclusion_ground"
-                      outlined dense
-                  />
-                </v-col>
-
-                <v-col cols="12">
-                  <v-textarea
-                      v-model="currentEstateProcess.legal_reference"
-                      label="Правовое обоснование*"
-                      outlined dense
-                      rows="3"
-                  />
-                </v-col>
-
-                <v-col cols="12" md="6">
-                  <v-autocomplete
-                      v-model="currentEstateProcess.document_reference"
-                      :items="documents"
-                      item-text="title"
-                      item-value="id"
-                      label="Документ-основание"
-                      outlined dense
-                      clearable
-                  >
-                    <!-- Кастомный шаблон для выбранного значения -->
-                    <template v-slot:selection="{ item }">
-                    <span class="compact-document-selection">
-                      <span class="document-type">{{ getRouteText(item.route) }}</span>
-                      <span class="document-name">{{ item.fileName }}</span>
-                      <span class="document-from" v-if="getFromWhoName(item.fromWho)">{{
-                          getFromWhoName(item.fromWho)
-                        }}</span>
-                    </span>
-                    </template>
-
-                    <!-- Кастомный шаблон для элементов списка -->
-                    <template v-slot:item="{ item }">
-                      <v-list-item-content>
-                        <!-- Первая строка: Название файла -->
-                        <v-list-item-title class="document-compact-title">
-                          <div class="document-compact-name" v-if="item.correspondence_type">
-                            <v-icon x-small class="mr-1">mdi-file-document</v-icon>
-                            {{ item.correspondence_type }}
-                          </div>
-                        </v-list-item-title>
-                        <span class="document-compact-correspondence">{{ item.fileName }}</span>
-                        <v-list-item-subtitle class="document-compact-subtitle">
-                          <div class="document-compact-info">
-                          <span class="document-compact-direction">
-                            {{ getRouteText(item.route) }}
-                          </span>
-                            <span class="document-compact-date" v-if="item.entry_date">
-                            <v-icon x-small class="mr-1 ml-2">mdi-calendar</v-icon>
-                              {{ formatDateShort(item.entry_date) }}
-                          </span>
-                            <span class="document-compact-from" v-if="getFromWhoName(item.fromWho)">
-                            <v-icon x-small class="mr-1 ml-2">mdi-account</v-icon>
-                            {{ getFromWhoName(item.fromWho) }}
-                          </span>
-                          </div>
-                        </v-list-item-subtitle>
-                      </v-list-item-content>
-                    </template>
-
-                    <!-- Кастомный префикс для поиска -->
-                    <template v-slot:prepend-item v-if="documents.length > 0">
-                      <v-list-item dense class="document-filter-header">
-                        <v-list-item-content>
-                          <v-list-item-subtitle class="text-caption">
-                            Всего документов: {{ documents.length }}
-                          </v-list-item-subtitle>
-                        </v-list-item-content>
-                      </v-list-item>
-                      <v-divider class="mt-1 mb-1"></v-divider>
-                    </template>
-
-                    <!-- Кастомный текст при отсутствии документов -->
-                    <template v-slot:no-data>
-                      <v-list-item>
-                        <v-list-item-content>
-                          <v-list-item-title class="text-center">
-                            Документы не найдены
-                          </v-list-item-title>
-                        </v-list-item-content>
-                      </v-list-item>
-                    </template>
-                  </v-autocomplete>
-                </v-col>
-
-                <v-col cols="12" md="6">
-                  <DatePicker
-                      v-model="currentEstateProcess.decision_date"
-                      value-type="format"
-                      format="DD.MM.YYYY"
-                      placeholder="Дата принятия решения*"
-                      :clearable="false"
-                      :rules="estateRules.decision_date"
-                      outlined
-                  />
-                </v-col>
-
-                <v-col cols="12">
-                  <v-switch
-                      v-model="currentEstateProcess.is_active"
-                      label="Актуальное решение"
-                      :disabled="currentEstateProcess.decision === 'OUT'"
-                      hint="Для исключения из конкурсной массы решение всегда активно"
-                      persistent-hint
-                      hide-details
-                  />
-                </v-col>
-              </template>
-            </v-row>
-          </v-form>
-        </v-card-text>
-
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn text @click="closeEstateProcessDialog">Отмена</v-btn>
-          <v-btn
-              color="primary"
-              @click="saveEstateProcess"
-              :disabled="!estateValid"
-          >
-            {{ isEditingEstateProcess ? 'Сохранить' : 'Добавить' }}
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <EstateProcessDialog
+        ref="estateDialog"
+        v-model="estateProcessDialog"
+        :estate-process="currentEstateProcess"
+        :is-editing="isEditingEstateProcess"
+        :project-id="editedAsset.owner_project"
+        @cancel="closeEstateProcessDialog"
+        @save="saveEstateProcess"
+    />
 
     <!-- Модальное окно для истории изменений конкурсной массы -->
     <v-dialog v-model="historyDialog" max-width="900" persistent>
@@ -680,50 +556,6 @@
         </v-card-title>
 
         <v-card-text class="pt-0">
-          <!-- Фильтры и поиск -->
-          <v-row class="mt-2 mb-4" dense>
-            <v-col cols="12" md="6">
-              <v-text-field
-                  v-model="historySearch"
-                  label="Поиск по истории"
-                  outlined dense
-                  clearable
-                  prepend-inner-icon="mdi-magnify"
-                  hide-details
-              />
-            </v-col>
-            <v-col cols="12" md="3">
-              <v-autocomplete
-                  v-model="historyFilter.decision"
-                  :items="[{text: 'Все решения', value: null}, ...estateDecisions]"
-                  label="Фильтр по решению"
-                  outlined dense
-                  clearable
-                  hide-details
-              />
-            </v-col>
-            <v-col cols="12" md="3">
-              <v-autocomplete
-                  v-model="historyFilter.changed_by"
-                  :items="historyUsers"
-                  item-text="full_name"
-                  item-value="id"
-                  label="Кто изменил"
-                  outlined dense
-                  clearable
-                  hide-details
-              />
-            </v-col>
-          </v-row>
-
-          <!-- Сводная статистика -->
-          <v-alert v-if="filteredHistory.length > 0" type="info" outlined dense class="mb-4">
-            <div class="d-flex justify-space-between">
-              <span>Всего записей: {{ filteredHistory.length }}</span>
-              <span>Последнее изменение: {{ formatDateTime(latestHistoryChange) }}</span>
-              <span>Первый раз внесено: {{ formatDateTime(earliestHistoryChange) }}</span>
-            </div>
-          </v-alert>
 
           <!-- Таблица истории изменений -->
           <v-data-table
@@ -745,9 +577,6 @@
             <!-- Кто изменил -->
             <template v-slot:item.changed_by_name="{ item }">
               <div class="d-flex align-center">
-                <v-avatar size="24" color="primary" class="mr-2">
-                  <span class="white--text text-caption">{{ getInitials(item.changed_by_name) }}</span>
-                </v-avatar>
                 <span>{{ item.changed_by_name }}</span>
               </div>
             </template>
@@ -948,6 +777,7 @@
 
 <script>
 import {AssetSchemas} from '@/const/dataTypes'
+import EstateProcessDialog from "@/components/referenceBook/Assets/EstateProcessDialog.vue";
 import DatePicker from 'vue2-datepicker'
 import 'vue2-datepicker/index.css'
 import {
@@ -976,10 +806,16 @@ import {
   VTextField
 } from 'vuetify/lib'
 import {mapGetters} from "vuex";
+import DisputeTransactionsList from "@/components/referenceBook/Assets/DisputeTransactionsList.vue";
+import DisputeDialog from "@/components/referenceBook/Assets/DisputeDialog.vue";
 
 export default {
   name: "AssetForm",
   components: {
+    DisputeTransactionsList,
+    DisputeDialog,
+    DisputeList: DisputeTransactionsList,
+    EstateProcessDialog,
     DatePicker,
     VForm,
     VTextField,
@@ -1013,7 +849,7 @@ export default {
     disabled: {
       type: Boolean,
       default: false
-    }
+    },
   },
   data() {
     return {
@@ -1038,7 +874,7 @@ export default {
         {value: "Денежные средства", text: "Денежные средства"},
         {value: "Дебиторская задолженность", text: "Дебиторская задолженность"},
         {value: "Ценные бумаги и прочие финансовые инструменты", text: "Ценные бумаги"},
-        {value: "Акции и иное участие в коммерческих организациян", text: "Акции и участие"},
+        {value: "Акции и иное участие в коммерческих организациях", text: "Акции и участие"},
         {value: "Иное имущество", text: "Иное имущество"}
       ],
       assetTypes: Object.keys(AssetSchemas),
@@ -1075,7 +911,6 @@ export default {
         description: '',
         is_active: true
       },
-
       currentArrest: {
         id: null,
         arresting_organization: null,
@@ -1085,7 +920,6 @@ export default {
         lifting_date: null,
         lifting_reason: ''
       },
-
       // Списки для выбора
       pledgeTypes: [
         {value: 'mortgage', text: 'Ипотека'},
@@ -1093,7 +927,6 @@ export default {
         {value: 'pledge_of_rights', text: 'Залог прав'},
         {value: 'other', text: 'Другой вид залога'}
       ],
-
       loadingLegalEntities: false,
       loadingPhysicalPersons: false,
       pledgeRules: {
@@ -1102,13 +935,11 @@ export default {
         start_date: [v => !!v || 'Дата начала обязательна'],
         amount: [v => !v || !isNaN(parseFloat(v)) || 'Сумма должна быть числом']
       },
-
       arrestRules: {
         arresting_organization: [v => !!v || 'Организация обязательна'],
         arrest_date: [v => !!v || 'Дата ареста обязательна'],
         reason: [v => !!v || 'Основание для ареста обязательно']
       },
-
       estateProcessDialog: false,
       estateValid: false,
       isEditingEstateProcess: false,
@@ -1124,7 +955,6 @@ export default {
         {value: 'IN', text: 'Включается в конкурсную массу'},
         {value: 'OUT', text: 'Исключается из конкурсной массы'}
       ],
-
       exclusionGrounds: [
         {value: 'gpk_446', text: 'Ст. 446 ГПК РФ (единственное жильё)'},
         {value: 'court_definition', text: 'Определение Арбитражного суда'},
@@ -1175,10 +1005,41 @@ export default {
         {text: 'Действия', value: 'actions', width: '80px', sortable: false}
       ],
       selectedHistoryItem: null,
+      // Оспаривание сделок
+      disputeDialog: false,
+      isEditingDispute: false,
+      editingDisputeIndex: -1,
+      currentDispute: {
+        project: null,
+        disposition_reason: '',
+        disposition_contract: '',
+        contract_value: null,
+        bankruptcy_application_date: null,
+        transaction_period: null,
+        main_insolvency_date: null,
+        statistical_value: null,
+        market_value_sources: [],
+        counterparty_person: null,
+        counterparty_legal: null,
+        counterparty_interest_type: null,
+        counterparty_interest_details: '',
+        disputing_articles: [],
+        legal_justification: '',
+        dispute_status: 'analysis',
+        notes: '',
+        is_active: true
+      },
     }
   },
   computed: {
-    ...mapGetters({allRefData: "allRefData", legalEntities: 'legalEntityData', documents: 'projectDocumentListData'}),
+    ...mapGetters({
+      allRefData: "allRefData",
+      legalEntities: 'legalEntityData',
+      documents: 'projectDocumentListData',
+      projects: 'projectListData',
+      physicalPersons: 'physicalPersonListDataV2',
+      creditorClaims: 'creditorClaimRegisterData'
+    }),
     hasPledges() {
       return Array.isArray(this.editedAsset.pledges) &&
           this.editedAsset.pledges.length > 0;
@@ -1193,7 +1054,6 @@ export default {
           Array.isArray(this.editedAsset.estate_process.history) &&
           this.editedAsset.estate_process.history.length > 0;
     },
-
     filteredHistory() {
       if (!this.editedAsset.estate_process || !this.editedAsset.estate_process.history) {
         return [];
@@ -1231,7 +1091,71 @@ export default {
         return dateB - dateA;
       });
     },
+    filteredProjects() {
+      if (!this.projects || this.projects.length === 0) {
+        return [];
+      }
 
+      // Получаем ID проектов из owner_project
+      const ownerProjectIds = this.editedAsset.owner_project || [];
+
+      if (!ownerProjectIds || ownerProjectIds.length === 0) {
+        console.warn('У владельца имущества нет связанных проектов');
+        return [];
+      }
+
+      // Фильтруем проекты по ID
+      return this.projects.filter(project =>
+          ownerProjectIds.includes(project.id)
+      );
+    },
+    availableCreditors() {
+      if (!this.creditorClaims || this.creditorClaims.length === 0) {
+        return []
+      }
+
+      // Собираем ID всех кредиторов из creditorClaims
+      const creditorIds = new Set()
+
+      this.creditorClaims.forEach(claim => {
+        if (claim.physical_creditor) {
+          // Если это физическое лицо
+          if (typeof claim.physical_creditor === 'object') {
+            creditorIds.add(claim.physical_creditor.id)
+          } else {
+            creditorIds.add(claim.physical_creditor)
+          }
+        } else if (claim.legal_creditor) {
+          // Если это юридическое лицо
+          if (typeof claim.legal_creditor === 'object') {
+            creditorIds.add(claim.legal_creditor.id)
+          } else {
+            creditorIds.add(claim.legal_creditor)
+          }
+        }
+      })
+
+      // Преобразуем Set в массив
+      const idsArray = Array.from(creditorIds)
+
+      // Фильтруем allRefData по найденным ID
+      return this.allRefData.filter(ref =>
+          idsArray.includes(ref.id)
+      ).map(creditor => {
+        // Добавляем поле name для единообразия
+        let name = ''
+        if (creditor.type === 'PhysicalPerson') {
+          name = creditor.fullName || 'Неизвестное физ. лицо'
+        } else if (creditor.type === 'LegalEntity') {
+          name = creditor.name || 'Неизвестное юр. лицо'
+        }
+
+        return {
+          ...creditor,
+          name: name
+        }
+      })
+    },
     historyUsers() {
       if (!this.editedAsset.estate_process || !this.editedAsset.estate_process.history) {
         return [];
@@ -1248,14 +1172,6 @@ export default {
       });
 
       return Array.from(usersMap.values());
-    },
-    latestHistoryChange() {
-      if (!this.filteredHistory.length) return null;
-      return this.filteredHistory[0].change_date;
-    },
-    earliestHistoryChange() {
-      if (!this.filteredHistory.length) return null;
-      return this.filteredHistory[this.filteredHistory.length - 1].change_date;
     },
   },
   watch: {
@@ -1279,7 +1195,8 @@ export default {
           pledges: newVal.pledges || [],
           arrests: newVal.arrests || [],
           details: newVal.details || {},
-          estate_process: newVal.estate_process || null
+          estate_process: newVal.estate_process || null,
+          dispute_transactions: newVal.dispute_transactions || []
         }))
 
         // Преобразуем organization из строки в число, если нужно
@@ -1289,8 +1206,6 @@ export default {
             this.editedAsset.details.organization = parseInt(orgValue);
           }
         }
-
-        console.log('Asset loaded:', this.editedAsset)
       }
     },
     legalEntities: {
@@ -1311,6 +1226,10 @@ export default {
     this.$store.dispatch('fetchPhysicalPersons')
     this.$store.dispatch('getLegalEntity')
     this.$store.dispatch('getProjectDocument', {project: this.editedAsset.owner_project.toString()})
+    if (this.editedAsset.owner_project) {
+      this.loadCreditorsForProject()
+    }
+
   },
   methods: {
     setPledgee(item) {
@@ -1369,7 +1288,8 @@ export default {
             details: this.editedAsset.details || {},
             pledges: this.editedAsset.pledges || [],
             arrests: this.editedAsset.arrests || [],
-            estate_process: this.editedAsset.estate_process || null
+            estate_process: this.editedAsset.estate_process || null,
+            dispute_transactions: this.editedAsset.dispute_transactions || []
           }));
 
           this.$emit('asset-change', assetData);
@@ -1746,33 +1666,13 @@ export default {
         console.error('Ошибка при сохранении залога/ареста:', error);
       }
     },
-    async saveEstateProcess() {
+    async saveEstateProcess(estateData) {
       try {
-        // Валидация формы
-        const estateFormValid = await this.$refs.estateForm.validate();
-        if (!estateFormValid) {
-          console.log('Форма конкурсной массы не валидна');
-          return;
-        }
-
-        // Подготавливаем данные
-        const estateData = {
-          ...this.currentEstateProcess,
-          decision_date: this.currentEstateProcess.decision_date
-        };
-
-        // Устанавливаем ID редактируемого процесса
-        if (this.isEditingEstateProcess && this.editedAsset.estate_process) {
-          estateData.id = this.editedAsset.estate_process.id;
-        }
-
-        // Обновляем estate_process в editedAsset
+        // estateData уже прошла валидацию в дочернем компоненте
         this.$set(this.editedAsset, 'estate_process', estateData);
 
-        // Закрываем диалог
         this.closeEstateProcessDialog();
 
-        // Обновляем данные
         this.$nextTick(() => {
           this.emitAssetChange();
         });
@@ -1780,7 +1680,7 @@ export default {
         console.log('Решение по конкурсной массе успешно сохранено');
 
       } catch (error) {
-        console.error('Ошибка при сохранении решения по конкурсной массе:', error);
+        console.error('Ошибка при сохранении решения по конкурсной массы:', error);
       }
     },
     editPledge(index) {
@@ -1883,42 +1783,8 @@ export default {
         is_active: true
       };
     },
-    onDecisionChange() {
-      // Если решение изменилось на IN, очищаем основание исключения
-      if (this.currentEstateProcess.decision === 'IN') {
-        this.currentEstateProcess.exclusion_ground = null;
-      }
-      // Для исключения решение всегда активно
-      if (this.currentEstateProcess.decision === 'OUT') {
-        this.currentEstateProcess.is_active = true;
-      }
-    },
     editEstateProcess() {
       this.openEstateProcessDialog();
-    },
-    getFromWhoName(fromWho) {
-      if (!fromWho) return null;
-
-      // Если это строка
-      if (typeof fromWho === 'string') {
-        // Проверяем, не является ли это JSON строкой
-        try {
-          const parsed = JSON.parse(fromWho);
-          if (parsed && typeof parsed === 'object') {
-            return parsed.name || parsed.fullName || parsed.full_name || null;
-          }
-        } catch (e) {
-          // Если не JSON, возвращаем как есть
-          return fromWho;
-        }
-      }
-
-      // Если это объект
-      if (typeof fromWho === 'object') {
-        return fromWho.name || fromWho.fullName || fromWho.full_name || null;
-      }
-
-      return null;
     },
     formatDateForPicker(dateString) {
       if (!dateString) return null;
@@ -1930,22 +1796,6 @@ export default {
         return `${day}.${month}.${year}`;
       }
       return dateString;
-    },
-    formatDateShort(dateString) {
-      if (!dateString) return '';
-
-      try {
-        const date = new Date(dateString);
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        return `${day}.${month}.${year}`;
-      } catch (e) {
-        return dateString;
-      }
-    },
-    getRouteText(route) {
-      return route ? 'Исходящий' : 'Входящий';
     },
     removeEstateProcess() {
       if (confirm('Вы уверены, что хотите удалить решение по конкурсной массе?')) {
@@ -2034,6 +1884,17 @@ export default {
         return dateTime;
       }
     },
+    async loadCreditorsForProject() {
+      try {
+        const projectIds = this.editedAsset.owner_project
+        if (projectIds && projectIds.length > 0) {
+          const projectId = projectIds[0]
+          await this.$store.dispatch('getCreditorClaim', projectId)
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки кредиторов:', error)
+      }
+    },
     async loadHistory() {
       try {
         if (this.editedAsset.estate_process && this.editedAsset.estate_process.id) {
@@ -2050,7 +1911,80 @@ export default {
       } catch (error) {
         console.error('Ошибка загрузки истории:', error);
       }
-    }
+    },
+    // Методы для оспаривания сделок
+    openDisputeDialog() {
+      this.disputeDialog = true
+      this.isEditingDispute = false
+      this.editingDisputeIndex = -1
+      this.currentDispute = {
+        project: this.filteredProjects.length === 1 ? this.filteredProjects[0].id : null,
+        disposition_reason: '',
+        disposition_contract: '',
+        contract_value: null,
+        bankruptcy_application_date: null,
+        transaction_period: null,
+        main_insolvency_date: null,
+        statistical_value: null,
+        market_value_sources: [],
+        counterparty_person: null,
+        counterparty_legal: null,
+        counterparty_interest_type: null,
+        counterparty_interest_details: '',
+        disputing_articles: [],
+        legal_justification: '',
+        dispute_status: 'analysis',  // Статус по умолчанию
+        notes: '',
+        is_active: true
+      };
+      
+    },
+
+    closeDisputeDialog() {
+      this.disputeDialog = false
+      this.isEditingDispute = false
+      this.editingDisputeIndex = -1
+    },
+
+    saveDispute(disputeData) {
+      // Создаем новый массив оспариваний
+      let newDisputes
+      if (this.isEditingDispute) {
+        newDisputes = [...this.editedAsset.dispute_transactions]
+        newDisputes[this.editingDisputeIndex] = disputeData
+      } else {
+        newDisputes = [...(this.editedAsset.dispute_transactions || []), disputeData]
+      }
+
+      // Обновляем реактивно
+      this.$set(this.editedAsset, 'dispute_transactions', newDisputes)
+
+      this.closeDisputeDialog()
+
+      this.$nextTick(() => {
+        this.emitAssetChange()
+      })
+    },
+
+    editDispute(index) {
+      this.disputeDialog = true
+      this.isEditingDispute = true
+      this.editingDisputeIndex = index
+      this.currentDispute = JSON.parse(JSON.stringify(
+          this.editedAsset.dispute_transactions[index]
+      ))
+    },
+
+    removeDispute(index) {
+      if (confirm('Вы уверены, что хотите удалить это оспаривание?')) {
+        const newDisputes = this.editedAsset.dispute_transactions.filter((_, i) => i !== index)
+        this.$set(this.editedAsset, 'dispute_transactions', newDisputes)
+
+        this.$nextTick(() => {
+          this.emitAssetChange()
+        })
+      }
+    },
   }
 }
 </script>

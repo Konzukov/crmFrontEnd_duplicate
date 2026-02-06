@@ -145,108 +145,22 @@
       <v-expansion-panel>
         <v-expansion-panel-header class="pr-5 pl-5">
           4.3. Сведения о составе и стоимости имущества должника
-          <v-spacer></v-spacer>
-          <v-tooltip top>
-            <template v-slot:activator="{ on, attrs }">
-              <v-btn disabled small icon v-bind="attrs"
-                     v-on="on" color="success" @click.native.stop="addEstate">
-                <v-icon>mdi-plus-thick</v-icon>
-              </v-btn>
-            </template>
-            <span>Добавить имущество</span>
-          </v-tooltip>
         </v-expansion-panel-header>
-        <BankruptcyEstate :collapsed="collapsed" :project="project"></BankruptcyEstate>
-        <v-expansion-panel-content class="procedure_content" :style="collapsed? 'height: 63vh': 'height: 41vh'">
-          <v-data-table
-            :headers="assetHeaders"
-            :items="filteredAssets"
-            :search="searchQuery"
-            :loading="loadingAssets"
-            :page.sync="assetPage"
-            :items-per-page.sync="assetItemsPerPage"
-            :footer-props="{
-                                'items-per-page-options': [10, 25, 50, 100],
-                                'items-per-page-text': 'Строк на странице:',
-                                'page-text': '{0}-{1} из {2}'
-                              }"
-            class="elevation-1 assets-table"
-        >
-          <template v-slot:item.is_joint_property="{ item }">
-            <v-chip small :color="getCategoryColor(item.is_joint_property)" dark class="category-chip">
-              {{ item.is_joint_property ? "Совместное" : 'Личное' }}
-            </v-chip>
-          </template>
-
-          <template v-slot:item.asset_type="{ item }">
-            <div class="asset-type">
-              <v-icon small class="mr-1">{{ getAssetIcon(item.asset_type) }}</v-icon>
-              {{ item.asset_type }}
-            </div>
-          </template>
-
-          <template v-slot:item.status="{ item }">
-            <v-chip
-                small
-                :color="getStatusColor(item.status)"
-                text-color="white"
-                class="status-chip"
-            >
-              {{ getStatusDisplay(item.status) }}
-            </v-chip>
-          </template>
-
-          <template v-slot:item.acquisition_date="{ item }">
-            <div class="date-cell">
-              {{ item.acquisition_date || '-' }}
-            </div>
-          </template>
-
-          <template v-slot:item.owner_name="{ item }">
-            <div class="owner-info">
-              {{ item.owner_name || '-' }}
-            </div>
-          </template>
-
-          <template v-slot:item.details="{ item }">
-            <v-btn
-                small
-                icon
-                @click="showAssetDetails(item)"
-                title="Показать детали"
-                class="details-btn"
-            >
-              <v-icon small>mdi-information-outline</v-icon>
-            </v-btn>
-          </template>
-
-          <template v-slot:no-data>
-            <div class="text-center py-4">
-              <v-icon class="mb-2">mdi-package-variant</v-icon>
-              <p class="mb-2">Нет данных об имуществе</p>
-              <v-btn color="primary" @click="addAsset">
-                <v-icon left>mdi-plus</v-icon>
-                Добавить имущество
-              </v-btn>
-            </div>
-          </template>
-
-          <template v-slot:loading>
-            <v-row justify="center" align="center" class="py-4">
-              <v-progress-circular indeterminate color="primary" size="24"></v-progress-circular>
-              <span class="ml-3">Загрузка имущества...</span>
-            </v-row>
-          </template>
-
-          <template v-slot:footer>
-            <v-divider></v-divider>
-            <div class="text-center py-2">
-                          <span class="text-caption grey--text">
-                            Показано {{ getAssetPaginationInfo() }}
-                          </span>
-            </div>
-          </template>
-        </v-data-table>
+        <BankruptcyEstate v-if="showOldBankruptcyTable" :collapsed="collapsed" :project="project"
+                          @hasData="handleBankruptcyData"></BankruptcyEstate>
+        <v-expansion-panel-content class="procedure_content" :style="collapsed? 'max-height: 63vh': 'max-height: 41vh'">
+          <AssetsTable
+              :items="filteredAssets"
+              :loading="loadingAssets"
+              :search="searchQuery"
+              :page.sync="assetPage"
+              :items-per-page.sync="assetItemsPerPage"
+              @edit="showAssetDetails"
+              :dense="true"
+              :show-estate-process="false"
+              :show-delete="false"
+              :show-add-button="false"
+          />
         </v-expansion-panel-content>
 
       </v-expansion-panel>
@@ -766,6 +680,36 @@
     <InvolvedPersonModal :project="project" @updateInvolvedPerson="updateInvolvedPerson"></InvolvedPersonModal>
     <ComplaintsCreateModal :project="project" @updateComplaint="updateComplaint"></ComplaintsCreateModal>
     <BasicCreditorClaimCreateModal @updateBasicCreditorClaim="updateBasicCreditorClaim"></BasicCreditorClaimCreateModal>
+    <v-dialog v-model="showAssetDialog" max-width="800px" persistent>
+      <v-card v-if="selectedAsset">
+        <v-card-title>
+          <span class="headline">Редактирование имущества</span>
+          <v-spacer></v-spacer>
+          <v-chip :color="getStatusColor(selectedAsset.status)" small>
+            {{ getStatusDisplay(selectedAsset.status) }}
+          </v-chip>
+        </v-card-title>
+        <v-card-text>
+          <AssetForm
+              ref="assetForm"
+              :asset="selectedAsset"
+              :disabled="isJointAsset(selectedAsset)"
+          />
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" text @click="showAssetDialog = false">Закрыть</v-btn>
+          <v-btn
+              color="primary"
+              @click="saveAsset"
+              :disabled="isJointAsset(selectedAsset) || savingAsset"
+              :loading="savingAsset"
+          >
+            Сохранить
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -801,15 +745,20 @@ import CreditorMeetingCreateModal
 import BasicCreditorClaimCreateModal from "@/components/referenceBook/Project/Creditor/BasicCreditorClaimCreate.vue";
 import InvolvedPersonModal from "@/components/referenceBook/Project/InvolvedPerson/InvolvedPersonModal.vue";
 import ComplaintsCreateModal from "@/components/referenceBook/Project/ComplaintsCreateModal.vue";
-
+import AssetForm from "@/components/referenceBook/Assets/AssetForm.vue";
+import AssetsTable from "@/components/referenceBook/Assets/AssetsTable.vue";
 
 export default {
-  props: ['project', 'collapsed', 'act', 'freePart'],
+  props: ['project', 'collapsed', 'act', 'freePart', 'debtor'],
   name: 'Procedure',
   data: () => ({
     procedureType: '',
     enforcementProceedings: [],
     bankAccountList: [],
+    showOldBankruptcyTable: false,
+    selectedAsset: null,
+    savingAsset: false,
+    showAssetDialog: false,
     bankCardList: [],
     creditorClaims: [],
     bargainingList: [],
@@ -894,7 +843,7 @@ export default {
       currentUser: 'authUserData',
       documentTemplate: "docTemplateData",
       basicCreditorClaim: 'basicCreditorClaimData',
-      assets: 'assetsList',
+      assets: 'personAssetsList',
     }),
     assetCategories() {
       return [
@@ -945,38 +894,56 @@ export default {
       })
     },
     addEstate() {
-      this.$emit('addEstate')
+      this.showAssetDialog = true
     },
-    getCategoryColor(is_joint_property) {
-      return is_joint_property ? 'success' : 'grey'
+    showAssetDetails(asset) {
+      this.selectedAsset = {...asset};
+      this.showAssetDialog = true;
     },
-    addAsset(){
+    async saveAsset() {
+      if (this.$refs.assetForm && this.$refs.assetForm.validate()) {
+        this.savingAsset = true;
+        try {
+          const updatedAsset = this.$refs.assetForm.getAssetData();
 
+          // Вызовите действие Vuex для обновления имущества
+          await this.$store.dispatch('updateAsset', updatedAsset);
+
+          // Обновите список имущества
+          await this.loadAssets();
+
+          this.showAssetDialog = false;
+
+          await this.$store.dispatch('snackbar/showSuccess', 'Имущество успешно обновлено');
+
+        } catch (error) {
+          console.error('Ошибка при сохранении имущества:', error);
+
+          // Вариант 1: используем хелпер showError
+          let errorMessage = 'Ошибка при сохранении имущества';
+          if (error.response && error.response.data) {
+            const data = error.response.data;
+            if (data.error) {
+              errorMessage = data.error;
+            } else if (data.details) {
+              errorMessage = typeof data.details === 'string'
+                  ? data.details
+                  : JSON.stringify(data.details);
+            }
+          }
+
+          await this.$store.dispatch('snackbar/showError', errorMessage);
+
+        } finally {
+          this.savingAsset = false;
+        }
+      }
+    },
+    handleBankruptcyData(hasData) {
+      this.showOldBankruptcyTable = hasData
     },
     isJointAsset(asset) {
-      return asset.is_joint_property || asset.ownership_type === 'joint';
-    },
-    getAssetPaginationInfo() {
-      const start = (this.assetPage - 1) * this.assetItemsPerPage + 1
-      const end = Math.min(this.assetPage * this.assetItemsPerPage, this.filteredAssets.length)
-      return `${start}-${end} из ${this.filteredAssets.length}`
-    },
-    getAssetIcon(assetType) {
-      const icons = {
-        'квартира': 'mdi-home',
-        'дом': 'mdi-home-city',
-        'земельный участок': 'mdi-map-marker',
-        'гараж': 'mdi-garage',
-        'автомобиль': 'mdi-car',
-        'мотоцикл': 'mdi-motorbike',
-        'яхта': 'mdi-sail-boat',
-        'самолёт': 'mdi-airplane',
-        'акции': 'mdi-chart-line',
-        'облигации': 'mdi-chart-bar',
-        'банковский вклад': 'mdi-bank',
-        'банковский счёт': 'mdi-credit-card'
-      }
-      return icons[assetType] || 'mdi-package-variant'
+      return asset?.is_joint_property || asset?.ownership_type === 'joint';
     },
     getStatusColor(status) {
       const colors = {
@@ -989,7 +956,6 @@ export default {
       }
       return colors[status] || 'grey'
     },
-
     getStatusDisplay(status) {
       const display = {
         'active': 'Активный',
@@ -1132,6 +1098,16 @@ export default {
     addBankCard(item) {
       this.selectedBackCard = {}
     },
+    async loadAssets() {
+      try {
+        this.loadingAssets = true
+        await this.$store.dispatch('fetchAssetsByPerson', {'personId': this.debtor.id})
+      } catch (error) {
+        console.error('Ошибка при загрузке имущества:', error)
+      } finally {
+        this.loadingAssets = false
+      }
+    },
     async createTradingProtocol(item) {
       console.log(this.documentTemplate)
       this.template = this.documentTemplate.filter(obj => obj.name === "Протокол_торгов")[0]
@@ -1264,12 +1240,13 @@ export default {
   },
   created() {
     console.log(this.project)
+    console.log(this.debtor)
     this.$store.dispatch('getBasicCreditorClaim', this.project)
     this.$store.dispatch('getProjectDetail', this.project).then(res => {
       this.procedureType = res.procedure
     })
     this.$store.dispatch('getDocTemplate')
-    this.$store.dispatch('fetchAssets')
+    this.$store.dispatch('fetchAssetsByPerson', {'personId': this.debtor.id})
     if (this.freePart) {
       this.projectFreePart = this.freePart
     }
@@ -1283,6 +1260,7 @@ export default {
     })
   },
   components: {
+    AssetsTable,
     ComplaintsCreateModal,
     InvolvedPersonModal,
     BasicCreditorClaimCreateModal,
@@ -1300,6 +1278,7 @@ export default {
     BargainingCreateModal,
     ApplicantCreateModal,
     BankCardCreate,
+    AssetForm,
     // ArbitrationManagerInfo,
     InvolvedPersons,
     Complaint,
