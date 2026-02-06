@@ -77,6 +77,19 @@
       </v-chip>
     </template>
 
+    <!-- Слот для статуса оспаривания -->
+    <template v-slot:item.dispute_status="{ item }">
+      <v-chip
+          small
+          :color="getStatusColor(item.status)"
+          text-color="white"
+          class="status-chip"
+      >
+        {{item}}
+<!--        {{ getDealStatusText(item.dispute_status) }}-->
+      </v-chip>
+    </template>
+
     <!-- Слот для даты приобретения -->
     <template v-slot:item.acquisition_date="{ item }">
       <div class="date-cell">
@@ -230,7 +243,15 @@ export default {
   data() {
     return {
       currentPage: this.page,
-      currentItemsPerPage: this.itemsPerPage
+      currentItemsPerPage: this.itemsPerPage,
+      disputeStatuses: [
+        {value: 'analysis', text: 'Анализ'},
+        {value: 'disputed', text: 'Оспаривается'},
+        {value: 'not_disputed', text: 'Не оспаривается'},
+        {value: 'completed', text: 'Завершено'},
+        {value: 'court_decision', text: 'Судебное решение вынесено'},
+        {value: 'settled', text: 'Урегулировано'}
+      ],
     }
   },
   computed: {
@@ -283,7 +304,9 @@ export default {
     getCategoryColor(is_joint_property) {
       return is_joint_property ? 'success' : 'grey'
     },
-
+    getDealStatusText(status){
+      return this.disputeStatuses.find(obj=> obj.value === status).text
+    },
     getAssetIcon(assetType) {
       const icons = {
         'квартира': 'mdi-home',

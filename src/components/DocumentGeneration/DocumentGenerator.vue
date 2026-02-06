@@ -1837,7 +1837,6 @@ export default {
         const citizenshipId = russianCitizenship?.id ||
             (party.citizenships?.length > 0 ? party.citizenships[0].id : null);
 
-        // Обработка идентификаторов (если они есть)
         if (party?.identifiers?.length > 0) {
           const identifierBlock = citizenshipId
               ? party.identifiers.find(block => block.citizenship === citizenshipId)
@@ -1850,20 +1849,16 @@ export default {
             formData.append(`${prefix}_OGRN`, snilsIdentifier?.value || null)
           }
         } else {
-          // Если идентификаторов нет, добавляем пустые значения
           formData.append(`${prefix}_INN`, null)
           formData.append(`${prefix}_OGRN`, null)
         }
 
-        // Обработка регистрационных данных (независимо от наличия идентификаторов)
         let registrationBlock = null;
         if (party?.registration?.length > 0) {
           registrationBlock = citizenshipId
               ? party.registration.find(block => block.citizenship === citizenshipId)
               : party.registration[0];
         }
-
-        console.log(registrationBlock)
 
         if (registrationBlock) {
           let address = registrationBlock.address

@@ -112,7 +112,9 @@ export default {
         }
     },
     getters: {
-        assetsList: state => state.assets,
-        personAssetsList: state => state.personAssets
+        assetsList: state => state.assets.filter(obj=> !obj.disposal_date),
+        disposalAssetsList: state => state.assets.filter(obj=> obj.disposal_date),
+        personAssetsList: state => state.personAssets,
+
     }
 }

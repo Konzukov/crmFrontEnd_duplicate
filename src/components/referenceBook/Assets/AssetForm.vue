@@ -29,7 +29,6 @@
             @change="onAssetTypeChange"
         />
       </v-col>
-
       <!-- Дата приобретения -->
       <v-col cols="12" md="4">
         <DatePicker
@@ -42,7 +41,6 @@
             :disabled="disabled"
         />
       </v-col>
-
       <!-- Дата выбытия -->
       <v-col cols="12" md="4">
         <DatePicker
@@ -55,7 +53,6 @@
             :disabled="disabled"
         />
       </v-col>
-
       <!-- Статус -->
       <v-col cols="12" md="4">
         <v-autocomplete
@@ -808,6 +805,7 @@ import {
 import {mapGetters} from "vuex";
 import DisputeTransactionsList from "@/components/referenceBook/Assets/DisputeTransactionsList.vue";
 import DisputeDialog from "@/components/referenceBook/Assets/DisputeDialog.vue";
+import moment from "moment";
 
 export default {
   name: "AssetForm",
@@ -1922,7 +1920,7 @@ export default {
         disposition_reason: '',
         disposition_contract: '',
         contract_value: null,
-        bankruptcy_application_date: null,
+        bankruptcy_application_date: this.filteredProjects.length === 1 ? moment(this.filteredProjects[0].bankruptcy_application_date).format('DD.MM.YYYY') : null,
         transaction_period: null,
         main_insolvency_date: null,
         statistical_value: null,

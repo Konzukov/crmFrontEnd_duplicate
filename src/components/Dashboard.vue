@@ -228,6 +228,7 @@
                       <!-- Таблица имущества с пагинацией -->
                       <AssetsTable
                           :items="assets"
+                          :headers="assetHeaders"
                           :loading="loadingAssets"
                           :search="searchQuery"
                           :filter-type="assetFilter"
@@ -245,11 +246,67 @@
                   <!-- Контент вкладки "Сделки" -->
                   <v-tab-item>
                     <div class="tab-pane">
-                      <div class="empty-tab-content">
-                        <v-icon class="empty-tab-icon">mdi-handshake-outline</v-icon>
-                        <p class="empty-tab-text">Раздел "Сделки" находится в разработке</p>
-                        <p class="empty-tab-subtext">Скоро здесь появится функционал для управления сделками</p>
-                      </div>
+                      <!-- Фильтры и поиск для сделок -->
+                      <v-row class="ma-2 filters-row">
+                        <v-col cols="12" md="4">
+                          <v-autocomplete
+                              v-model="dealFilter"
+                              :items="dealFilters"
+                              label="Фильтр по типу"
+                              dense
+                              outlined
+                              hide-details
+                              clearable
+                          ></v-autocomplete>
+                        </v-col>
+                        <v-col cols="12" md="4">
+                          <v-autocomplete
+                              v-model="dealCategoryFilter"
+                              :items="assetCategories"
+                              label="Фильтр по категории"
+                              dense
+                              outlined
+                              hide-details
+                              clearable
+                          ></v-autocomplete>
+                        </v-col>
+                        <v-col cols="12" md="4">
+                          <v-text-field
+                              v-model="dealSearchQuery"
+                              label="Поиск сделок"
+                              prepend-inner-icon="mdi-magnify"
+                              dense
+                              outlined
+                              hide-details
+                              clearable
+                          ></v-text-field>
+                        </v-col>
+                      </v-row>
+
+                      <!-- Кнопки для сделок -->
+                      <v-row class="mb-2 mr-2">
+                        <v-col cols="12" class="d-flex align-center">
+                          <v-spacer></v-spacer>
+                          <v-btn small color="primary" @click="refreshAssets" :loading="loadingAssets" class="mr-2">
+                            <v-icon left>mdi-refresh</v-icon>
+                            Обновить
+                          </v-btn>
+                        </v-col>
+                      </v-row>
+
+                      <!-- Таблица сделок -->
+                      <AssetsTable
+                          :items="disposalAssets"
+                          :headers="dealHeaders"
+                          :loading="loadingAssets"
+                          :search="dealSearchQuery"
+                          :filter-type="dealFilter"
+                          :filter-category="dealCategoryFilter"
+                          :page.sync="dealPage"
+                          :items-per-page.sync="dealItemsPerPage"
+                          @edit="showAssetDetails"
+                          :hide-actions="true"
+                      />
                     </div>
                   </v-tab-item>
                 </v-tabs-items>
@@ -350,11 +407,19 @@ export default {
       loadingAssets: false,
       drawer: null,
       activeOrganization: '',
+      // Для вкладки "Имущество"
       searchQuery: '',
       assetFilter: null,
       categoryFilter: null,
       assetPage: 1,
       assetItemsPerPage: 10,
+      // Для вкладки "Сделки"
+      dealSearchQuery: '',
+      dealFilter: null,
+      dealCategoryFilter: null,
+      dealPage: 1,
+      dealItemsPerPage: 10,
+
       deals: [],
       // Фильтры
       assetFilters: [
@@ -363,15 +428,28 @@ export default {
         {text: 'Совместное', value: 'joint'},
         {text: 'Отчужденное', value: 'disposal'},
       ],
+      dealFilters: [
+        {text: 'Все сделки', value: null},
+        {text: 'Личное', value: 'personal'},
+        {text: 'Совместное', value: 'joint'},
+      ],
 
       // Заголовки таблицы
       assetHeaders: [
         {text: 'Тип имущества', value: 'asset_type', sortable: true, width: '25%'},
         {text: 'Доля владения', value: 'is_joint_property', sortable: true, width: '18%'},
         {text: 'Дата приобретения', value: 'acquisition_date', sortable: true, width: '15%'},
+        {text: 'Владелец', value: 'owner_name', sortable: true, width: '22%'},
+        {text: 'Действия', value: 'actions', sortable: false, align: 'center', width: '8%'}
+      ],
+      dealHeaders: [
+        {text: 'Тип имущества', value: 'asset_type', sortable: true, width: '25%'},
+        {text: 'Доля владения', value: 'is_joint_property', sortable: true, width: '18%'},
+        {text: 'Статус сделки', value: 'dispute_status', width: '15%', getter: item => item.dispute_transactions},
+        {text: 'Дата приобретения', value: 'acquisition_date', sortable: true, width: '15%'},
         {text: 'Дата отчуждения', value: 'disposal_date', sortable: true, width: '15%'},
         {text: 'Владелец', value: 'owner_name', sortable: true, width: '22%'},
-        {text: 'Детали', value: 'details', sortable: false, align: 'center', width: '8%'},
+        {text: 'Действия', value: 'actions', sortable: false, align: 'center', width: '8%'}
       ],
       // Modal Asset
       showAssetDialog: false,
@@ -398,6 +476,7 @@ export default {
       userData: 'authUserData',
       dashboardTaskList: 'dashboardUserTaskList',
       assets: 'assetsList',
+      disposalAssets: 'disposalAssetsList'
     }),
 
     // Категории имущества из dataTypes.js
@@ -413,7 +492,6 @@ export default {
       ]
     },
 
-    // Отфильтрованные активы
     filteredAssets() {
       let filtered = [...this.assets]
 
@@ -429,6 +507,23 @@ export default {
       // Фильтр по категории
       if (this.categoryFilter) {
         filtered = filtered.filter(asset => asset.category_display === this.categoryFilter)
+      }
+
+      return filtered
+    },
+    filteredDeals() {
+      let filtered = [...this.disposalAssets]
+
+      // Фильтр по типу (личное/совместное)
+      if (this.dealFilter === 'personal') {
+        filtered = filtered.filter(asset => !asset.is_joint_property && asset.ownership_type === 'personal')
+      } else if (this.dealFilter === 'joint') {
+        filtered = filtered.filter(asset => asset.is_joint_property || asset.ownership_type === 'joint')
+      }
+
+      // Фильтр по категории
+      if (this.dealCategoryFilter) {
+        filtered = filtered.filter(asset => asset.category_display === this.dealCategoryFilter)
       }
 
       return filtered
