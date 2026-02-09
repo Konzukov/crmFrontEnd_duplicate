@@ -309,7 +309,7 @@
     <v-divider class="my-4"></v-divider>
     <!-- Раздел оспаривания сделок (используем новый компонент) -->
     <DisputeTransactionsList
-        :disputes="editedAsset.dispute_transactions || []"
+        :dispute="editedAsset.dispute_transaction || null"
         :disabled="disabled"
         :disposal-date="editedAsset.disposal_date"
         :all-ref-data="allRefData"
@@ -1109,50 +1109,55 @@ export default {
     },
     availableCreditors() {
       if (!this.creditorClaims || this.creditorClaims.length === 0) {
-        return []
+        return [];
       }
 
-      // Собираем ID всех кредиторов из creditorClaims
-      const creditorIds = new Set()
+      // Собираем уникальных кредиторов из creditorClaims
+      const creditorMap = new Map();
 
       this.creditorClaims.forEach(claim => {
+        let creditor = null;
+        let type = null;
+        let id = null;
+        let name = '';
+
         if (claim.physical_creditor) {
           // Если это физическое лицо
-          if (typeof claim.physical_creditor === 'object') {
-            creditorIds.add(claim.physical_creditor.id)
-          } else {
-            creditorIds.add(claim.physical_creditor)
+          creditor = typeof claim.physical_creditor === 'object'
+              ? claim.physical_creditor
+              : this.allRefData.find(ref => ref.id === claim.physical_creditor && ref.type === "PhysicalPerson");
+
+          if (creditor) {
+            type = 'PhysicalPerson';
+            id = creditor.id;
+            name = creditor.fullName || creditor.name || 'Неизвестное физ. лицо';
           }
         } else if (claim.legal_creditor) {
           // Если это юридическое лицо
-          if (typeof claim.legal_creditor === 'object') {
-            creditorIds.add(claim.legal_creditor.id)
-          } else {
-            creditorIds.add(claim.legal_creditor)
+          creditor = typeof claim.legal_creditor === 'object'
+              ? claim.legal_creditor
+              : this.allRefData.find(ref => ref.id === claim.legal_creditor && ref.type === "LegalEntity");
+
+          if (creditor) {
+            type = 'LegalEntity';
+            id = creditor.id;
+            name = creditor.name || 'Неизвестное юр. лицо';
           }
         }
-      })
 
-      // Преобразуем Set в массив
-      const idsArray = Array.from(creditorIds)
-
-      // Фильтруем allRefData по найденным ID
-      return this.allRefData.filter(ref =>
-          idsArray.includes(ref.id)
-      ).map(creditor => {
-        // Добавляем поле name для единообразия
-        let name = ''
-        if (creditor.type === 'PhysicalPerson') {
-          name = creditor.fullName || 'Неизвестное физ. лицо'
-        } else if (creditor.type === 'LegalEntity') {
-          name = creditor.name || 'Неизвестное юр. лицо'
+        // Добавляем в Map по ID, чтобы избежать дубликатов
+        if (id && !creditorMap.has(id)) {
+          creditorMap.set(id, {
+            id: id,
+            name: name,
+            type: type,
+            original: creditor
+          });
         }
+      });
 
-        return {
-          ...creditor,
-          name: name
-        }
-      })
+      // Преобразуем Map в массив
+      return Array.from(creditorMap.values());
     },
     historyUsers() {
       if (!this.editedAsset.estate_process || !this.editedAsset.estate_process.history) {
@@ -1187,14 +1192,13 @@ export default {
           return
         }
 
-        // Создаем глубокую копию
         this.editedAsset = JSON.parse(JSON.stringify({
           ...newVal,
           pledges: newVal.pledges || [],
           arrests: newVal.arrests || [],
           details: newVal.details || {},
           estate_process: newVal.estate_process || null,
-          dispute_transactions: newVal.dispute_transactions || []
+          dispute_transaction: newVal.dispute_transaction || null
         }))
 
         // Преобразуем organization из строки в число, если нужно
@@ -1287,7 +1291,7 @@ export default {
             pledges: this.editedAsset.pledges || [],
             arrests: this.editedAsset.arrests || [],
             estate_process: this.editedAsset.estate_process || null,
-            dispute_transactions: this.editedAsset.dispute_transactions || []
+            dispute_transaction: this.editedAsset.dispute_transaction || null
           }));
 
           this.$emit('asset-change', assetData);
@@ -1912,15 +1916,46 @@ export default {
     },
     // Методы для оспаривания сделок
     openDisputeDialog() {
-      this.disputeDialog = true
-      this.isEditingDispute = false
-      this.editingDisputeIndex = -1
+      this.disputeDialog = true;
+      this.isEditingDispute = !!this.editedAsset.dispute_transaction;
+
+      if (this.editedAsset.dispute_transaction) {
+        // Копируем существующую сделку
+        this.currentDispute = JSON.parse(JSON.stringify(this.editedAsset.dispute_transaction));
+      } else {
+        this.currentDispute = {
+          project: this.filteredProjects.length === 1 ? this.filteredProjects[0].id : null,
+          disposition_reason: '',
+          disposition_contract: '',
+          contract_value: null,
+          bankruptcy_application_date: this.filteredProjects.length === 1 ?
+              moment(this.filteredProjects[0].bankruptcy_application_date).format('DD.MM.YYYY') : null,
+          transaction_period: null,
+          main_insolvency_date: null,
+          statistical_value: null,
+          market_value_sources: [],
+          counterparty_person: null,
+          counterparty_legal: null,
+          counterparty_interest_type: null,
+          counterparty_interest_details: '',
+          disputing_articles: [],
+          legal_justification: '',
+          dispute_status: 'analysis',
+          notes: '',
+          is_active: true
+        };
+      }
+    },
+
+    closeDisputeDialog() {
+      this.disputeDialog = false;
+      this.isEditingDispute = false;
       this.currentDispute = {
-        project: this.filteredProjects.length === 1 ? this.filteredProjects[0].id : null,
+        project: null,
         disposition_reason: '',
         disposition_contract: '',
         contract_value: null,
-        bankruptcy_application_date: this.filteredProjects.length === 1 ? moment(this.filteredProjects[0].bankruptcy_application_date).format('DD.MM.YYYY') : null,
+        bankruptcy_application_date: null,
         transaction_period: null,
         main_insolvency_date: null,
         statistical_value: null,
@@ -1931,56 +1966,34 @@ export default {
         counterparty_interest_details: '',
         disputing_articles: [],
         legal_justification: '',
-        dispute_status: 'analysis',  // Статус по умолчанию
+        dispute_status: 'analysis',
         notes: '',
         is_active: true
       };
-      
-    },
-
-    closeDisputeDialog() {
-      this.disputeDialog = false
-      this.isEditingDispute = false
-      this.editingDisputeIndex = -1
     },
 
     saveDispute(disputeData) {
-      // Создаем новый массив оспариваний
-      let newDisputes
-      if (this.isEditingDispute) {
-        newDisputes = [...this.editedAsset.dispute_transactions]
-        newDisputes[this.editingDisputeIndex] = disputeData
-      } else {
-        newDisputes = [...(this.editedAsset.dispute_transactions || []), disputeData]
-      }
+      // Обновляем свойство как один объект
+      this.$set(this.editedAsset, 'dispute_transaction', disputeData);
 
-      // Обновляем реактивно
-      this.$set(this.editedAsset, 'dispute_transactions', newDisputes)
-
-      this.closeDisputeDialog()
+      this.closeDisputeDialog();
 
       this.$nextTick(() => {
-        this.emitAssetChange()
-      })
+        this.emitAssetChange();
+      });
     },
 
-    editDispute(index) {
-      this.disputeDialog = true
-      this.isEditingDispute = true
-      this.editingDisputeIndex = index
-      this.currentDispute = JSON.parse(JSON.stringify(
-          this.editedAsset.dispute_transactions[index]
-      ))
+    editDispute() {
+      this.openDisputeDialog();
     },
 
-    removeDispute(index) {
-      if (confirm('Вы уверены, что хотите удалить это оспаривание?')) {
-        const newDisputes = this.editedAsset.dispute_transactions.filter((_, i) => i !== index)
-        this.$set(this.editedAsset, 'dispute_transactions', newDisputes)
+    removeDispute() {
+      if (confirm('Вы уверены, что хотите удалить оспариваемую сделку?')) {
+        this.$set(this.editedAsset, 'dispute_transaction', null);
 
         this.$nextTick(() => {
-          this.emitAssetChange()
-        })
+          this.emitAssetChange();
+        });
       }
     },
   }

@@ -231,7 +231,7 @@
                           <v-list-item-content>
                             <div class="d-flex justify-space-between align-center">
                               <div>
-                                <strong>{{ getCreditorName(creditor.creditor) }}</strong>
+                                <strong>{{ getCreditorName(creditor) }}</strong>
                                 <v-chip x-small :color="creditor.is_included ? 'success' : 'error'" class="ml-2">
                                   {{ creditor.is_included ? 'Включен в реестр' : 'Не включен' }}
                                 </v-chip>
@@ -272,7 +272,7 @@
                           <v-row>
                             <v-col cols="12" md="6">
                               <v-autocomplete
-                                  v-model="currentCreditor.creditor"
+                                  v-model="currentCreditor.creditorId"
                                   :items="availableCreditors"
                                   item-text="name"
                                   item-value="id"
@@ -665,6 +665,7 @@ export default {
     },
     save() {
       if (this.$refs.form.validate()) {
+        // Просто передаем кредиторов как есть - они уже в правильном формате
         const disputeData = {
           ...this.disputeData,
           bankruptcy_application_date: this.disputeData.bankruptcy_application_date,
@@ -673,7 +674,7 @@ export default {
           statistical_value: this.disputeData.statistical_value ? parseFloat(this.disputeData.statistical_value) : null,
           counterparty_person: this.counterpartyType === 'physical' ? this.disputeData.counterparty_person : null,
           counterparty_legal: this.counterpartyType === 'legal' ? this.disputeData.counterparty_legal : null,
-          creditor_relations: this.creditors,
+          creditor_relations: [...this.creditors],
           dispute_status: this.disputeData.dispute_status || 'analysis'
         };
         this.$emit('save', disputeData);
@@ -691,10 +692,25 @@ export default {
       }
     },
     editCreditor(index) {
-      this.showCreditorForm = true
-      this.isEditingCreditor = true
-      this.editingCreditorIndex = index
-      this.currentCreditor = JSON.parse(JSON.stringify(this.creditors[index]))
+      this.showCreditorForm = true;
+      this.isEditingCreditor = true;
+      this.editingCreditorIndex = index;
+      const creditor = this.creditors[index];
+
+      console.log('Editing creditor:', creditor);
+
+      // Находим ID кредитора
+      const creditorId = creditor.legal_creditor || creditor.physical_creditor;
+
+      this.currentCreditor = {
+        creditorId: creditorId, // сохраняем ID
+        creditor: null, // оставляем null, так как не используем объект
+        insolvency_date: creditor.insolvency_date,
+        is_included: creditor.is_included,
+        notes: creditor.notes
+      };
+
+      console.log('Current creditor after edit:', this.currentCreditor);
     },
     cancelCreditorEdit() {
       this.showCreditorForm = false
@@ -708,33 +724,79 @@ export default {
       }
     },
     saveCreditor() {
-      if (!this.currentCreditor.creditor) {
-        return
+      console.log('Saving creditor with data:', this.currentCreditor);
+
+      if (!this.currentCreditor.creditorId) {
+        console.error('Кредитор не выбран');
+        return;
       }
 
-      const creditorData = {
-        ...this.currentCreditor,
-        insolvency_date: this.currentCreditor.insolvency_date
+      const selectedCreditor = this.availableCreditors.find(c => c.id === this.currentCreditor.creditorId);
+      if (!selectedCreditor) {
+        console.error('Выбранный кредитор не найден в availableCreditors');
+        return;
       }
+
+      // Создаем объект кредитора с правильными полями
+      const creditorData = {
+        insolvency_date: this.currentCreditor.insolvency_date,
+        is_included: this.currentCreditor.is_included,
+        notes: this.currentCreditor.notes
+      };
+
+      // В зависимости от типа кредитора устанавливаем соответствующее поле
+      if (selectedCreditor.type === 'LegalEntity') {
+        creditorData.legal_creditor = selectedCreditor.id;
+        creditorData.physical_creditor = null;
+      } else if (selectedCreditor.type === 'PhysicalPerson') {
+        creditorData.physical_creditor = selectedCreditor.id;
+        creditorData.legal_creditor = null;
+      }
+
+      console.log('Creditor data to save:', creditorData);
 
       if (this.isEditingCreditor) {
-        const newCreditors = [...this.creditors]
-        newCreditors[this.editingCreditorIndex] = creditorData
-        this.creditors = newCreditors
+        const newCreditors = [...this.creditors];
+        newCreditors[this.editingCreditorIndex] = creditorData;
+        this.creditors = newCreditors;
       } else {
-        this.creditors = [...this.creditors, creditorData]
+        this.creditors = [...this.creditors, creditorData];
       }
 
-      this.cancelCreditorEdit()
+      console.log('Creditors after save:', this.creditors);
+
+      this.cancelCreditorEdit();
     },
     removeCreditor(index) {
       if (confirm('Вы уверены, что хотите удалить этого кредитора?')) {
         this.creditors = this.creditors.filter((_, i) => i !== index)
       }
     },
-    getCreditorName(creditorId) {
-      const creditor = this.availableCreditors.find(c => c.id === creditorId)
-      return creditor ? creditor.name : 'Неизвестный кредитор'
+    getCreditorName(creditor) {
+      // Если creditor - это объект с полями legal_creditor/physical_creditor
+      if (creditor && typeof creditor === 'object') {
+        const creditorId = creditor.legal_creditor || creditor.physical_creditor;
+
+        if (!creditorId) {
+          // Если у объекта есть поле creditor (для отладки)
+          if (creditor.creditor) {
+            const foundCreditor = this.availableCreditors.find(c => c.id === creditor.creditor);
+            return foundCreditor ? foundCreditor.name : 'Неизвестный кредитор';
+          }
+          return 'Неизвестный кредитор';
+        }
+
+        const foundCreditor = this.availableCreditors.find(c => c.id === creditorId);
+        return foundCreditor ? foundCreditor.name : `Кредитор ID: ${creditorId}`;
+      }
+
+      // Если это просто ID (число или строка)
+      if (typeof creditor === 'string' || typeof creditor === 'number') {
+        const foundCreditor = this.availableCreditors.find(c => c.id === creditor);
+        return foundCreditor ? foundCreditor.name : `Кредитор ID: ${creditor}`;
+      }
+
+      return 'Неизвестный кредитор';
     },
     addMarketValueSource() {
       if (!this.newMarketValueSource.source) {

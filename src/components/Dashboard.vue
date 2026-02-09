@@ -445,7 +445,12 @@ export default {
       dealHeaders: [
         {text: 'Тип имущества', value: 'asset_type', sortable: true, width: '25%'},
         {text: 'Доля владения', value: 'is_joint_property', sortable: true, width: '18%'},
-        {text: 'Статус сделки', value: 'dispute_status', width: '15%', getter: item => item.dispute_transactions},
+        {
+          text: 'Статус сделки',
+          value: 'dispute_status',
+          width: '15%',
+          getter: item => item.dispute_transactions.dispute_status_display
+        },
         {text: 'Дата приобретения', value: 'acquisition_date', sortable: true, width: '15%'},
         {text: 'Дата отчуждения', value: 'disposal_date', sortable: true, width: '15%'},
         {text: 'Владелец', value: 'owner_name', sortable: true, width: '22%'},

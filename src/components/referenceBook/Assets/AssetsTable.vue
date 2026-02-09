@@ -79,21 +79,30 @@
 
     <!-- Слот для статуса оспаривания -->
     <template v-slot:item.dispute_status="{ item }">
-      <v-chip
-          small
-          :color="getStatusColor(item.status)"
-          text-color="white"
-          class="status-chip"
-      >
-        {{item}}
-<!--        {{ getDealStatusText(item.dispute_status) }}-->
-      </v-chip>
+      <div v-if="item.dispute_transaction">
+        <v-chip
+            small
+            :color="getDisputeStatusColor(item.dispute_transaction.dispute_status)"
+            text-color="white"
+            class="status-chip"
+        >
+          {{ getDisputeStatusText(item.dispute_transaction.dispute_status) }}
+        </v-chip>
+      </div>
+      <div v-else class="text-caption grey--text">—</div>
     </template>
 
     <!-- Слот для даты приобретения -->
     <template v-slot:item.acquisition_date="{ item }">
       <div class="date-cell">
         {{ item.acquisition_date || '-' }}
+      </div>
+    </template>
+
+    <!-- Слот для даты отчуждения -->
+    <template v-slot:item.disposal_date="{ item }">
+      <div class="date-cell">
+        {{ item.disposal_date || '-' }}
       </div>
     </template>
 
@@ -244,14 +253,6 @@ export default {
     return {
       currentPage: this.page,
       currentItemsPerPage: this.itemsPerPage,
-      disputeStatuses: [
-        {value: 'analysis', text: 'Анализ'},
-        {value: 'disputed', text: 'Оспаривается'},
-        {value: 'not_disputed', text: 'Не оспаривается'},
-        {value: 'completed', text: 'Завершено'},
-        {value: 'court_decision', text: 'Судебное решение вынесено'},
-        {value: 'settled', text: 'Урегулировано'}
-      ],
     }
   },
   computed: {
@@ -304,9 +305,7 @@ export default {
     getCategoryColor(is_joint_property) {
       return is_joint_property ? 'success' : 'grey'
     },
-    getDealStatusText(status){
-      return this.disputeStatuses.find(obj=> obj.value === status).text
-    },
+
     getAssetIcon(assetType) {
       const icons = {
         'квартира': 'mdi-home',
@@ -347,6 +346,31 @@ export default {
         'outstanding': 'Просрочен'
       }
       return display[status] || status
+    },
+
+    // Методы для статуса оспаривания
+    getDisputeStatusText(status) {
+      const statusMap = {
+        'analysis': 'Анализ',
+        'disputed': 'Оспаривается',
+        'not_disputed': 'Не оспаривается',
+        'completed': 'Завершено',
+        'court_decision': 'Судебное решение',
+        'settled': 'Урегулировано'
+      }
+      return statusMap[status] || status
+    },
+
+    getDisputeStatusColor(status) {
+      const colorMap = {
+        'analysis': 'info',
+        'disputed': 'error',
+        'not_disputed': 'success',
+        'completed': 'success',
+        'court_decision': 'warning',
+        'settled': 'success'
+      }
+      return colorMap[status] || 'grey'
     },
 
     hasActiveStatuses(asset) {

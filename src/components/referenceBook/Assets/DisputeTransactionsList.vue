@@ -1,11 +1,11 @@
 <template>
   <div>
-    <!-- Раздел оспаривания сделок -->
+    <!-- Раздел оспаривания сделки -->
     <v-divider class="my-4"></v-divider>
     <v-row>
       <v-col cols="12">
         <div class="d-flex justify-space-between align-center mb-2">
-          <h4 class="text-h6">Оспаривание сделок</h4>
+          <h4 class="text-h6">Оспаривание сделки</h4>
           <v-btn
               color="primary"
               small
@@ -13,37 +13,35 @@
               :disabled="disabled || !hasDisposalDate"
           >
             <v-icon left small>mdi-gavel</v-icon>
-            Добавить оспаривание
+            {{ dispute ? 'Редактировать' : 'Добавить' }}
           </v-btn>
         </div>
 
-        <!-- Карточки существующих оспариваний -->
-        <v-card v-if="hasDisputes" class="mb-4">
+        <!-- Карточка существующего оспаривания -->
+        <v-card v-if="dispute" class="mb-4">
           <v-card-title class="py-2 text-h8">
             <v-icon left small>mdi-gavel</v-icon>
-            Оспариваемые сделки ({{ disputes.length }})
+            Оспариваемая сделка
           </v-card-title>
           <v-card-text class="pt-0">
             <v-list dense>
-              <v-list-item
-                  v-for="(dispute, index) in disputes"
-                  :key="`dispute-${index}-${dispute.dispute_status || ''}-${dispute.created_at || ''}`"
-                  class="mb-2"
-              >
+              <v-list-item class="mb-2">
                 <v-list-item-content>
-                  <div class="d-flex justify-space-between">
+                  <div class="d-flex justify-space-between align-center">
                     <div>
-                      <strong>{{ getDispositionReasonText(dispute.disposition_reason) }}</strong> •
-                      {{ getCounterpartyName(dispute) || 'Контрагент не указан' }}
+                      <strong>{{ getDispositionReasonText(dispute.disposition_reason) }}</strong>
                       <v-chip x-small :color="getDisputeStatusColor(dispute.dispute_status)" class="ml-2">
                         {{ getDisputeStatusText(dispute.dispute_status) }}
                       </v-chip>
+                      <v-chip x-small :color="dispute.is_active ? 'warning' : 'grey'" class="ml-2">
+                        {{ dispute.is_active ? 'Активно' : 'Неактивно' }}
+                      </v-chip>
                     </div>
                     <div>
-                      <v-btn icon small @click="$emit('edit-dispute', index)">
+                      <v-btn icon small @click="$emit('edit-dispute')">
                         <v-icon small>mdi-pencil</v-icon>
                       </v-btn>
-                      <v-btn icon small @click="$emit('remove-dispute', index)" color="error">
+                      <v-btn icon small @click="$emit('remove-dispute')" color="error">
                         <v-icon small>mdi-delete</v-icon>
                       </v-btn>
                     </div>
@@ -58,12 +56,30 @@
                     <strong>Стоимость по договору:</strong> {{ formatCurrency(dispute.contract_value) }}
                   </div>
 
-                  <div class="text-caption mt-1">
-                    <strong>Период:</strong> {{ getTransactionPeriodText(dispute.transaction_period) }}
+                  <div v-if="dispute.bankruptcy_application_date" class="text-caption mt-1">
+                    <strong>Дата заявления о банкротстве:</strong> {{ formatDate(dispute.bankruptcy_application_date) }}
                   </div>
 
-                  <div class="text-caption mt-1">
-                    <strong>Статус:</strong> {{ getDisputeStatusText(dispute.dispute_status) }}
+                  <div v-if="dispute.transaction_period" class="text-caption mt-1">
+                    <strong>Период сделки:</strong> {{ getTransactionPeriodText(dispute.transaction_period) }}
+                  </div>
+
+                  <div v-if="counterpartyName" class="text-caption mt-1">
+                    <strong>Контрагент:</strong> {{ counterpartyName }}
+                  </div>
+
+                  <div v-if="dispute.counterparty_interest_type" class="text-caption mt-1">
+                    <strong>Тип заинтересованности:</strong>
+                    {{ getCounterpartyInterestText(dispute.counterparty_interest_type) }}
+                  </div>
+
+                  <div v-if="hasCreditors" class="text-caption mt-1">
+                    <strong>Кредиторы:</strong> {{ dispute.creditor_relations ? dispute.creditor_relations.length : 0 }}
+                  </div>
+
+                  <div v-if="dispute.legal_justification" class="text-caption text--secondary mt-1">
+                    <strong>Обоснование:</strong> {{ dispute.legal_justification.substring(0, 150) }}
+                    {{ dispute.legal_justification.length > 150 ? '...' : '' }}
                   </div>
 
                   <div v-if="dispute.analysis_summary" class="text-caption text--secondary mt-1">
@@ -79,7 +95,7 @@
           Для добавления оспаривания требуется указать дату выбытия имущества
         </v-alert>
         <v-alert v-else type="info" outlined dense>
-          Нет оспариваний сделок
+          Оспариваемая сделка не добавлена
         </v-alert>
       </v-col>
     </v-row>
@@ -87,13 +103,12 @@
 </template>
 
 <script>
-
 export default {
   name: "DisputeTransactionsList",
   props: {
-    disputes: {
-      type: Array,
-      default: () => []
+    dispute: {
+      type: Object,
+      default: () => null
     },
     disabled: {
       type: Boolean,
@@ -113,11 +128,26 @@ export default {
     }
   },
   computed: {
-    hasDisputes() {
-      return Array.isArray(this.disputes) && this.disputes.length > 0
-    },
     hasDisposalDate() {
       return !!this.disposalDate
+    },
+    hasCreditors() {
+      return this.dispute &&
+          this.dispute.creditor_relations &&
+          Array.isArray(this.dispute.creditor_relations) &&
+          this.dispute.creditor_relations.length > 0
+    },
+    counterpartyName() {
+      if (!this.dispute) return ''
+
+      if (this.dispute.counterparty_person) {
+        const person = this.allRefData.find(p => p.id === this.dispute.counterparty_person && p.type === 'PhysicalPerson')
+        return person ? person.fullName : 'Неизвестное физ. лицо'
+      } else if (this.dispute.counterparty_legal) {
+        const legal = this.legalEntities.find(l => l.id === this.dispute.counterparty_legal)
+        return legal ? legal.name : 'Неизвестное юр. лицо'
+      }
+      return ''
     }
   },
   methods: {
@@ -135,11 +165,11 @@ export default {
     getDisputeStatusColor(status) {
       const colorMap = {
         'analysis': 'info',
-        'disputed': 'warning',
+        'disputed': 'error',
         'not_disputed': 'success',
-        'completed': 'grey',
-        'court_decision': 'primary',
-        'settled': 'teal'
+        'completed': 'success',
+        'court_decision': 'warning',
+        'settled': 'success'
       }
       return colorMap[status] || 'grey'
     },
@@ -163,15 +193,17 @@ export default {
       }
       return periodMap[period] || period
     },
-    getCounterpartyName(dispute) {
-      if (dispute.counterparty_person) {
-        const person = this.allRefData.find(p => p.id === dispute.counterparty_person && p.type === 'PhysicalPerson')
-        return person ? person.fullName : 'Неизвестное физ. лицо'
-      } else if (dispute.counterparty_legal) {
-        const legal = this.legalEntities.find(l => l.id === dispute.counterparty_legal)
-        return legal ? legal.name : 'Неизвестное юр. лицо'
+    getCounterpartyInterestText(interestType) {
+      const interestMap = {
+        'relative': 'Родственные связи',
+        'awareness': 'Осведомленность о неплатежеспособности',
+        'affiliate': 'Аффилированность',
+        'controlled': 'Контролируемое лицо',
+        'employee': 'Сотрудник',
+        'partner': 'Партнер по бизнесу',
+        'other': 'Иное'
       }
-      return 'Не указан'
+      return interestMap[interestType] || interestType
     },
     formatCurrency(amount) {
       if (!amount) return '0 ₽'
@@ -180,6 +212,11 @@ export default {
         currency: 'RUB',
         minimumFractionDigits: 0
       }).format(amount)
+    },
+    formatDate(date) {
+      if (!date) return '—'
+      if (typeof date === 'string') return date
+      return date
     }
   },
   emits: ['open-dialog', 'edit-dispute', 'remove-dispute']
