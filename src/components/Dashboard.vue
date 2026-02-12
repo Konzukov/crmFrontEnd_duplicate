@@ -90,14 +90,14 @@
               <v-list-item-title>Синхронизация</v-list-item-title>
             </v-list-item-content>
           </v-list-item>
-          <!--          <v-list-item :to="{name: 'document-flow'}">-->
-          <!--            <v-list-item-icon>-->
-          <!--              <v-icon>mdi-file-document-edit</v-icon>-->
-          <!--            </v-list-item-icon>-->
-          <!--            <v-list-item-content>-->
-          <!--              <v-list-item-title>Документы (v2)</v-list-item-title>-->
-          <!--            </v-list-item-content>-->
-          <!--          </v-list-item>-->
+          <v-list-item :to="{name: 'document-flow'}">
+            <v-list-item-icon>
+              <v-icon>mdi-file-document-multiple-outline</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Документооборот</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
         </v-list-item-group>
       </v-list>
     </v-navigation-drawer>
