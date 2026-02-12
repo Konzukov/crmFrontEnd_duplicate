@@ -376,7 +376,7 @@ const routes = [
                     {
                         path: 'documents/create',
                         name: 'doc-flow-create',
-                        component: () => import('@/components/DocumentFlow/DocumentForm.vue')
+                        component: () => import('@/components/DocumentFlow/DocumentFormPage.vue')
                     },
                     {
                         path: 'documents/:id',
@@ -387,7 +387,7 @@ const routes = [
                     {
                         path: 'documents/:id/edit',
                         name: 'doc-flow-edit',
-                        component: () => import('@/components/DocumentFlow/DocumentForm.vue'),
+                        component: () => import('@/components/DocumentFlow/DocumentFormPage.vue'),
                         props: true
                     },
                     {
@@ -398,7 +398,7 @@ const routes = [
                     {
                         path: 'correspondence/create',
                         name: 'doc-flow-corr-create',
-                        component: () => import('@/components/DocumentFlow/CorrespondenceForm.vue')
+                        component: () => import('@/components/DocumentFlow/CorrespondenceFormPage.vue')
                     },
                     {
                         path: 'correspondence/:id',
