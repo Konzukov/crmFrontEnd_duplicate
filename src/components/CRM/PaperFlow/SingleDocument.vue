@@ -161,21 +161,15 @@ export default {
     open() {
       this.dialog = true
       this.overlay = true
-      this.$store.dispatch('getParticipator').then(() => {
-        this.$store.dispatch('getLegalEntity').then(() => {
-          this.$store.dispatch('fetchPhysicalPersons').then(() => {
-            this.$store.dispatch('getProjectList').then(() => {
-              this.$store.dispatch('allSystemUser').then(() => {
-                this.$store.dispatch('getProjectList').then(() => {
-                  this.$store.dispatch('getCorrespondenceType').then(() => {
-                    this.overlay = false
-                  })
-                })
-              })
-            })
-          })
-        })
-      })
+      this.$store.dispatch('getParticipator')
+      this.$store.dispatch('getLegalEntity')
+      this.$store.dispatch('fetchPhysicalPersons')
+      this.$store.dispatch('getProjectList')
+      this.$store.dispatch('allSystemUser')
+      this.$store.dispatch('getProjectList')
+      this.$store.dispatch('getCorrespondenceType')
+      this.overlay = false
+
     },
     close() {
       this.dialog = false
@@ -333,21 +327,23 @@ export default {
 </script>
 
 <style scoped>
-.document-edit-action{
+.document-edit-action {
   position: relative;
   bottom: 140px;
   right: 100px;
 }
+
 .document-edit-container {
   height: 95%;
 }
-.document-edit-container .row{
+
+.document-edit-container .row {
   height: 100%;
 }
+
 .document-view {
   position: relative;
 }
-
 
 
 >>> .v-carousel {
@@ -357,6 +353,7 @@ export default {
 >>> .v-image__image--cover {
   background-size: contain;
 }
+
 >>> .arrow-left {
   transform: rotate(180deg);
 }

@@ -248,7 +248,7 @@
                     <div class="tab-pane">
                       <!-- Фильтры и поиск для сделок -->
                       <v-row class="ma-2 filters-row">
-                        <v-col cols="12" md="4">
+                        <v-col cols="12" md="3">
                           <v-autocomplete
                               v-model="dealFilter"
                               :items="dealFilters"
@@ -259,7 +259,7 @@
                               clearable
                           ></v-autocomplete>
                         </v-col>
-                        <v-col cols="12" md="4">
+                        <v-col cols="12" md="3">
                           <v-autocomplete
                               v-model="dealCategoryFilter"
                               :items="assetCategories"
@@ -270,7 +270,7 @@
                               clearable
                           ></v-autocomplete>
                         </v-col>
-                        <v-col cols="12" md="4">
+                        <v-col cols="12" md="3">
                           <v-text-field
                               v-model="dealSearchQuery"
                               label="Поиск сделок"
@@ -280,6 +280,17 @@
                               hide-details
                               clearable
                           ></v-text-field>
+                        </v-col>
+                        <v-col cols="12" md="3">
+                          <v-autocomplete
+                              v-model="dealStatusFilter"
+                              :items="dealStatusOptions"
+                              label="Статус сделки"
+                              dense
+                              outlined
+                              hide-details
+                              clearable
+                          ></v-autocomplete>
                         </v-col>
                       </v-row>
 
@@ -291,22 +302,69 @@
                             <v-icon left>mdi-refresh</v-icon>
                             Обновить
                           </v-btn>
+                          <v-btn small color="primary" @click="toggleSelectionMode" class="mr-2">
+                            <v-icon left>{{ showDealSelection ? 'mdi-close' : 'mdi-checkbox-multiple-marked' }}</v-icon>
+                            {{ showDealSelection ? 'Отменить выбор' : 'Выбрать сделки' }}
+                          </v-btn>
                         </v-col>
                       </v-row>
 
                       <!-- Таблица сделок -->
                       <AssetsTable
+                          ref="dealsTable"
                           :items="disposalAssets"
                           :headers="dealHeaders"
                           :loading="loadingAssets"
                           :search="dealSearchQuery"
                           :filter-type="dealFilter"
                           :filter-category="dealCategoryFilter"
+                          :filter-deal-status="dealStatusFilter"
                           :page.sync="dealPage"
                           :items-per-page.sync="dealItemsPerPage"
+                          :show-select="showDealSelection"
+                          :selected-owner="selectedOwner"
+                          v-model="selectedDeals"
+                          @selection-change="handleSelectionChange"
                           @edit="showAssetDetails"
-                          :hide-actions="true"
-                      />
+                          @generate-document="generateDocumentForSingle"
+                          :show-generate-document="!showDealSelection"
+                          :show-footer-actions="showDealSelection"
+                      >
+                        <template v-if="showDealSelection" v-slot:footer-actions="{ selectedItems }">
+                          <div v-if="selectedItems && selectedItems.length > 0" class="d-flex align-center"
+                               style="width: 100%;">
+                            <div class="d-flex align-center">
+                              <v-chip v-if="selectedItems.length > 0" class="mr-2" color="primary" x-small>
+                                Выбрано: {{ selectedItems.length }}
+                              </v-chip>
+                            </div>
+                            <v-spacer></v-spacer>
+                            <div class="d-flex align-center">
+                              <v-btn
+                                  x-small
+                                  color="primary"
+                                  @click="clearSelection"
+                                  :disabled="selectedItems.length === 0"
+                                  class="mr-1"
+                              >
+                                <v-icon left small>mdi-close</v-icon>
+                                Очистить
+                              </v-btn>
+                              <v-btn
+                                  x-small
+                                  :loading="loading"
+                                  color="success"
+                                  @click="generateDocumentForSelected"
+                                  :disabled="selectedItems.length === 0"
+                                  class="mr-1"
+                              >
+                                <v-icon left small>mdi-file-document-edit</v-icon>
+                                Документ
+                              </v-btn>
+                            </div>
+                          </div>
+                        </template>
+                      </AssetsTable>
                     </div>
                   </v-tab-item>
                 </v-tabs-items>
@@ -390,13 +448,15 @@
 </template>
 
 <script>
-import {mapGetters, mapActions} from 'vuex'
+import {mapActions, mapGetters} from 'vuex'
 import SystemUpdateNotice from "@/components/UI/SystemUpdateNotice.vue";
 import createDocument from "@/components/CRM/PaperFlow/modal/createDocument.vue";
 import AssetForm from "@/components/referenceBook/Assets/AssetForm.vue";
 import {eventBus} from "@/bus";
 import EstateProcessDialog from "@/components/referenceBook/Assets/EstateProcessDialog.vue";
 import AssetsTable from "@/components/referenceBook/Assets/AssetsTable.vue";
+import customConst from "@/const/customConst";
+import {saveAs} from 'file-saver';
 
 export default {
   name: "Dashboard",
@@ -405,6 +465,7 @@ export default {
     return {
       activeTab: 0,
       loadingAssets: false,
+      loading: false,
       drawer: null,
       activeOrganization: '',
       // Для вкладки "Имущество"
@@ -414,6 +475,19 @@ export default {
       assetPage: 1,
       assetItemsPerPage: 10,
       // Для вкладки "Сделки"
+      showDealSelection: false,
+      selectedDeals: [],
+      selectedOwner: null,
+      dealStatusFilter: null,
+      dealStatusOptions: [
+        {text: 'Все статусы', value: null},
+        {text: 'Анализ', value: 'analysis'},
+        {text: 'Оспаривается', value: 'disputed'},
+        {text: 'Не оспаривается', value: 'not_disputed'},
+        {text: 'Завершено', value: 'completed'},
+        {text: 'Судебное решение', value: 'court_decision'},
+        {text: 'Урегулировано', value: 'settled'}
+      ],
       dealSearchQuery: '',
       dealFilter: null,
       dealCategoryFilter: null,
@@ -436,7 +510,7 @@ export default {
 
       // Заголовки таблицы
       assetHeaders: [
-        {text: 'Тип имущества', value: 'asset_type', sortable: true, width: '25%'},
+        {text: 'Тип имущества', value: 'asset_type', sortable: true, width: '30%'},
         {text: 'Доля владения', value: 'is_joint_property', sortable: true, width: '18%'},
         {text: 'Дата приобретения', value: 'acquisition_date', sortable: true, width: '15%'},
         {text: 'Владелец', value: 'owner_name', sortable: true, width: '22%'},
@@ -444,17 +518,12 @@ export default {
       ],
       dealHeaders: [
         {text: 'Тип имущества', value: 'asset_type', sortable: true, width: '25%'},
-        {text: 'Доля владения', value: 'is_joint_property', sortable: true, width: '18%'},
-        {
-          text: 'Статус сделки',
-          value: 'dispute_status',
-          width: '15%',
-          getter: item => item.dispute_transactions.dispute_status_display
-        },
-        {text: 'Дата приобретения', value: 'acquisition_date', sortable: true, width: '15%'},
-        {text: 'Дата отчуждения', value: 'disposal_date', sortable: true, width: '15%'},
-        {text: 'Владелец', value: 'owner_name', sortable: true, width: '22%'},
-        {text: 'Действия', value: 'actions', sortable: false, align: 'center', width: '8%'}
+        {text: 'Статус сделки', value: 'dispute_status', sortable: true, width: '10%'},
+        {text: 'Доля владения', value: 'is_joint_property', sortable: true, width: '10%'},
+        {text: 'Дата приобретения', value: 'acquisition_date', sortable: true, width: '12%'},
+        {text: 'Дата отчуждения', value: 'disposal_date', sortable: true, width: '12%'},
+        {text: 'Владелец', value: 'owner_name', sortable: true, width: '15%'},
+        {text: 'Действия', value: 'actions', sortable: false, align: 'center', width: '5%'}
       ],
       // Modal Asset
       showAssetDialog: false,
@@ -484,7 +553,6 @@ export default {
       disposalAssets: 'disposalAssetsList'
     }),
 
-    // Категории имущества из dataTypes.js
     assetCategories() {
       return [
         "Недвижимое имущество",
@@ -496,45 +564,6 @@ export default {
         "Иное имущество"
       ]
     },
-
-    filteredAssets() {
-      let filtered = [...this.assets]
-
-      // Фильтр по типу (личное/совместное)
-      if (this.assetFilter === 'personal') {
-        filtered = filtered.filter(asset => !asset.is_joint_property && asset.ownership_type === 'personal')
-      } else if (this.assetFilter === 'joint') {
-        filtered = filtered.filter(asset => asset.is_joint_property || asset.ownership_type === 'joint')
-      } else if (this.assetFilter === 'disposal') {
-        filtered = filtered.filter(asset => asset.disposal_date)
-      }
-
-      // Фильтр по категории
-      if (this.categoryFilter) {
-        filtered = filtered.filter(asset => asset.category_display === this.categoryFilter)
-      }
-
-      return filtered
-    },
-    filteredDeals() {
-      let filtered = [...this.disposalAssets]
-
-      // Фильтр по типу (личное/совместное)
-      if (this.dealFilter === 'personal') {
-        filtered = filtered.filter(asset => !asset.is_joint_property && asset.ownership_type === 'personal')
-      } else if (this.dealFilter === 'joint') {
-        filtered = filtered.filter(asset => asset.is_joint_property || asset.ownership_type === 'joint')
-      }
-
-      // Фильтр по категории
-      if (this.dealCategoryFilter) {
-        filtered = filtered.filter(asset => asset.category_display === this.dealCategoryFilter)
-      }
-
-      return filtered
-    },
-
-    // Статистика по имуществу
     assetStats() {
       const total = this.assets.length
       const active = this.assets.filter(a => a.status === 'active').length
@@ -556,19 +585,32 @@ export default {
       ]
     }
   },
+  watch: {
+    activeTab(newTab) {
+      if (newTab !== 1) {
+        this.showDealSelection = false;
+        this.clearSelection();
+      }
+    },
+    selectedDeals(newVal) {
+      if (newVal.length === 0 && this.showDealSelection) {
+        // Если в режиме выбора массив пуст, можно выйти из режима
+        // Но это не обязательно, зависит от логики
+        // this.showDealSelection = false;
+      }
+    }
+  },
   methods: {
     ...mapActions({
       getDashboardTaskList: 'getDashboardTaskList',
       fetchAssets: 'fetchAssets',
     }),
-
     logout() {
       this.$store.dispatch('logout', this.userData.pk)
           .then(() => {
             this.$router.push('/login')
           })
     },
-
     changeActiveOrganization(item) {
       let formData = new FormData()
       formData.set('uuid', item)
@@ -576,7 +618,6 @@ export default {
         location.reload()
       })
     },
-
     async loadAssets() {
       try {
         this.loadingAssets = true
@@ -587,15 +628,12 @@ export default {
         this.loadingAssets = false
       }
     },
-
     refreshAssets() {
       this.loadAssets()
     },
-
     addAsset() {
       eventBus.$emit('newDocument', {useTemplate: true, templateId: 6})
     },
-
     async saveAsset() {
       if (this.$refs.assetForm && this.$refs.assetForm.validate()) {
         this.savingAsset = true;
@@ -635,29 +673,6 @@ export default {
         }
       }
     },
-
-    getCategoryColor(is_joint_property) {
-      return is_joint_property ? 'success' : 'grey'
-    },
-
-    getAssetIcon(assetType) {
-      const icons = {
-        'квартира': 'mdi-home',
-        'дом': 'mdi-home-city',
-        'земельный участок': 'mdi-map-marker',
-        'гараж': 'mdi-garage',
-        'автомобиль': 'mdi-car',
-        'мотоцикл': 'mdi-motorbike',
-        'яхта': 'mdi-sail-boat',
-        'самолёт': 'mdi-airplane',
-        'акции': 'mdi-chart-line',
-        'облигации': 'mdi-chart-bar',
-        'банковский вклад': 'mdi-bank',
-        'банковский счёт': 'mdi-credit-card'
-      }
-      return icons[assetType] || 'mdi-package-variant'
-    },
-
     getStatusColor(status) {
       const colors = {
         'active': 'green',
@@ -669,7 +684,6 @@ export default {
       }
       return colors[status] || 'grey'
     },
-
     getStatusDisplay(status) {
       const display = {
         'active': 'Активный',
@@ -681,24 +695,15 @@ export default {
       }
       return display[status] || status
     },
-
-    hasActiveStatuses(asset) {
-      const hasArrests = asset.arrest_status_info && asset.arrest_status_info.arrest_count > 0;
-      const hasPledges = asset.pledge_status_info && asset.pledge_status_info.pledge_count > 0;
-      return hasArrests || hasPledges;
-    },
-
     showAssetDetails(asset) {
       this.selectedAsset = {...asset};
       this.showAssetDialog = true;
     },
-
     async deleteAsset(asset) {
       // Сохраняем актив для удаления и показываем диалог
       this.assetToDelete = {...asset};
       this.showDeleteDialog = true;
     },
-
     async confirmDeleteAsset() {
       if (!this.assetToDelete) return;
 
@@ -730,27 +735,13 @@ export default {
         this.deletingAsset = false;
       }
     },
-
     cancelDelete() {
       this.showDeleteDialog = false;
       this.assetToDelete = null;
       this.deletingAsset = false;
     },
-
     isJointAsset(asset) {
       return asset.is_joint_property || asset.ownership_type === 'joint';
-    },
-
-    getAssetPaginationInfo() {
-      const start = (this.assetPage - 1) * this.assetItemsPerPage + 1
-      const end = Math.min(this.assetPage * this.assetItemsPerPage, this.filteredAssets.length)
-      return `${start}-${end} из ${this.filteredAssets.length}`
-    },
-
-    truncateDescription(text, maxLength) {
-      if (!text) return '';
-      if (text.length <= maxLength) return text;
-      return text.substring(0, maxLength) + '...';
     },
     openEstateProcessDialog(asset) {
       this.assetForEstateProcess = {...asset};
@@ -771,7 +762,6 @@ export default {
 
       this.showEstateProcessDialog = true;
     },
-
     closeEstateProcessDialog() {
       this.showEstateProcessDialog = false;
       this.assetForEstateProcess = null;
@@ -806,7 +796,119 @@ export default {
 
         await this.$store.dispatch('snackbar/showError', errorMessage);
       }
-    }
+    },
+    toggleSelectionMode() {
+      if (this.showDealSelection) {
+        // Если уже в режиме выбора, отменяем его и очищаем
+        this.showDealSelection = false;
+        this.selectedDeals = [];
+        this.selectedOwner = null;
+
+        // Очищаем состояние таблицы
+        if (this.$refs.dealsTable && this.$refs.dealsTable.resetSelection) {
+          this.$refs.dealsTable.resetSelection();
+        }
+      } else {
+        // Входим в режим выбора
+        this.showDealSelection = true;
+      }
+    },
+    handleSelectionChange(selected) {
+      console.log('Selection changed:', selected);
+
+      // Создаем копию массива для реактивности
+      if (selected.length === 0) {
+        this.selectedDeals = [];
+        this.selectedOwner = null;
+        return;
+      }
+
+      // Проверяем, что все выбранные сделки одного владельца
+      const owners = [...new Set(selected.map(item => item.owner_name))];
+
+      if (owners.length > 1) {
+        // Если выбраны сделки разных владельцев, оставляем только первого
+        const firstOwner = owners[0];
+        this.selectedOwner = firstOwner;
+
+        // Фильтруем выбранные элементы только первого владельца
+        this.selectedDeals = selected.filter(item => item.owner_name === firstOwner);
+
+        // Показываем предупреждение
+        this.$store.dispatch('snackbar/showWarning',
+            `Можно выбрать сделки только одного владельца. Оставлены сделки ${firstOwner}`);
+      } else if (owners.length === 1) {
+        this.selectedOwner = owners[0];
+        this.selectedDeals = [...selected]; // Копируем массив для реактивности
+      }
+    },
+    clearSelection() {
+      // Очищаем только выбранные сделки, но остаемся в режиме выбора
+      this.selectedDeals = [];
+      this.selectedOwner = null;
+
+      // Принудительно сбрасываем состояние таблицы через ref
+      if (this.$refs.dealsTable && this.$refs.dealsTable.resetSelection) {
+        this.$refs.dealsTable.resetSelection();
+      }
+    },
+    generateDocumentForSelected() {
+      if (this.selectedDeals.length === 0) {
+        this.$store.dispatch('snackbar/showError', 'Выберите хотя бы одну сделку');
+        return;
+      }
+      this.loading = true
+      const owners = [...new Set(this.selectedDeals.map(item => item.owner_name))];
+      if (owners.length > 1) {
+        this.$store.dispatch('snackbar/showError', 'Выбраны сделки разных владельцев');
+        return;
+      }
+
+      const owner = owners[0];
+      let formData = new FormData()
+      const dealIds = this.selectedDeals.map(deal => {
+        formData.set('project', deal.dispute_transaction.project)
+        formData.set('CURT', deal.dispute_transaction.project_info.curt)
+        formData.append('disputes', deal.dispute_transaction.id)
+        return deal.id
+      });
+
+      console.log('Формирование документа для сделок:', {
+        owner,
+        dealIds,
+        count: dealIds.length
+      });
+
+      formData.append('template', 60)
+      formData.append('docType', 'docx')
+      formData.append('useFacsimile', 'false');
+      formData.append('filename', `Анализ сделок_${owner}`)
+      formData.append('DEBTOR_FULLNAME', owner)
+
+      this.$http({
+        method: "POST",
+        url: customConst.GENERATOR + 'document-template/generate/',
+        data: formData,
+        responseType: 'blob'
+      }).then(res => {
+        saveAs(res.data, `Анализ_сделок_${owner}`)
+        this.loading = false
+      }).finally(() => {
+        this.selectedDeals = [];
+        this.selectedOwner = null;
+        this.showDealSelection = false;
+        this.$nextTick(() => {
+          this.dealPage += 0;
+        });
+      })
+    },
+    generateDocumentForSingle(deal) {
+      console.log('Формирование документа для сделки:', deal);
+
+      // TODO: Вызов API для формирования документа для одной сделки
+      this.$store.dispatch('snackbar/showSuccess',
+          `Формируется документ для сделки ${deal.asset_type} владельца ${deal.owner_name}`);
+    },
 
   },
   async created() {
@@ -831,7 +933,7 @@ export default {
 </script>
 
 <style scoped>
-/* Уменьшаем высоту контейнеров и карточек */
+/* Основные контейнеры */
 .dashboard-container {
   height: calc(100vh - 64px);
   overflow-y: auto;
@@ -841,134 +943,121 @@ export default {
   min-height: calc(100vh - 120px);
 }
 
-/* Уменьшаем высоту боковых карточек */
+/* Карточки боковой панели */
 .sidebar-card {
   max-height: 28%;
   min-height: 180px;
 }
 
-/* Уменьшаем заголовки карточек */
+.sidebar-card + .sidebar-card {
+  margin-top: 1rem;
+}
+
+/* Заголовки карточек */
 .card-title {
   background-color: #f5f5f5;
   border-bottom: 1px solid #e0e0e0;
-  font-size: 0.9rem !important; /* Уменьшаем шрифт */
+  font-size: 0.9rem;
   font-weight: 600;
-  padding: 10px 16px !important; /* Уменьшаем отступы */
-  min-height: 40px !important; /* Фиксируем высоту */
+  padding: 10px 16px;
+  min-height: 40px;
 }
 
-/* Уменьшаем размер иконок в заголовках */
 .card-title .v-icon {
-  font-size: 1.2rem !important;
+  font-size: 1.2rem;
 }
 
-/* Уменьшаем текст заголовков */
 .title-text {
-  font-size: 0.875rem !important;
+  font-size: 0.875rem;
   font-weight: 600;
 }
 
-/* Таблица с фиксированной высотой и скроллом */
+/* Контент боковой панели */
+.sidebar-content {
+  padding: 12px 16px;
+}
+
+.empty-section {
+  padding: 20px;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 2rem;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.empty-text {
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+/* Панель фильтров */
+.filters-row {
+  margin: 4px 0 8px;
+}
+
+.tab-pane {
+  padding: 4px;
+}
+
+/* Таблица */
 .assets-table {
   background: white;
   border-radius: 8px;
   overflow: hidden;
-  font-size: 0.7rem !important; /* Уменьшаем общий шрифт таблицы */
 }
 
-/* Фиксируем высоту таблицы для скролла */
 .assets-table >>> .v-data-table__wrapper {
-  max-height: calc(100vh - 450px) !important;
+  max-height: calc(100vh - 450px);
   overflow-y: auto;
 }
 
-/* Уменьшаем размеры чипов */
-.category-chip {
-  font-size: 0.75rem !important;
-  height: 22px !important;
-}
-
-.status-chip {
-  font-size: 0.75rem !important;
-  height: 22px !important;
-}
-
-/* Уменьшаем кнопки */
-.details-btn {
-  min-width: 28px !important;
-  width: 28px !important;
-  height: 28px !important;
-}
-
-.details-btn .v-icon {
-  font-size: 1rem !important;
-}
-
-/* Уменьшаем элементы управления пагинацией */
-.assets-table >>> .v-data-footer {
-  padding: 8px 16px !important;
-  min-height: 48px !important;
-}
-
 .assets-table >>> td {
-  font-size: 0.8rem !important;
-  height: 40px !important;
+  font-size: 0.8rem;
+  height: 40px;
 }
 
-.assets-table >>> .v-data-footer__select {
-  font-size: 0.7rem !important;
+/* Чипы */
+.category-chip,
+.status-chip {
+  font-size: 0.75rem;
+  height: 22px;
 }
 
-.assets-table >>> .v-data-footer__pagination {
-  font-size: 0.8rem !important;
-}
-
-
-/* Уменьшаем кнопки действий */
+/* Кнопки */
 .v-btn {
-  font-size: 0.8rem !important;
-  min-height: 32px !important;
-  padding: 4px 12px !important;
+  font-size: 0.8rem;
+  min-height: 32px;
+  padding: 4px 12px;
 }
 
 .v-btn .v-icon {
-  font-size: 1rem !important;
+  font-size: 1rem;
 }
 
-/* Уменьшаем вкладки */
+.v-btn--x-small {
+  font-size: 0.7rem;
+  min-height: 26px;
+  padding: 0 8px;
+}
+
+.v-btn--x-small .v-icon {
+  font-size: 0.9rem;
+}
+
+/* Вкладки */
 .v-tab {
-  font-size: 0.85rem !important;
-  min-height: 42px !important;
+  font-size: 0.85rem;
+  min-height: 42px;
 }
 
 .v-tab .v-icon {
-  font-size: 1.2rem !important;
+  font-size: 1.2rem;
 }
 
-/* Уменьшаем чипы на вкладках */
-.v-chip {
-  font-size: 0.6rem !important;
-  height: 18px !important;
-}
-
-/* Уменьшаем пустые секции */
-.empty-section {
-  padding: 20px;
-}
-
-.empty-icon {
-  font-size: 2rem !important;
-}
-
-.empty-text {
-  font-size: 0.85rem !important;
-}
-
-/* Уменьшаем содержимое сайдбара */
-.sidebar-content {
-  padding: 12px 16px !important;
-}
-
+/* Стили для информации об имуществе */
 .asset-type-with-description {
   display: flex;
   flex-direction: column;
@@ -985,14 +1074,9 @@ export default {
   white-space: nowrap;
 }
 
-.description-text, .address-text {
+.description-text,
+.address-text {
   cursor: help;
-}
-
-
-.asset-type-with-badges {
-  display: flex;
-  align-items: center;
 }
 
 .asset-type-content {
@@ -1013,22 +1097,7 @@ export default {
 }
 
 /* Бейджи для арестов и залогов */
-.arrest-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 18px;
-  height: 18px;
-  border-radius: 9px;
-  background-color: #ff5252;
-  color: white;
-  font-size: 0.65rem;
-  font-weight: 600;
-  padding: 0 4px;
-  cursor: default;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
+.arrest-badge,
 .pledge-badge {
   display: inline-flex;
   align-items: center;
@@ -1036,16 +1105,22 @@ export default {
   min-width: 18px;
   height: 18px;
   border-radius: 9px;
-  background-color: #4caf50;
-  color: white;
   font-size: 0.65rem;
   font-weight: 600;
   padding: 0 4px;
   cursor: default;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  color: white;
 }
 
-/* Эффекты при наведении */
+.arrest-badge {
+  background-color: #ff5252;
+}
+
+.pledge-badge {
+  background-color: #4caf50;
+}
+
 .arrest-badge:hover {
   background-color: #ff1744;
   transform: scale(1.05);
@@ -1056,28 +1131,42 @@ export default {
   transform: scale(1.05);
 }
 
-.action .v-list-item__icon {
-  margin-right: 8px;
-  margin-left: -8px;
+/* Элементы пагинации */
+.assets-table >>> .v-data-footer {
+  padding: 8px 16px;
+  min-height: 48px;
 }
 
-.action .v-list-item__title {
-  font-size: 0.875rem;
+.assets-table >>> .v-data-footer__select {
+  font-size: 0.7rem;
 }
 
-/* Адаптивность для мобильных */
+.assets-table >>> .v-data-footer__pagination {
+  font-size: 0.8rem;
+}
+
+/* Чекбоксы в таблице */
+.assets-table >>> .v-data-table__checkbox {
+  padding: 0 8px;
+}
+
+.assets-table >>> .v-data-table__selected {
+  background-color: #e8f5e9;
+}
+
+/* Адаптивные стили */
 @media (max-width: 960px) {
   .dashboard-container {
     padding: 12px;
   }
 
   .card-title {
-    padding: 8px 12px !important;
-    font-size: 0.85rem !important;
+    padding: 8px 12px;
+    font-size: 0.85rem;
   }
 
   .assets-table >>> .v-data-table__wrapper {
-    max-height: calc(100vh - 500px) !important;
+    max-height: calc(100vh - 500px);
   }
 }
 
@@ -1087,14 +1176,14 @@ export default {
   }
 
   .card-title {
-    padding: 6px 10px !important;
-    font-size: 0.8rem !important;
-    min-height: 36px !important;
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    min-height: 36px;
   }
 
   .v-btn {
-    font-size: 0.75rem !important;
-    padding: 2px 8px !important;
+    font-size: 0.75rem;
+    padding: 2px 8px;
   }
 
   .asset-type-content {

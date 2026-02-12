@@ -1222,7 +1222,13 @@ export default {
           }
         }
       }
-    }
+    },
+    value: {
+      handler(newVal) {
+        this.internalSelected = [...newVal];
+      },
+      immediate: true
+    },
   },
   mounted() {
     this.$store.dispatch('fetchPhysicalPersons')
@@ -1255,7 +1261,6 @@ export default {
     },
     getPledgeeName(pledge) {
       if (pledge.legal_pledgee) {
-        // Ищем юридическое лицо
         const legalEntity = this.legalEntities.find(le => le.id === pledge.legal_pledgee);
         return legalEntity ? legalEntity.name : 'Неизвестное юр. лицо';
       } else if (pledge.physical_pledgee) {
@@ -1307,7 +1312,6 @@ export default {
     },
     onAssetTypeChange() {
       if (!this.disabled) {
-        // Очищаем details через Vue.set для реактивности
         this.$set(this.editedAsset, 'details', {});
         const schema = AssetSchemas[this.editedAsset.asset_type];
         if (schema && schema.properties) {
@@ -1328,8 +1332,6 @@ export default {
           });
         }
       }
-
-      // Обновляем родительский компонент
       this.$nextTick(() => {
         this.emitAssetChange();
       });
@@ -1914,7 +1916,6 @@ export default {
         console.error('Ошибка загрузки истории:', error);
       }
     },
-    // Методы для оспаривания сделок
     openDisputeDialog() {
       this.disputeDialog = true;
       this.isEditingDispute = !!this.editedAsset.dispute_transaction;
@@ -1946,7 +1947,6 @@ export default {
         };
       }
     },
-
     closeDisputeDialog() {
       this.disputeDialog = false;
       this.isEditingDispute = false;
@@ -1971,7 +1971,6 @@ export default {
         is_active: true
       };
     },
-
     saveDispute(disputeData) {
       // Обновляем свойство как один объект
       this.$set(this.editedAsset, 'dispute_transaction', disputeData);
@@ -1982,11 +1981,9 @@ export default {
         this.emitAssetChange();
       });
     },
-
     editDispute() {
       this.openDisputeDialog();
     },
-
     removeDispute() {
       if (confirm('Вы уверены, что хотите удалить оспариваемую сделку?')) {
         this.$set(this.editedAsset, 'dispute_transaction', null);
@@ -1996,6 +1993,10 @@ export default {
         });
       }
     },
+    resetSelection() {
+      this.internalSelected = [];
+      this.selectedItems = [];
+    }
   }
 }
 </script>

@@ -5,31 +5,51 @@
       <v-card-text>
         <v-row justify="start">
           <v-col cols="4" class="mt-5 actions">
-            <v-autocomplete
-                v-if="template['name'] !== 'Сводный запрос в кредитную организацию'"
-                dense
-                outlined
-                label="Выберете проект"
-                v-model="project"
-                :items="activeProjectList"
-                item-text="name"
-                item-value="id"
-                @change="getProjectDetail"
-            >
-              <template v-slot:selection="data">
-                <v-chip>
-                  {{ data.item.name }}
-                </v-chip>
-              </template>
-              <template v-slot:item="data">
-                <v-list-item-content>
-                  <v-list-item-title>{{ data.item.name }}</v-list-item-title>
-                  <v-list-item-subtitle style="font-size: 10px; color: #00a6ee">{{ data.item.code }} -
-                    {{ data.item.procedure | getProcedure }}
-                  </v-list-item-subtitle>
-                </v-list-item-content>
-              </template>
-            </v-autocomplete>
+            <v-row v-if="template['name'] !== 'Сводный запрос в кредитную организацию'" align="center" no-gutters
+                   class="mb-3">
+              <v-col cols="12" class="mb-3">
+                <v-autocomplete
+                    dense
+                    outlined
+                    label="Выберите проект"
+                    v-model="project"
+                    :items="filteredProjectList"
+                    item-text="name"
+                    item-value="id"
+                    @change="getProjectDetail"
+                    :clearable="true"
+                    hide-details
+                >
+                  <template v-slot:selection="data">
+                    <v-chip :color="data.item.isArchive ? 'grey lighten-2' : ''">
+                      {{ data.item.name }}
+                      <span v-if="data.item.isArchive" class="ml-1" style="font-size: 10px;">(архив)</span>
+                    </v-chip>
+                  </template>
+                  <template v-slot:item="data">
+                    <v-list-item-content>
+                      <v-list-item-title>
+                        {{ data.item.name }}
+                        <span v-if="data.item.isArchive" class="ml-1"
+                              style="font-size: 10px; color: #999;">(архив)</span>
+                      </v-list-item-title>
+                      <v-list-item-subtitle style="font-size: 10px; color: #00a6ee">
+                        {{ data.item.code }} - {{ data.item.procedure | getProcedure }}
+                      </v-list-item-subtitle>
+                    </v-list-item-content>
+                  </template>
+                </v-autocomplete>
+              </v-col>
+              <v-col cols="12" class="mb-3">
+                <v-checkbox
+                    v-model="showAllProjects"
+                    dense
+                    hide-details
+                    class="mt-0 pt-0"
+                    label="Показать все проекты (включая архивные)"
+                ></v-checkbox>
+              </v-col>
+            </v-row>
             <v-autocomplete
                 v-else
                 dense
@@ -857,7 +877,8 @@
 
                       </template>
                       <template v-else-if="field['is_date']">
-                        <template  v-if="field.value === 'ADMISSION_DEPARTMENT_DATE' || field.value === 'RETURN_SEND_DATE'">
+                        <template
+                            v-if="field.value === 'ADMISSION_DEPARTMENT_DATE' || field.value === 'RETURN_SEND_DATE'">
                           <DatePicker
                               style="width: 100%"
                               class="mb-4"
@@ -1423,6 +1444,7 @@ export default {
     }
   },
   data: () => ({
+    showAllProjects: false,
     selectedFormat: null,
     showCreditorClaimCreate: false,
     participator: null,
@@ -1608,6 +1630,9 @@ export default {
       }
 
       return formats;
+    },
+    filteredProjectList() {
+      return this.showAllProjects ? this.projectList : this.activeProjectList;
     },
   },
   watch: {

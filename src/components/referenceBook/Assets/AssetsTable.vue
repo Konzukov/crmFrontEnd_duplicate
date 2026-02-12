@@ -11,7 +11,31 @@
       :dense="dense"
       @update:page="$emit('update:page', $event)"
       @update:items-per-page="$emit('update:items-per-page', $event)"
+      :show-select="showSelect"
+      v-model="selectedItems"
+      item-key="id"
   >
+    <template v-slot:header.data-table-select="{ on, props }">
+      <v-checkbox
+          dense
+          v-bind="props"
+          v-on="on"
+          hide-details
+          class="ma-0 pa-0 header-checkbox"
+      ></v-checkbox>
+    </template>
+
+    <template v-slot:item.data-table-select="{ isSelected, select, item }">
+      <v-checkbox
+          :value="isSelected"
+          @change="select($event)"
+          :disabled="!canSelectItem(item)"
+          hide-details
+          dense
+          class="ma-0 pa-0 row-checkbox"
+      ></v-checkbox>
+    </template>
+
     <!-- Слот для типа имущества -->
     <template v-slot:item.asset_type="{ item }">
       <div class="asset-type-with-description">
@@ -166,11 +190,16 @@
 
     <!-- Слот для футера -->
     <template v-slot:footer>
-      <v-divider></v-divider>
+      <template v-if="$scopedSlots['footer-actions'] && showFooterActions">
+        <div class="selection-footer">
+          <slot name="footer-actions" :selectedItems="selectedItems"></slot>
+        </div>
+        <v-divider></v-divider>
+      </template>
       <div class="text-center py-2">
-        <span class="text-caption grey--text">
-          Показано {{ getPaginationInfo() }}
-        </span>
+    <span class="text-caption grey--text">
+      Показано {{ getPaginationInfo() }}
+    </span>
       </div>
     </template>
   </v-data-table>
@@ -213,6 +242,10 @@ export default {
       type: String,
       default: null
     },
+    filterDealStatus: {
+      type: String,
+      default: null
+    },
     // Пагинация
     page: {
       type: Number,
@@ -247,15 +280,50 @@ export default {
     footerItemsPerPageOptions: {
       type: Array,
       default: () => [10, 25, 50, 100]
-    }
+    },
+    showFooterActions: {
+      type: Boolean,
+      default: false
+    },
+    itemKey: {
+      type: String,
+      default: 'id'
+    },
+    showSelect: {
+      type: Boolean,
+      default: false
+    },
+    value: { // v-model для выбранных элементов
+      type: Array,
+      default: () => []
+    },
+    selectedOwner: { // текущий выбранный владелец для ограничения
+      type: String,
+      default: null
+    },
+    showGenerateDocument: {
+      type: Boolean,
+      default: false
+    },
   },
   data() {
     return {
       currentPage: this.page,
       currentItemsPerPage: this.itemsPerPage,
+      internalSelected: [...this.value]
     }
   },
   computed: {
+    selectedItems: {
+      get() {
+        return this.internalSelected;
+      },
+      set(value) {
+        this.internalSelected = value;
+        this.$emit('input', value);
+        this.$emit('selection-change', value);
+      }
+    },
     filteredItems() {
       let filtered = [...this.items]
 
@@ -273,6 +341,14 @@ export default {
         filtered = filtered.filter(asset => asset.category_display === this.filterCategory)
       }
 
+      // Новый фильтр по статусу сделки
+      if (this.filterDealStatus) {
+        filtered = filtered.filter(asset => {
+          if (!asset.dispute_transaction) return false;
+          return asset.dispute_transaction.dispute_status === this.filterDealStatus;
+        });
+      }
+
       return filtered
     },
     footerProps() {
@@ -284,7 +360,7 @@ export default {
     },
     showCustomActions() {
       return this.$scopedSlots['custom-actions']
-    }
+    },
   },
   watch: {
     page(newVal) {
@@ -298,10 +374,21 @@ export default {
     },
     currentItemsPerPage(newVal) {
       this.$emit('update:items-per-page', newVal)
+    },
+    value: {
+      handler(newVal) {
+        this.internalSelected = newVal ? [...newVal] : [];
+      },
+      deep: true,
+      immediate: true
     }
   },
   methods: {
-    // Методы форматирования
+    canSelectItem(item) {
+      if (!this.showSelect) return false;
+      if (!this.selectedOwner) return true; // Если владелец не выбран, можно выбрать любую
+      return item.owner_name === this.selectedOwner;
+    },
     getCategoryColor(is_joint_property) {
       return is_joint_property ? 'success' : 'grey'
     },
@@ -395,11 +482,21 @@ export default {
 </script>
 
 <style scoped>
-.assets-table >>> .v-data-table__wrapper {
-  max-height: calc(100vh - 450px) !important;
+/* Базовые стили таблицы */
+.assets-table {
+  --table-max-height: calc(100vh - 450px);
+  --badge-height: 18px;
+  --chip-height: 22px;
+  --description-width: 250px;
+}
+
+/* Контейнер таблицы */
+.assets-table :deep(.v-data-table__wrapper) {
+  max-height: var(--table-max-height) !important;
   overflow-y: auto;
 }
 
+/* Группа типа имущества */
 .asset-type-with-description {
   display: flex;
   flex-direction: column;
@@ -417,60 +514,54 @@ export default {
   margin-right: 8px;
 }
 
+/* Описание и адрес */
 .asset-description {
   font-size: 0.75rem;
   color: #666;
   line-height: 1.2;
-  max-width: 250px;
+  max-width: var(--description-width);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.description-text, .address-text {
+.description-text,
+.address-text {
   cursor: help;
 }
 
+/* Бейджи */
 .asset-badges {
   display: flex;
   gap: 4px;
   margin-left: auto;
 }
 
-/* Бейджи для арестов и залогов */
-.arrest-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 18px;
-  height: 18px;
-  border-radius: 9px;
-  background-color: #ff5252;
-  color: white;
-  font-size: 0.65rem;
-  font-weight: 600;
-  padding: 0 4px;
-  cursor: default;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
+.arrest-badge,
 .pledge-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 18px;
-  height: 18px;
-  border-radius: 9px;
-  background-color: #4caf50;
+  min-width: var(--badge-height);
+  height: var(--badge-height);
+  border-radius: calc(var(--badge-height) / 2);
   color: white;
   font-size: 0.65rem;
   font-weight: 600;
   padding: 0 4px;
   cursor: default;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s, background-color 0.2s;
 }
 
-/* Эффекты при наведении */
+.arrest-badge {
+  background-color: #ff5252;
+}
+
+.pledge-badge {
+  background-color: #4caf50;
+}
+
 .arrest-badge:hover {
   background-color: #ff1744;
   transform: scale(1.05);
@@ -481,47 +572,120 @@ export default {
   transform: scale(1.05);
 }
 
-/* Уменьшаем размеры чипов */
-.category-chip {
-  font-size: 0.75rem !important;
-  height: 22px !important;
-}
-
+/* Чипы */
+.category-chip,
 .status-chip {
   font-size: 0.75rem !important;
-  height: 22px !important;
+  height: var(--chip-height) !important;
 }
 
+/* Меню действий */
 .action .v-list-item__icon {
-  margin-right: 8px;
-  margin-left: -8px;
+  margin: 0 8px 0 -8px;
 }
 
 .action .v-list-item__title {
   font-size: 0.875rem;
 }
 
-.date-cell, .owner-info {
+/* Ячейки с текстом */
+.date-cell,
+.owner-info {
   font-size: 0.85rem;
 }
 
-/* Адаптивность для мобильных */
+/* Стили для чекбоксов */
+.assets-table :deep(.v-data-table__checkbox) {
+  padding: 0 12px;
+}
+
+.assets-table :deep(.v-data-table__selected) {
+  background-color: rgba(33, 150, 243, 0.1) !important;
+}
+
+.assets-table :deep(.v-simple-checkbox) {
+  margin: 0;
+}
+
+.assets-table :deep(.v-simple-checkbox--disabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Футер с выделением */
+.selection-footer {
+  background-color: #e3f2fd;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 40px;
+}
+
+.selection-footer :deep(.v-chip) {
+  font-size: 0.7rem !important;
+  height: 20px !important;
+}
+
+.selection-footer :deep(.v-btn) {
+  font-size: 0.7rem !important;
+  min-height: 26px !important;
+  padding: 0 8px !important;
+}
+
+.selection-footer :deep(.v-btn .v-icon) {
+  font-size: 0.9rem !important;
+}
+
+/* Стандартный футер таблицы */
+.assets-table :deep(.v-data-footer) {
+  padding: 4px 8px !important;
+  min-height: 36px !important;
+}
+
+/* Адаптивность */
+@media (max-width: 960px) {
+  .assets-table {
+    --description-width: 200px;
+  }
+
+  .asset-type-content {
+    flex-wrap: nowrap;
+  }
+}
+
 @media (max-width: 600px) {
+  .assets-table {
+    --table-max-height: calc(100vh - 400px);
+    --badge-height: 16px;
+  }
+
   .asset-type-content {
     flex-direction: column;
     align-items: flex-start;
   }
 
   .asset-badges {
-    margin-left: 0;
-    margin-top: 2px;
+    margin: 2px 0 0 0;
   }
 
   .arrest-badge,
   .pledge-badge {
-    min-width: 16px;
-    height: 16px;
     font-size: 0.6rem;
+  }
+}
+
+/* Оптимизация для печати */
+@media print {
+  .assets-table :deep(.v-data-table__wrapper) {
+    max-height: none !important;
+    overflow: visible;
+  }
+
+  .arrest-badge,
+  .pledge-badge,
+  .action-menu {
+    display: none !important;
   }
 }
 </style>
