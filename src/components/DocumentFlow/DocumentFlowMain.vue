@@ -44,23 +44,37 @@
     >
       <v-icon>mdi-plus</v-icon>
     </v-btn>
+
+    <!-- Document Create Dialog -->
+    <DocumentCreate v-model="showCreateDialog" @created="onDocumentsCreated" />
   </v-container>
 </template>
 
 <script>
+import DocumentCreate from '@/components/CRM/DocumentFlow/DocumentCreate.vue'
+
 export default {
   name: 'DocumentFlowMain',
+  components: {
+    DocumentCreate
+  },
   data() {
     return {
-      activeTab: null
+      activeTab: null,
+      showCreateDialog: false
     }
   },
   methods: {
     createDocument() {
-      this.$router.push({name: 'doc-flow-create'})
+      this.showCreateDialog = true
     },
     createCorrespondence() {
       this.$router.push({name: 'doc-flow-corr-create'})
+    },
+    async onDocumentsCreated() {
+      // Refresh documents list
+      await this.$store.dispatch('documentFlow/fetchDocuments')
+      this.showCreateDialog = false
     }
   }
 }

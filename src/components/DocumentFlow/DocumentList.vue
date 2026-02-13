@@ -69,23 +69,34 @@
       <template v-slot:item.current_state="{ item }">
         <v-chip
           small
-          :color="item.current_state ? item.current_state.color : 'grey'"
-          dark
+          color="primary"
+          outlined
         >
-          {{ item.current_state ? item.current_state.name : 'Не указано' }}
+          {{ item.current_state || 'Не указано' }}
         </v-chip>
       </template>
 
       <template v-slot:item.document_type="{ item }">
-        {{ item.document_type ? item.document_type.name : '-' }}
+        {{ item.document_type || '-' }}
       </template>
 
       <template v-slot:item.executor="{ item }">
-        {{ item.executor ? item.executor.name : '-' }}
+        {{ item.executor || '-' }}
       </template>
 
       <template v-slot:item.project="{ item }">
         {{ item.project ? item.project.name : '-' }}
+      </template>
+
+      <template v-slot:item.files="{ item }">
+        <!-- Support both file_count and files_count for API backwards compatibility -->
+        <div v-if="item.file_count || item.files_count" class="d-flex align-center">
+          <v-chip x-small color="primary" outlined class="mr-1">
+            <v-icon x-small left>mdi-paperclip</v-icon>
+            {{ item.file_count || item.files_count || 0 }}
+          </v-chip>
+        </div>
+        <span v-else class="text--secondary">-</span>
       </template>
 
       <template v-slot:item.created_at="{ item }">
@@ -123,6 +134,7 @@ export default {
         { text: 'Статус', value: 'current_state', sortable: false },
         { text: 'Исполнитель', value: 'executor', sortable: false },
         { text: 'Проект', value: 'project', sortable: false },
+        { text: 'Файлы', value: 'files', sortable: false },
         { text: 'Дата создания', value: 'created_at', sortable: true },
         { text: 'Действия', value: 'actions', sortable: false }
       ],

@@ -104,13 +104,13 @@
                               </div>
                             </v-list-item-content>
                             <v-list-item-action class="ma-0 ml-1" style="display: flex; align-items: center;">
-                              <!-- Кнопка просмотра PDF -->
+                              <!-- Кнопка просмотра для PDF и изображений -->
                               <v-btn
-                                  v-if="file.fileType === 'PDF'"
+                                  v-if="canPreviewFile(file)"
                                   icon
                                   x-small
-                                  @click.stop="openPdfViewer(file)"
-                                  title="Просмотреть PDF"
+                                  @click.stop="openFilePreview(file)"
+                                  title="Просмотреть"
                                   class="mr-1"
                               >
                                 <v-icon x-small>mdi-eye</v-icon>
@@ -221,6 +221,7 @@
               <v-card-text class="pa-3">
                 <v-form ref="documentForm" v-model="currentDocumentValid">
                   <v-row dense>
+                    <!-- Обязательные поля -->
                     <v-col cols="12" class="pb-1">
                       <v-text-field
                           outlined
@@ -238,26 +239,13 @@
                           dense
                           v-model="currentDocument.direction"
                           :items="directionOptions"
-                          label="Тип *"
+                          label="Направление *"
                           :rules="[v => !!v || 'Обязательно']"
                           hide-details
                       ></v-select>
                     </v-col>
 
                     <v-col cols="6" class="pb-1">
-                      <v-select
-                          outlined
-                          dense
-                          v-model="currentDocument.document_type"
-                          :items="documentTypes"
-                          item-text="name"
-                          item-value="id"
-                          label="Вид"
-                          hide-details
-                      ></v-select>
-                    </v-col>
-
-                    <v-col cols="12" class="pb-1">
                       <v-autocomplete
                           outlined
                           dense
@@ -271,55 +259,152 @@
                       ></v-autocomplete>
                     </v-col>
 
+                    <!-- Кнопка показать/скрыть дополнительные поля -->
                     <v-col cols="12" class="pb-1">
-                      <v-text-field
-                          outlined
-                          dense
-                          v-model="currentDocument.out_number"
-                          label="Номер"
-                          hide-details
-                      ></v-text-field>
+                      <v-btn
+                          text
+                          small
+                          color="primary"
+                          @click="showOptionalFields = !showOptionalFields"
+                      >
+                        <v-icon left small>{{ showOptionalFields ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+                        {{ showOptionalFields ? 'Скрыть' : 'Показать' }} дополнительные поля
+                      </v-btn>
                     </v-col>
 
-                    <v-col cols="12" class="pb-1">
-                      <v-textarea
-                          outlined
-                          dense
-                          v-model="currentDocument.description"
-                          label="Описание"
-                          rows="1"
-                          auto-grow
-                          hide-details
-                      ></v-textarea>
-                    </v-col>
+                    <!-- Опциональные поля -->
+                    <template v-if="showOptionalFields">
+                      <v-col cols="12" class="pb-1">
+                        <v-select
+                            outlined
+                            dense
+                            v-model="currentDocument.document_type"
+                            :items="documentTypes"
+                            item-text="name"
+                            item-value="id"
+                            label="Тип документа"
+                            clearable
+                            hide-details
+                        ></v-select>
+                      </v-col>
 
-                    <v-col cols="6" class="pb-1">
-                      <v-autocomplete
-                          outlined
-                          dense
-                          v-model="currentDocument.project"
-                          :items="projects"
-                          item-text="name"
-                          item-value="id"
-                          label="Проект"
-                          clearable
-                          hide-details
-                      ></v-autocomplete>
-                    </v-col>
+                      <v-col cols="12" class="pb-1">
+                        <v-text-field
+                            outlined
+                            dense
+                            v-model="currentDocument.out_number"
+                            label="Исх. номер"
+                            hide-details
+                        ></v-text-field>
+                      </v-col>
 
-                    <v-col cols="6" class="pb-1">
-                      <v-autocomplete
-                          outlined
-                          dense
-                          v-model="currentDocument.issuer_legal"
-                          :items="legalEntities"
-                          item-text="name"
-                          item-value="id"
-                          label="Организация"
-                          clearable
-                          hide-details
-                      ></v-autocomplete>
-                    </v-col>
+                      <v-col cols="12" class="pb-1">
+                        <v-textarea
+                            outlined
+                            dense
+                            v-model="currentDocument.description"
+                            label="Описание"
+                            rows="2"
+                            auto-grow
+                            hide-details
+                        ></v-textarea>
+                      </v-col>
+
+                      <v-col cols="12" class="pb-1">
+                        <v-autocomplete
+                            outlined
+                            dense
+                            v-model="currentDocument.project"
+                            :items="projects"
+                            item-text="name"
+                            item-value="id"
+                            label="Проект"
+                            clearable
+                            hide-details
+                        ></v-autocomplete>
+                      </v-col>
+
+                      <v-col cols="12" class="pb-1">
+                        <v-autocomplete
+                            outlined
+                            dense
+                            v-model="currentDocument.issuer_legal"
+                            :items="legalEntities"
+                            item-text="name"
+                            item-value="id"
+                            label="Выдавшая организация"
+                            clearable
+                            hide-details
+                        ></v-autocomplete>
+                      </v-col>
+
+                      <v-col cols="12" class="pb-1">
+                        <v-autocomplete
+                            outlined
+                            dense
+                            v-model="currentDocument.issuer_physical"
+                            :items="executors"
+                            item-text="fullName"
+                            item-value="id"
+                            label="Выдавшее лицо"
+                            clearable
+                            hide-details
+                        ></v-autocomplete>
+                      </v-col>
+
+                      <v-col cols="12" class="pb-1">
+                        <v-autocomplete
+                            outlined
+                            dense
+                            v-model="currentDocument.owner_legal"
+                            :items="legalEntities"
+                            item-text="name"
+                            item-value="id"
+                            label="Владелец (организация)"
+                            clearable
+                            hide-details
+                        ></v-autocomplete>
+                      </v-col>
+
+                      <v-col cols="12" class="pb-1">
+                        <v-autocomplete
+                            outlined
+                            dense
+                            v-model="currentDocument.owner_physical"
+                            :items="executors"
+                            item-text="fullName"
+                            item-value="id"
+                            label="Владелец (физ. лицо)"
+                            clearable
+                            hide-details
+                        ></v-autocomplete>
+                      </v-col>
+
+                      <v-col cols="8" class="pb-1">
+                        <v-text-field
+                            outlined
+                            dense
+                            v-model.number="currentDocument.amount"
+                            label="Сумма"
+                            type="number"
+                            step="0.01"
+                            clearable
+                            hide-details
+                        ></v-text-field>
+                      </v-col>
+
+                      <v-col cols="4" class="pb-1">
+                        <v-select
+                            outlined
+                            dense
+                            v-model="currentDocument.currency"
+                            :items="currencyOptions"
+                            label="Валюта"
+                            clearable
+                            hide-details
+                        ></v-select>
+                      </v-col>
+                    </template>
                   </v-row>
                 </v-form>
               </v-card-text>
@@ -409,10 +494,10 @@
                 <v-btn
                     color="primary"
                     @click="isEditing ? updateDocument() : addDocument()"
-                    :disabled="!currentDocumentValid || currentDocument.files.length === 0"
+                    :disabled="!currentDocumentValid"
                 >
                   <v-icon left>{{ isEditing ? 'mdi-content-save' : 'mdi-plus' }}</v-icon>
-                  {{ isEditing ? 'Сохранить изменения' : `Добавить документ (${currentDocument.files.length} файлов)` }}
+                  {{ isEditing ? 'Сохранить изменения' : `Добавить документ` }}
                 </v-btn>
               </v-card-actions>
             </v-card>
@@ -538,12 +623,34 @@
         :fileName="pdfViewer.fileName"
         @close="closePdfViewer"
     />
+    
+    <!-- Image Preview Dialog -->
+    <v-dialog v-model="imageViewer.visible" max-width="90vw">
+      <v-card>
+        <v-card-title class="headline">
+          {{ imageViewer.fileName }}
+          <v-spacer></v-spacer>
+          <v-btn icon @click="closeImageViewer">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-card-title>
+        <v-card-text class="pa-0">
+          <v-img
+              :src="imageViewer.src"
+              :alt="imageViewer.fileName"
+              contain
+              max-height="80vh"
+          ></v-img>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
   </v-dialog>
 </template>
 
 <script>
 import {mapActions, mapGetters} from 'vuex'
 import PdfViewer from "@/components/PDFViewer/PdfViewer.vue";
+import customConst from '@/const/customConst'
 
 export default {
   name: 'DocumentCreate',
@@ -561,6 +668,7 @@ export default {
     systemFilesSearch: '',
     editingIndex: null,
     activeTab: 0,
+    showOptionalFields: false,
     filePool: [],
     currentDocument: {
       title: '',
@@ -571,6 +679,11 @@ export default {
       description: '',
       project: null,
       issuer_legal: null,
+      issuer_physical: null,
+      owner_legal: null,
+      owner_physical: null,
+      amount: null,
+      currency: null,
       files: []
     },
     documents: [],
@@ -579,7 +692,17 @@ export default {
       {text: 'Исходящий', value: 'outgoing'},
       {text: 'Входящий', value: 'incoming'}
     ],
+    currencyOptions: [
+      {text: 'RUB (₽)', value: 'RUB'},
+      {text: 'USD ($)', value: 'USD'},
+      {text: 'EUR (€)', value: 'EUR'}
+    ],
     pdfViewer: {
+      visible: false,
+      src: null,
+      fileName: ''
+    },
+    imageViewer: {
       visible: false,
       src: null,
       fileName: ''
@@ -682,6 +805,11 @@ export default {
         description: docToEdit.description,
         project: docToEdit.project,
         issuer_legal: docToEdit.issuer_legal,
+        issuer_physical: docToEdit.issuer_physical,
+        owner_legal: docToEdit.owner_legal,
+        owner_physical: docToEdit.owner_physical,
+        amount: docToEdit.amount,
+        currency: docToEdit.currency,
         files: [...docToEdit.files] // Копируем файлы
       }
 
@@ -925,6 +1053,11 @@ export default {
         description: '',
         project: null,
         issuer_legal: null,
+        issuer_physical: null,
+        owner_legal: null,
+        owner_physical: null,
+        amount: null,
+        currency: null,
         files: []
       }
 
@@ -938,7 +1071,10 @@ export default {
       const fileTypeIcons = {
         DOCX: {icon: 'mdi-file-word', color: 'blue darken-2'},
         PDF: {icon: 'mdi-file-pdf-box', color: 'red darken-2'},
-        SIGN: {icon: 'mdi-certificate', color: 'green darken-2'},
+        IMAGE: {icon: 'mdi-image', color: 'green darken-2'},
+        SIGN: {icon: 'mdi-certificate', color: 'purple darken-2'},
+        ARCHIVE: {icon: 'mdi-folder-zip', color: 'orange darken-2'},
+        TEXT: {icon: 'mdi-file-document', color: 'grey darken-1'},
         OTHER: {icon: 'mdi-file', color: 'grey darken-1'}
       }
       return fileTypeIcons[fileType] || fileTypeIcons.OTHER
@@ -950,10 +1086,62 @@ export default {
         'pdf': 'PDF',
         'docx': 'DOCX',
         'doc': 'DOCX',
+        'jpg': 'IMAGE',
+        'jpeg': 'IMAGE',
+        'png': 'IMAGE',
+        'gif': 'IMAGE',
+        'bmp': 'IMAGE',
+        'webp': 'IMAGE',
         'sig': 'SIGN',
-        'p7s': 'SIGN'
+        'p7s': 'SIGN',
+        'zip': 'ARCHIVE',
+        'rar': 'ARCHIVE',
+        '7z': 'ARCHIVE',
+        'txt': 'TEXT',
+        'md': 'TEXT'
       }
       return extensionMap[ext] || 'OTHER'
+    },
+
+    canPreviewFile(file) {
+      return file.fileType === 'PDF' || file.fileType === 'IMAGE'
+    },
+
+    openFilePreview(file) {
+      if (file.fileType === 'PDF') {
+        this.openPdfViewer(file)
+      } else if (file.fileType === 'IMAGE') {
+        this.openImageViewer(file)
+      }
+    },
+
+    openImageViewer(file) {
+      if (file.type === 'new' && file.file) {
+        const blobUrl = URL.createObjectURL(file.file)
+        this.imageViewer = {
+          visible: true,
+          src: blobUrl,
+          fileName: file.name
+        }
+      } else if (file.type === 'existing') {
+        // For existing files from system - use backend URL
+        this.imageViewer = {
+          visible: true,
+          src: `${customConst.DOCUMENT_FLOW}file/${file.fileId}/download/`,
+          fileName: file.name
+        }
+      }
+    },
+
+    closeImageViewer() {
+      if (this.imageViewer.src && this.imageViewer.src.startsWith('blob:')) {
+        URL.revokeObjectURL(this.imageViewer.src)
+      }
+      this.imageViewer = {
+        visible: false,
+        src: null,
+        fileName: ''
+      }
     },
 
     formatFileSize(bytes) {
@@ -995,7 +1183,12 @@ export default {
               out_number: doc.out_number,
               description: doc.description,
               project: doc.project,
-              issuer_legal: doc.issuer_legal
+              issuer_legal: doc.issuer_legal,
+              issuer_physical: doc.issuer_physical,
+              owner_legal: doc.owner_legal,
+              owner_physical: doc.owner_physical,
+              amount: doc.amount,
+              currency: doc.currency
             }
 
             const createdDoc = await this.createDocument(documentData)
@@ -1095,6 +1288,9 @@ export default {
       }
     },
     closePdfViewer() {
+      if (this.pdfViewer.src && this.pdfViewer.src.startsWith('blob:')) {
+        URL.revokeObjectURL(this.pdfViewer.src)
+      }
       this.pdfViewer = {
         visible: false,
         src: null,
