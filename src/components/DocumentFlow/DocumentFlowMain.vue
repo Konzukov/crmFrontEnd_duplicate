@@ -46,17 +46,17 @@
     </v-btn>
 
     <!-- Document Create Dialog -->
-    <DocumentCreate v-model="showCreateDialog" @created="onDocumentsCreated" />
+    <DocumentCreateDialog v-model="showCreateDialog" @created="onDocumentsCreated" />
   </v-container>
 </template>
 
 <script>
-import DocumentCreate from '@/components/CRM/DocumentFlow/DocumentCreate.vue'
+import DocumentCreateDialog from './DocumentCreateDialog.vue'
 
 export default {
   name: 'DocumentFlowMain',
   components: {
-    DocumentCreate
+    DocumentCreateDialog
   },
   data() {
     return {

@@ -38,17 +38,6 @@
           @change="applyFilters"
         ></v-select>
       </v-col>
-      <v-col cols="12" md="3">
-        <v-autocomplete
-          v-model="filters.project"
-          :items="[]"
-          label="Проект"
-          clearable
-          outlined
-          dense
-          @change="applyFilters"
-        ></v-autocomplete>
-      </v-col>
     </v-row>
 
     <v-data-table
@@ -69,8 +58,8 @@
       <template v-slot:item.current_state="{ item }">
         <v-chip
           small
-          color="primary"
-          outlined
+          :color="getStateColor(item.current_state)"
+          dark
         >
           {{ item.current_state || 'Не указано' }}
         </v-chip>
@@ -84,21 +73,6 @@
         {{ item.executor || '-' }}
       </template>
 
-      <template v-slot:item.project="{ item }">
-        {{ item.project ? item.project.name : '-' }}
-      </template>
-
-      <template v-slot:item.files="{ item }">
-        <!-- Support both file_count and files_count for API backwards compatibility -->
-        <div v-if="item.file_count || item.files_count" class="d-flex align-center">
-          <v-chip x-small color="primary" outlined class="mr-1">
-            <v-icon x-small left>mdi-paperclip</v-icon>
-            {{ item.file_count || item.files_count || 0 }}
-          </v-chip>
-        </div>
-        <span v-else class="text--secondary">-</span>
-      </template>
-
       <template v-slot:item.created_at="{ item }">
         {{ formatDate(item.created_at) }}
       </template>
@@ -110,7 +84,7 @@
         <v-icon small class="mr-2" @click.stop="editDocument(item)">
           mdi-pencil
         </v-icon>
-        <v-icon small @click.stop="deleteDocument(item)">
+        <v-icon small @click.stop="confirmDelete(item)">
           mdi-delete
         </v-icon>
       </template>
@@ -133,8 +107,6 @@ export default {
         { text: 'Направление', value: 'direction', sortable: false },
         { text: 'Статус', value: 'current_state', sortable: false },
         { text: 'Исполнитель', value: 'executor', sortable: false },
-        { text: 'Проект', value: 'project', sortable: false },
-        { text: 'Файлы', value: 'files', sortable: false },
         { text: 'Дата создания', value: 'created_at', sortable: true },
         { text: 'Действия', value: 'actions', sortable: false }
       ],
@@ -146,8 +118,7 @@ export default {
       filters: {
         direction: null,
         current_state: null,
-        document_type: null,
-        project: null
+        document_type: null
       },
       options: {},
       totalItems: 0
@@ -161,13 +132,16 @@ export default {
       'getLoading'
     ]),
     documents() {
-      return this.getDocuments || []
+      const docs = this.getDocuments
+      return Array.isArray(docs) ? docs : []
     },
     documentTypes() {
-      return this.getDocumentTypes || []
+      const types = this.getDocumentTypes
+      return Array.isArray(types) ? types : []
     },
     workflowStates() {
-      return this.getWorkflowStates || []
+      const states = this.getWorkflowStates
+      return Array.isArray(states) ? states : []
     },
     loading() {
       return this.getLoading || {}
@@ -208,10 +182,10 @@ export default {
     editDocument(item) {
       this.$router.push({ name: 'doc-flow-edit', params: { id: item.id } })
     },
-    async deleteDocument(item) {
+    async confirmDelete(item) {
       if (confirm('Вы уверены, что хотите удалить этот документ?')) {
         try {
-          await this.$store.dispatch('documentFlow/deleteDocument', item.id)
+          await this.deleteDocument(item.id)
           this.$store.commit('snackbar/showSnackbar', {
             message: 'Документ удален',
             color: 'success'
@@ -240,6 +214,18 @@ export default {
         internal: 'Внутренний'
       }
       return texts[direction] || direction
+    },
+    getStateColor(stateName) {
+      // Map Russian state names to colors based on problem statement
+      if (!stateName) return 'grey'
+      const stateStr = stateName.toLowerCase()
+      if (stateStr.includes('черновик')) return 'grey'
+      if (stateStr.includes('рассмотрении')) return 'orange'
+      if (stateStr.includes('подписан')) return 'green'
+      if (stateStr.includes('отправлен')) return 'blue'
+      if (stateStr.includes('завершён') || stateStr.includes('завершен')) return 'teal'
+      if (stateStr.includes('архив')) return 'brown'
+      return 'primary'
     },
     formatDate(date) {
       return date ? moment(date).format('DD.MM.YYYY HH:mm') : '-'
