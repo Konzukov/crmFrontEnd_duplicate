@@ -106,8 +106,15 @@ export default {
                 if (state.filters.ordering) params.ordering = state.filters.ordering
                 
                 const res = await axios.get(customConst.DOCUMENT_FLOW + 'documents/', {params})
-                commit('SET_DOCUMENTS', res.data.data)
-                return res.data.data
+                // Handle paginated response or direct array
+                let data = res.data.data
+                if (data && typeof data === 'object' && data.results && Array.isArray(data.results)) {
+                    data = data.results
+                } else if (!Array.isArray(data)) {
+                    data = []
+                }
+                commit('SET_DOCUMENTS', data)
+                return data
             } catch (err) {
                 console.error('Error fetching documents:', err)
                 throw err
@@ -119,8 +126,12 @@ export default {
             commit('SET_LOADING', {key: 'document', value: true})
             try {
                 const res = await axios.get(customConst.DOCUMENT_FLOW + `documents/${id}/`)
-                commit('SET_CURRENT_DOCUMENT', res.data.data)
-                return res.data.data
+                let data = res.data.data
+                if (data && typeof data === 'object' && data.results && Array.isArray(data.results)) {
+                    data = data.results[0] || null
+                }
+                commit('SET_CURRENT_DOCUMENT', data)
+                return data
             } catch (err) {
                 console.error('Error fetching document:', err)
                 throw err
@@ -283,8 +294,14 @@ export default {
             commit('SET_LOADING', {key: 'types', value: true})
             try {
                 const res = await axios.get(customConst.DOCUMENT_FLOW + 'document-types/')
-                commit('SET_DOCUMENT_TYPES', res.data.data)
-                return res.data.data
+                let data = res.data.data
+                if (data && typeof data === 'object' && data.results && Array.isArray(data.results)) {
+                    data = data.results
+                } else if (!Array.isArray(data)) {
+                    data = []
+                }
+                commit('SET_DOCUMENT_TYPES', data)
+                return data
             } catch (err) {
                 console.error('Error fetching document types:', err)
                 throw err
@@ -296,8 +313,14 @@ export default {
             commit('SET_LOADING', {key: 'states', value: true})
             try {
                 const res = await axios.get(customConst.DOCUMENT_FLOW + 'workflow-states/')
-                commit('SET_WORKFLOW_STATES', res.data.data)
-                return res.data.data
+                let data = res.data.data
+                if (data && typeof data === 'object' && data.results && Array.isArray(data.results)) {
+                    data = data.results
+                } else if (!Array.isArray(data)) {
+                    data = []
+                }
+                commit('SET_WORKFLOW_STATES', data)
+                return data
             } catch (err) {
                 console.error('Error fetching workflow states:', err)
                 throw err
@@ -309,8 +332,14 @@ export default {
             commit('SET_LOADING', {key: 'correspondence', value: true})
             try {
                 const res = await axios.get(customConst.DOCUMENT_FLOW + 'correspondence/')
-                commit('SET_CORRESPONDENCE', res.data.data)
-                return res.data.data
+                let data = res.data.data
+                if (data && typeof data === 'object' && data.results && Array.isArray(data.results)) {
+                    data = data.results
+                } else if (!Array.isArray(data)) {
+                    data = []
+                }
+                commit('SET_CORRESPONDENCE', data)
+                return data
             } catch (err) {
                 console.error('Error fetching correspondence:', err)
                 throw err
@@ -377,7 +406,13 @@ export default {
         async fetchFileList({commit}) {
             return await new Promise((resolve, reject) => {
                 axios.get(customConst.DOCUMENT_FLOW + 'file/').then(res => {
-                    commit('SET_FILE_LIST', res.data.data)
+                    let data = res.data.data
+                    if (data && typeof data === 'object' && data.results && Array.isArray(data.results)) {
+                        data = data.results
+                    } else if (!Array.isArray(data)) {
+                        data = []
+                    }
+                    commit('SET_FILE_LIST', data)
                     resolve(res)
                 }).catch(err => {
                     console.log(err)

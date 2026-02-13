@@ -69,19 +69,19 @@
       <template v-slot:item.current_state="{ item }">
         <v-chip
           small
-          :color="item.current_state ? item.current_state.color : 'grey'"
+          color="grey"
           dark
         >
-          {{ item.current_state ? item.current_state.name : 'Не указано' }}
+          {{ item.current_state || 'Не указано' }}
         </v-chip>
       </template>
 
       <template v-slot:item.document_type="{ item }">
-        {{ item.document_type ? item.document_type.name : '-' }}
+        {{ item.document_type || '-' }}
       </template>
 
       <template v-slot:item.executor="{ item }">
-        {{ item.executor ? item.executor.name : '-' }}
+        {{ item.executor || '-' }}
       </template>
 
       <template v-slot:item.project="{ item }">
