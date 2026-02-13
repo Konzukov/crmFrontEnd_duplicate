@@ -89,6 +89,7 @@
       </template>
 
       <template v-slot:item.files="{ item }">
+        <!-- Support both file_count and files_count for API backwards compatibility -->
         <div v-if="item.file_count || item.files_count" class="d-flex align-center">
           <v-chip x-small color="primary" outlined class="mr-1">
             <v-icon x-small left>mdi-paperclip</v-icon>

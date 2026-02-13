@@ -650,6 +650,7 @@
 <script>
 import {mapActions, mapGetters} from 'vuex'
 import PdfViewer from "@/components/PDFViewer/PdfViewer.vue";
+import customConst from '@/const/customConst'
 
 export default {
   name: 'DocumentCreate',
@@ -1124,7 +1125,6 @@ export default {
         }
       } else if (file.type === 'existing') {
         // For existing files from system - use backend URL
-        const customConst = require('@/const/customConst').default
         this.imageViewer = {
           visible: true,
           src: `${customConst.DOCUMENT_FLOW}file/${file.fileId}/download/`,
