@@ -418,6 +418,7 @@ export default {
       newFiles: [],
       uploadedFiles: [],
       fileSearch: '',
+      filePreviewUrls: [], // Track object URLs for cleanup
       
       // Current document being edited
       currentDocument: this.getEmptyDocument(),
@@ -480,7 +481,15 @@ export default {
     },
     dialog(val) {
       this.$emit('input', val)
+      if (!val) {
+        // Cleanup object URLs when dialog closes
+        this.cleanupFilePreviewUrls()
+      }
     }
+  },
+  beforeDestroy() {
+    // Cleanup object URLs to prevent memory leaks
+    this.cleanupFilePreviewUrls()
   },
   methods: {
     ...mapActions('documentFlow', [
@@ -489,6 +498,12 @@ export default {
       'uploadFile',
       'createDocument'
     ]),
+    cleanupFilePreviewUrls() {
+      this.filePreviewUrls.forEach(url => {
+        URL.revokeObjectURL(url)
+      })
+      this.filePreviewUrls = []
+    },
     async initDialog() {
       try {
         await Promise.all([
@@ -530,10 +545,16 @@ export default {
     },
     onFilesSelected(files) {
       if (files && files.length > 0) {
-        this.uploadedFiles.push(...files)
+        // Replace instead of push to avoid duplicates
+        this.uploadedFiles = [...files]
       }
     },
     removeNewFile(index) {
+      const file = this.uploadedFiles[index]
+      // Cleanup preview URL if it exists
+      if (file && file._previewUrl) {
+        URL.revokeObjectURL(file._previewUrl)
+      }
       this.uploadedFiles.splice(index, 1)
     },
     addFileToDocument(file, type) {
@@ -604,7 +625,7 @@ export default {
               }
               
               const result = await this.uploadFile({ formData })
-              if (result.data && result.data.id) {
+              if (result && result.data && result.data.id) {
                 uploadedFileIds.push(result.data.id)
               }
             } else {
@@ -645,7 +666,10 @@ export default {
         this.$emit('created')
         this.closeDialog()
       } else {
-        alert(`Создано ${this.createdCount} из ${this.documentQueue.length} документов. Ошибки: ${errors.length}`)
+        this.$store.commit('snackbar/showSnackbar', {
+          message: `Создано ${this.createdCount} из ${this.documentQueue.length} документов. Ошибки: ${errors.length}`,
+          color: 'warning'
+        })
       }
     },
     closeDialog() {
@@ -682,7 +706,12 @@ export default {
       return file.type && file.type.startsWith('image/')
     },
     getFilePreview(file) {
-      return URL.createObjectURL(file)
+      // Create and track object URL for cleanup
+      if (!file._previewUrl) {
+        file._previewUrl = URL.createObjectURL(file)
+        this.filePreviewUrls.push(file._previewUrl)
+      }
+      return file._previewUrl
     },
     getFileIcon(mimeType) {
       if (!mimeType) return 'mdi-file'

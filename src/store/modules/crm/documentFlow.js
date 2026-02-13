@@ -42,7 +42,7 @@ export default {
     },
     mutations: {
         SET_FILE_LIST(state, data) {
-            state.files = Array.isArray(data) ? [...data] : []
+            state.files = Array.isArray(data) ? data : []
         },
         UPDATE_FILE_LIST(state, data) {
             state.files.push(data)
