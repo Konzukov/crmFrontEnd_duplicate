@@ -1124,10 +1124,10 @@ export default {
         }
       } else if (file.type === 'existing') {
         // For existing files from system - use backend URL
-        // You may need to adjust this based on your backend API
+        const customConst = require('@/const/customConst').default
         this.imageViewer = {
           visible: true,
-          src: `/api/document-flow/file/${file.fileId}/download/`,
+          src: `${customConst.DOCUMENT_FLOW}file/${file.fileId}/download/`,
           fileName: file.name
         }
       }

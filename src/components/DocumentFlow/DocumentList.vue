@@ -69,8 +69,8 @@
       <template v-slot:item.current_state="{ item }">
         <v-chip
           small
-          color="grey"
-          dark
+          color="primary"
+          outlined
         >
           {{ item.current_state || 'Не указано' }}
         </v-chip>
