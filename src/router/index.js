@@ -362,18 +362,56 @@ const routes = [
             {
                 path: 'document-flow',
                 name: 'document-flow',
-                component: () => import('@/components/CRM/DocumentFlow/DocumentFlow.vue'),
+                component: () => import('@/components/DocumentFlow/DocumentFlowMain.vue'),
                 children: [
                     {
-                        path: 'files',
-                        name: 'files',
-                        component: () => import('@/components/CRM/DocumentFlow/DocumentFlowFiles.vue')
+                        path: '',
+                        redirect: 'documents'
                     },
                     {
                         path: 'documents',
-                        name: 'documents',
+                        name: 'doc-flow-documents',
+                        component: () => import('@/components/DocumentFlow/DocumentList.vue')
+                    },
+                    {
+                        path: 'documents/create',
+                        name: 'doc-flow-create',
+                        component: () => import('@/components/DocumentFlow/DocumentFormPage.vue')
+                    },
+                    {
+                        path: 'documents/:id',
+                        name: 'doc-flow-detail',
+                        component: () => import('@/components/DocumentFlow/DocumentDetail.vue'),
+                        props: true
+                    },
+                    {
+                        path: 'documents/:id/edit',
+                        name: 'doc-flow-edit',
+                        component: () => import('@/components/DocumentFlow/DocumentFormPage.vue'),
+                        props: true
+                    },
+                    {
+                        path: 'correspondence',
+                        name: 'doc-flow-correspondence',
+                        component: () => import('@/components/DocumentFlow/CorrespondenceList.vue')
+                    },
+                    {
+                        path: 'correspondence/create',
+                        name: 'doc-flow-corr-create',
+                        component: () => import('@/components/DocumentFlow/CorrespondenceFormPage.vue')
+                    },
+                    {
+                        path: 'correspondence/:id',
+                        name: 'doc-flow-corr-detail',
+                        component: () => import('@/components/DocumentFlow/CorrespondenceDetail.vue'),
+                        props: true
+                    },
+                    {
+                        path: 'settings',
+                        name: 'doc-flow-settings',
+                        component: () => import('@/components/DocumentFlow/DocumentFlowSettings.vue')
                     }
-                ],
+                ]
             },
             {
                 path: 'report',
