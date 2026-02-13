@@ -32,11 +32,11 @@
                   <strong>Состояние:</strong>
                   <v-chip
                     small
-                    :color="document.current_state ? document.current_state.color : 'grey'"
+                    :color="getStateColor(document.current_state)"
                     dark
                     class="ml-2"
                   >
-                    {{ document.current_state ? document.current_state.name : 'Не указано' }}
+                    {{ document.current_state || 'Не указано' }}
                   </v-chip>
                   <v-btn
                     small
@@ -49,7 +49,7 @@
                   </v-btn>
                 </div>
                 <div class="mb-2">
-                  <strong>Тип:</strong> {{ document.document_type ? document.document_type.name : '-' }}
+                  <strong>Тип:</strong> {{ document.document_type || '-' }}
                 </div>
                 <div class="mb-2">
                   <strong>Направление:</strong>
@@ -58,22 +58,22 @@
                   </v-chip>
                 </div>
                 <div class="mb-2">
-                  <strong>Исполнитель:</strong> {{ document.executor ? document.executor.name : '-' }}
+                  <strong>Исполнитель:</strong> {{ document.executor || '-' }}
                 </div>
                 <div class="mb-2" v-if="document.issuer_legal">
-                  <strong>Издатель (юр. лицо):</strong> {{ document.issuer_legal.name }}
+                  <strong>Издатель (юр. лицо):</strong> {{ document.issuer_legal }}
                 </div>
                 <div class="mb-2" v-if="document.issuer_physical">
-                  <strong>Издатель (физ. лицо):</strong> {{ document.issuer_physical.name }}
+                  <strong>Издатель (физ. лицо):</strong> {{ document.issuer_physical }}
                 </div>
                 <div class="mb-2" v-if="document.owner_legal">
-                  <strong>Владелец (юр. лицо):</strong> {{ document.owner_legal.name }}
+                  <strong>Владелец (юр. лицо):</strong> {{ document.owner_legal }}
                 </div>
                 <div class="mb-2" v-if="document.owner_physical">
-                  <strong>Владелец (физ. лицо):</strong> {{ document.owner_physical.name }}
+                  <strong>Владелец (физ. лицо):</strong> {{ document.owner_physical }}
                 </div>
                 <div class="mb-2" v-if="document.project">
-                  <strong>Проект:</strong> {{ document.project.name }}
+                  <strong>Проект:</strong> {{ document.project }}
                 </div>
                 <div class="mb-2" v-if="document.amount">
                   <strong>Сумма:</strong> {{ document.amount }} {{ document.currency || 'RUB' }}
@@ -99,29 +99,33 @@
             </v-btn>
           </v-card-title>
           <v-card-text>
-            <v-list dense v-if="document.files && document.files.length">
+            <v-list dense v-if="fileLinks && fileLinks.length">
               <v-list-item
-                v-for="file in document.files"
-                :key="file.id"
-                @click="selectFile(file)"
-                :class="{ 'primary--text': selectedFileId === file.id }"
+                v-for="link in fileLinks"
+                :key="link.id"
+                @click="selectFileLink(link)"
+                :class="{ 'primary--text': selectedFileLinkId === link.id }"
               >
                 <v-list-item-icon>
-                  <v-icon>{{ getFileIcon(file.mime_type) }}</v-icon>
+                  <v-icon>{{ getFileIcon(link.file_mime_type) }}</v-icon>
                 </v-list-item-icon>
                 <v-list-item-content>
-                  <v-list-item-title>{{ file.original_name }}</v-list-item-title>
+                  <v-list-item-title>{{ link.file_name || 'Файл' }}</v-list-item-title>
                   <v-list-item-subtitle>
-                    {{ formatFileSize(file.file_size) }} • {{ formatDate(file.uploaded_at) }}
+                    {{ link.location_type_display || 'Весь файл' }}
+                    <span v-if="link.location_value"> ({{ link.location_value }})</span>
+                  </v-list-item-subtitle>
+                  <v-list-item-subtitle v-if="link.description">
+                    {{ link.description }}
                   </v-list-item-subtitle>
                 </v-list-item-content>
                 <v-list-item-action>
-                  <v-btn icon small :href="file.file" target="_blank">
+                  <v-btn icon small :href="link.file_url" target="_blank" v-if="link.file_url">
                     <v-icon small>mdi-download</v-icon>
                   </v-btn>
                 </v-list-item-action>
                 <v-list-item-action>
-                  <v-btn icon small @click.stop="removeFile(file)">
+                  <v-btn icon small @click.stop="removeFileLink(link)">
                     <v-icon small>mdi-delete</v-icon>
                   </v-btn>
                 </v-list-item-action>
@@ -145,13 +149,19 @@
             </v-btn>
           </v-card-title>
           <v-card-text>
-            <v-list dense v-if="document.signatories && document.signatories.length">
-              <v-list-item v-for="signatory in document.signatories" :key="signatory.id">
+            <v-list dense v-if="signatories && signatories.length">
+              <v-list-item v-for="signatory in signatories" :key="signatory.id">
                 <v-list-item-content>
-                  <v-list-item-title>{{ signatory.name }}</v-list-item-title>
+                  <v-list-item-title>{{ signatory.signatory_name || signatory.signatory || '-' }}</v-list-item-title>
+                  <v-list-item-subtitle v-if="signatory.signed_at">
+                    {{ formatDate(signatory.signed_at) }}
+                  </v-list-item-subtitle>
+                  <v-list-item-subtitle v-if="signatory.comment">
+                    {{ signatory.comment }}
+                  </v-list-item-subtitle>
                 </v-list-item-content>
                 <v-list-item-action>
-                  <v-btn icon small @click="removeSignatory(signatory)">
+                  <v-btn icon small @click="confirmRemoveSignatory(signatory)">
                     <v-icon small>mdi-delete</v-icon>
                   </v-btn>
                 </v-list-item-action>
@@ -170,11 +180,11 @@
             История изменений
           </v-card-title>
           <v-card-text>
-            <v-timeline dense v-if="document.workflow_history && document.workflow_history.length">
+            <v-timeline dense v-if="workflowHistory && workflowHistory.length">
               <v-timeline-item
-                v-for="(history, index) in document.workflow_history"
+                v-for="(history, index) in workflowHistory"
                 :key="index"
-                :color="history.state ? history.state.color : 'grey'"
+                :color="getHistoryStateColor(history)"
                 small
               >
                 <template v-slot:opposite>
@@ -182,11 +192,11 @@
                 </template>
                 <v-card flat>
                   <v-card-title class="subtitle-2">
-                    {{ history.state ? history.state.name : 'Изменение' }}
+                    {{ history.state_name || history.state || 'Изменение' }}
                   </v-card-title>
                   <v-card-text>
-                    <div v-if="history.actor">
-                      <strong>Кто:</strong> {{ history.actor.name }}
+                    <div v-if="history.actor_name || history.actor">
+                      <strong>Кто:</strong> {{ history.actor_name || history.actor }}
                     </div>
                     <div v-if="history.comment">
                       <strong>Комментарий:</strong> {{ history.comment }}
@@ -266,7 +276,7 @@ export default {
       showStateChangeDialog: false,
       showAddFileDialog: false,
       showAddSignatoryDialog: false,
-      selectedFileId: null
+      selectedFileLinkId: null
     }
   },
   computed: {
@@ -274,14 +284,23 @@ export default {
     document() {
       return this.getCurrentDocument
     },
+    fileLinks() {
+      return this.document && Array.isArray(this.document.files) ? this.document.files : []
+    },
+    signatories() {
+      return this.document && Array.isArray(this.document.signatories) ? this.document.signatories : []
+    },
+    workflowHistory() {
+      return this.document && Array.isArray(this.document.workflow_history) ? this.document.workflow_history : []
+    },
     selectedFilePdfUrl() {
-      if (!this.document || !this.document.files || !this.document.files.length) {
+      if (!this.fileLinks || !this.fileLinks.length) {
         return null
       }
-      const file = this.selectedFileId
-        ? this.document.files.find(f => f.id === this.selectedFileId)
-        : this.document.files[0]
-      return file && file.mime_type === 'application/pdf' ? file.file : null
+      const link = this.selectedFileLinkId
+        ? this.fileLinks.find(f => f.id === this.selectedFileLinkId)
+        : this.fileLinks[0]
+      return link && link.file_mime_type === 'application/pdf' ? link.file_url : null
     }
   },
   async mounted() {
@@ -296,8 +315,8 @@ export default {
     async loadDocument() {
       try {
         await this.fetchDocument(this.id)
-        if (this.document && this.document.files && this.document.files.length) {
-          this.selectedFileId = this.document.files[0].id
+        if (this.fileLinks && this.fileLinks.length) {
+          this.selectedFileLinkId = this.fileLinks[0].id
         }
       } catch (error) {
         console.error('Error loading document:', error)
@@ -307,15 +326,15 @@ export default {
         })
       }
     },
-    selectFile(file) {
-      this.selectedFileId = file.id
+    selectFileLink(link) {
+      this.selectedFileLinkId = link.id
     },
-    async removeFile(file) {
-      if (confirm('Удалить этот файл?')) {
+    async removeFileLink(link) {
+      if (confirm('Удалить этот файл из документа?')) {
         try {
           await this.removeFilesFromDocument({
             documentId: this.document.id,
-            fileIds: [file.id]
+            fileIds: [link.file_id || link.id]
           })
           this.$store.commit('snackbar/showSnackbar', {
             message: 'Файл удален',
@@ -330,10 +349,10 @@ export default {
         }
       }
     },
-    async removeSignatory(signatory) {
+    async confirmRemoveSignatory(signatory) {
       if (confirm('Удалить этого подписанта?')) {
         try {
-          await this.$store.dispatch('documentFlow/removeSignatory', {
+          await this.removeSignatory({
             documentId: this.document.id,
             signatoryId: signatory.id
           })
@@ -352,6 +371,21 @@ export default {
     },
     onStateChanged() {
       this.loadDocument()
+    },
+    getStateColor(stateName) {
+      if (!stateName) return 'grey'
+      const stateStr = String(stateName).toLowerCase()
+      if (stateStr.includes('черновик')) return 'grey'
+      if (stateStr.includes('рассмотрении')) return 'orange'
+      if (stateStr.includes('подписан')) return 'green'
+      if (stateStr.includes('отправлен')) return 'blue'
+      if (stateStr.includes('завершён') || stateStr.includes('завершен')) return 'teal'
+      if (stateStr.includes('архив')) return 'brown'
+      return 'primary'
+    },
+    getHistoryStateColor(history) {
+      const stateName = history.state_name || history.state
+      return this.getStateColor(stateName)
     },
     getDirectionColor(direction) {
       const colors = {

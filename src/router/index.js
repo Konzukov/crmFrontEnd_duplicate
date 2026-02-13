@@ -374,11 +374,6 @@ const routes = [
                         component: () => import('@/components/DocumentFlow/DocumentList.vue')
                     },
                     {
-                        path: 'documents/create',
-                        name: 'doc-flow-create',
-                        component: () => import('@/components/DocumentFlow/DocumentFormPage.vue')
-                    },
-                    {
                         path: 'documents/:id',
                         name: 'doc-flow-detail',
                         component: () => import('@/components/DocumentFlow/DocumentDetail.vue'),

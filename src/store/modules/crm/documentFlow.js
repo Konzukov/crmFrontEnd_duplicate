@@ -5,10 +5,17 @@ import customConst from "@/const/customConst";
 
 Vue.use(VueCookies)
 
+// Utility to extract array from paginated or direct array responses
+function extractArray(responseData) {
+    if (Array.isArray(responseData)) return responseData
+    if (responseData && Array.isArray(responseData.results)) return responseData.results
+    return []
+}
+
 export default {
     namespaced: true,
     state: {
-        file: [],
+        files: [],  // Renamed from 'file' to 'files' for consistency
         documents: [],
         currentDocument: null,
         documentTypes: [],
@@ -20,6 +27,7 @@ export default {
         loading: {
             documents: false,
             document: false,
+            files: false,
             correspondence: false,
             types: false,
             states: false
@@ -34,10 +42,10 @@ export default {
     },
     mutations: {
         SET_FILE_LIST(state, data) {
-            state.file = [...data]
+            state.files = Array.isArray(data) ? data : []
         },
         UPDATE_FILE_LIST(state, data) {
-            state.file.push(data)
+            state.files.push(data)
         },
         SET_CREATE_OPTIONS: (state, options) => {
             state.createOptions = options
@@ -91,7 +99,7 @@ export default {
             state.filters = {...state.filters, ...filters}
         },
         REMOVE_FILE(state, fileId) {
-            state.file = state.file.filter(f => f.id !== fileId)
+            state.files = state.files.filter(f => f.id !== fileId)
         }
     },
     actions: {
@@ -106,13 +114,7 @@ export default {
                 if (state.filters.ordering) params.ordering = state.filters.ordering
                 
                 const res = await axios.get(customConst.DOCUMENT_FLOW + 'documents/', {params})
-                // Handle paginated response or direct array
-                let data = res.data.data
-                if (data && typeof data === 'object' && data.results && Array.isArray(data.results)) {
-                    data = data.results
-                } else if (!Array.isArray(data)) {
-                    data = []
-                }
+                const data = extractArray(res.data.data)
                 commit('SET_DOCUMENTS', data)
                 return data
             } catch (err) {
@@ -126,10 +128,7 @@ export default {
             commit('SET_LOADING', {key: 'document', value: true})
             try {
                 const res = await axios.get(customConst.DOCUMENT_FLOW + `documents/${id}/`)
-                let data = res.data.data
-                if (data && typeof data === 'object' && data.results && Array.isArray(data.results)) {
-                    data = data.results[0] || null
-                }
+                const data = res.data.data
                 commit('SET_CURRENT_DOCUMENT', data)
                 return data
             } catch (err) {
@@ -294,12 +293,7 @@ export default {
             commit('SET_LOADING', {key: 'types', value: true})
             try {
                 const res = await axios.get(customConst.DOCUMENT_FLOW + 'document-types/')
-                let data = res.data.data
-                if (data && typeof data === 'object' && data.results && Array.isArray(data.results)) {
-                    data = data.results
-                } else if (!Array.isArray(data)) {
-                    data = []
-                }
+                const data = extractArray(res.data.data)
                 commit('SET_DOCUMENT_TYPES', data)
                 return data
             } catch (err) {
@@ -313,12 +307,7 @@ export default {
             commit('SET_LOADING', {key: 'states', value: true})
             try {
                 const res = await axios.get(customConst.DOCUMENT_FLOW + 'workflow-states/')
-                let data = res.data.data
-                if (data && typeof data === 'object' && data.results && Array.isArray(data.results)) {
-                    data = data.results
-                } else if (!Array.isArray(data)) {
-                    data = []
-                }
+                const data = extractArray(res.data.data)
                 commit('SET_WORKFLOW_STATES', data)
                 return data
             } catch (err) {
@@ -332,12 +321,7 @@ export default {
             commit('SET_LOADING', {key: 'correspondence', value: true})
             try {
                 const res = await axios.get(customConst.DOCUMENT_FLOW + 'correspondence/')
-                let data = res.data.data
-                if (data && typeof data === 'object' && data.results && Array.isArray(data.results)) {
-                    data = data.results
-                } else if (!Array.isArray(data)) {
-                    data = []
-                }
+                const data = extractArray(res.data.data)
                 commit('SET_CORRESPONDENCE', data)
                 return data
             } catch (err) {
@@ -404,21 +388,18 @@ export default {
             }
         },
         async fetchFileList({commit}) {
-            return await new Promise((resolve, reject) => {
-                axios.get(customConst.DOCUMENT_FLOW + 'file/').then(res => {
-                    let data = res.data.data
-                    if (data && typeof data === 'object' && data.results && Array.isArray(data.results)) {
-                        data = data.results
-                    } else if (!Array.isArray(data)) {
-                        data = []
-                    }
-                    commit('SET_FILE_LIST', data)
-                    resolve(res)
-                }).catch(err => {
-                    console.log(err)
-                    reject(err)
-                })
-            })
+            commit('SET_LOADING', {key: 'files', value: true})
+            try {
+                const res = await axios.get(customConst.DOCUMENT_FLOW + 'file/')
+                const data = extractArray(res.data.data)
+                commit('SET_FILE_LIST', data)
+                return data
+            } catch (err) {
+                console.error('Error fetching files:', err)
+                throw err
+            } finally {
+                commit('SET_LOADING', {key: 'files', value: false})
+            }
         },
         async uploadFile({commit}, {formData, onProgress}) {
             return new Promise((resolve, reject) => {
@@ -468,17 +449,17 @@ export default {
         }
     },
     getters: {
-        getFileList: s => s.file,
-        getCreateOptions: state => state.createOptions,
-        getDocuments: state => state.documents,
-        getCurrentDocument: state => state.currentDocument,
-        getDocumentTypes: state => state.documentTypes,
-        getWorkflowStates: state => state.workflowStates,
-        getCorrespondence: state => state.correspondence,
-        getCurrentCorrespondence: state => state.currentCorrespondence,
-        getMailAccounts: state => state.mailAccounts,
-        getLoading: state => state.loading,
-        getFilters: state => state.filters
+        getFileList: state => Array.isArray(state.files) ? state.files : [],
+        getCreateOptions: state => state.createOptions || null,
+        getDocuments: state => Array.isArray(state.documents) ? state.documents : [],
+        getCurrentDocument: state => state.currentDocument || null,
+        getDocumentTypes: state => Array.isArray(state.documentTypes) ? state.documentTypes : [],
+        getWorkflowStates: state => Array.isArray(state.workflowStates) ? state.workflowStates : [],
+        getCorrespondence: state => Array.isArray(state.correspondence) ? state.correspondence : [],
+        getCurrentCorrespondence: state => state.currentCorrespondence || null,
+        getMailAccounts: state => Array.isArray(state.mailAccounts) ? state.mailAccounts : [],
+        getLoading: state => state.loading || {},
+        getFilters: state => state.filters || {}
     }
 }
 
